@@ -53,3 +53,34 @@ Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/bui
                   <div className="pointer-events-none absolute inset-0 rounded-full ring-1 ring-white/10" />
                 </div>
               </motion.div>
+
+
+              function HeroGrid() {
+  const gridSize = 6; // rows and columns
+  const cells = Array.from({ length: gridSize * gridSize });
+
+  return (
+    <div className="relative w-full h-full rounded-3xl overflow-hidden bg-gradient-to-br from-black/40 to-black/10">
+      {/* grid lines */}
+      <div className="absolute inset-0 grid grid-cols-6 grid-rows-6">
+        {cells.map((_, i) => (
+          <div key={i} className="border border-white/10" />
+        ))}
+      </div>
+
+      {/* glowing particle */}
+      <motion.div
+        className="absolute w-8 h-8 rounded-full bg-cyan-400/80 blur-xl"
+        animate={{
+          x: ["0%", "80%", "80%", "0%", "0%"],
+          y: ["0%", "0%", "80%", "80%", "0%"],
+        }}
+        transition={{
+          duration: 14,
+          repeat: Infinity,
+          ease: "easeInOut",
+        }}
+      />
+    </div>
+  );
+}
