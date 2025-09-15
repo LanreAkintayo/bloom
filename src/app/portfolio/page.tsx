@@ -234,12 +234,12 @@ function Header({ onCreate }: { onCreate?: () => void }) {
           <div className="flex items-center gap-3">
             <div className="hidden sm:block">
               <GhostButton onClick={() => alert("Log in flow placeholder")}>
-                Log in
+                Connect Wallet
               </GhostButton>
             </div>
 
             <div className="hidden md:block">
-              <PrimaryButton onClick={onCreate}>Create Deal</PrimaryButton>
+              <PrimaryButton onClick={onCreate}>Get Started</PrimaryButton>
             </div>
 
             <div className="md:hidden">
@@ -477,10 +477,9 @@ function Hero({ onDemo }: { onDemo?: () => void }) {
       <div className="absolute z-10 w-40 h-40 bg-blue-400/20 rounded-full blur-3xl animate-blob animation-delay-4000 bottom-0 left-1/3" />
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 grid grid-cols-1 md:grid-cols-2 gap-10 items-center">
         <div className="space-y-6 z-10">
-          <div className="flex items-center gap-3">
-            <Badge>Secure • AI powered • Gasless</Badge>
-            <span className="text-xs text-white/60">Non custodial</span>
-          </div>
+          {/* <div className="flex items-center gap-3">
+            <Badge>Secure</Badge>
+          </div> */}
 
           <motion.h1
             initial={{ opacity: 0, y: 16 }}
@@ -488,7 +487,7 @@ function Hero({ onDemo }: { onDemo?: () => void }) {
             transition={{ duration: 0.6 }}
             className="text-4xl sm:text-5xl md:text-6xl font-extrabold leading-tight bg-clip-text text-transparent bg-gradient-to-r from-emerald-300 via-cyan-300 to-blue-400"
           >
-            The safer smarter way to move crypto
+             Safe, Smart, and Simple Crypto Payments
           </motion.h1>
 
           <motion.p
@@ -498,8 +497,7 @@ function Hero({ onDemo }: { onDemo?: () => void }) {
             className="max-w-xl text-white/70"
           >
             Escrow protection that releases funds only when delivery is
-            confirmed. Built in AI checks, optional juried disputes, and gasless
-            onboarding make transfer safer and easy for everyone.
+            confirmed. Built-in AI assistant for faster transaction, optional juried disputes, and reversible  transfer in case of wrong wallet address or mistakes.
           </motion.p>
 
           <div className="flex flex-wrap gap-4 mt-6">
@@ -514,7 +512,7 @@ function Hero({ onDemo }: { onDemo?: () => void }) {
             </GhostButton>
           </div>
 
-          <div className="mt-6 flex gap-6 text-sm">
+          {/* <div className="mt-6 flex gap-6 text-sm">
             <div className="flex items-center gap-3">
               <div className="text-xs font-semibold text-white/90">100+</div>
               <div className="text-xs text-white/60">beta users</div>
@@ -527,7 +525,7 @@ function Hero({ onDemo }: { onDemo?: () => void }) {
               <div className="text-xs font-semibold text-white/90">0.002</div>
               <div className="text-xs text-white/60">avg fee USD approx</div>
             </div>
-          </div>
+          </div> */}
         </div>
 
         <div className="relative flex items-center justify-center">

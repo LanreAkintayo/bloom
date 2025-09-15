@@ -756,6 +756,11 @@ const steps = [
     desc: "'Send 0.05 ETH to @lanre every Friday.' Natural language, no friction.",
   },
   {
+    icon: <SendHorizontal className="h-5 w-5 text-emerald-300" />,
+    title: "Say It",
+    desc: "'Send 0.05 ETH to @lanre every Friday.' Natural language, no friction.",
+  },
+  {
     icon: <Lock className="h-5 w-5 text-emerald-300" />,
     title: "Locked & Loaded",
     desc: "Funds stay safe until executed — with a window for undoing mistakes.",
