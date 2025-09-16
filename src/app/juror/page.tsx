@@ -96,7 +96,7 @@ export default function JurorDashboard() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-950 to-black text-white p-6">
       {/* Page Header */}
-      <div className="my-10 text-center ">
+      <div className="my-10 text-center">
         <h1 className="text-3xl font-bold text-white">Juror Dashboard</h1>
         <p className="text-white/70 mt-1 text-sm">
           Track your disputes, reputation, and rewards.

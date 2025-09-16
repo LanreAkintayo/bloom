@@ -105,14 +105,16 @@ export default function RegisterJuror() {
               </div>
 
               {/* Register Button */}
+              {/* <div className="w-full flex items-center justify-center"> */}
               <Button
                 onClick={handleRegister}
                 disabled={loading || !stake || !signerAddress}
-                className="w-full bg-emerald-600 hover:bg-emerald-700"
+                className=" bg-emerald-600 hover:bg-emerald-700"
               >
                 {loading ? "Registering..." : "Register as Juror"}
               </Button>
-            </div>
+              </div>
+            {/* </div> */}
 
             {/* Learn More / Rules Section */}
             <div className="mt-4 border-t border-slate-700 pt-4">
@@ -153,14 +155,16 @@ export default function RegisterJuror() {
                   <li>Unstaking is only allowed after a cooldown period.</li>
                 </ul>
 
+                <div className="">
                 <Button
                   as="a"
                   href="https://example.com/juror-docs"
                   target="_blank"
-                  className="bg-slate-800 my-5 border border-slate-700 w-full"
+                  className="bg-slate-800 my-5 border border-slate-700 "
                 >
                   Learn More
                 </Button>
+                </div>
               </div>
             </div>
           </CardContent>
