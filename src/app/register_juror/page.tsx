@@ -68,7 +68,7 @@ export default function RegisterJuror() {
             </h2>
 
             {/* Signer Address Input */}
-            <div className="space-y-3">
+            <div className="space-y-5">
               <div>
                 <label className="block text-sm font-medium text-white mb-1">
                   Signer Address
