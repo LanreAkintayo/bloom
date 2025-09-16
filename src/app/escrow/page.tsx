@@ -15,9 +15,47 @@ import {
   FileText,
 } from "lucide-react";
 import DealCard from "@/components/escrow/DealCard"; // Import your new DealCard
+import WalletCard from "@/components/escrow/WalletCard";
+import HowItWorks from "@/components/escrow/HowItWorks";
+import ConfirmationModal from "@/components/escrow/ConfirmationModal";
 
 export default function EscrowPage() {
   const [loadingDeals, setLoadingDeals] = useState(false);
+  const [modalOpen, setModalOpen] = useState(false);
+
+  // This state stores the deal temporarily for confirmation
+  const [pendingDeal, setPendingDeal] = useState({
+    recipient: "",
+    amount: "",
+    token: "",
+    description: "",
+  });
+
+  const handleCreateDealClick = () => {
+    // store current form in pendingDeal and open modal
+    setPendingDeal({ ...form });
+    setModalOpen(true);
+  };
+
+  const confirmCreateDeal = () => {
+    setLoadingDeals(true);
+    setTimeout(() => {
+      setDeals([
+        ...deals,
+        {
+          id: deals.length + 1,
+          recipient: pendingDeal.recipient,
+          sender: "You",
+          amount: `${pendingDeal.amount} ${pendingDeal.token}`,
+          status: "Pending" as const,
+          description: pendingDeal.description,
+          createdAt: new Date().toISOString().slice(0, 10),
+        },
+      ]);
+      setForm({ recipient: "", amount: "", token: "", description: "" });
+      setLoadingDeals(false);
+    }, 2000);
+  };
   const [deals, setDeals] = useState([
     {
       id: 1,
@@ -74,11 +112,15 @@ export default function EscrowPage() {
 
   // Handlers for DealCard actions
   const handleCancelDeal = (id: number) => {
-    setDeals(deals.map(d => d.id === id ? { ...d, status: "Disputed" } : d));
+    setDeals(
+      deals.map((d) => (d.id === id ? { ...d, status: "Disputed" } : d))
+    );
   };
 
   const handleReleaseDeal = (id: number) => {
-    setDeals(deals.map(d => d.id === id ? { ...d, status: "Completed" } : d));
+    setDeals(
+      deals.map((d) => (d.id === id ? { ...d, status: "Completed" } : d))
+    );
   };
 
   const handleClaimDeal = (id: number) => {
@@ -89,47 +131,7 @@ export default function EscrowPage() {
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-950 to-black text-white p-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
       {/* Left Panel */}
       <div className="lg:col-span-1 space-y-6">
-        <Card className="bg-slate-900/95 border border-emerald-500/30 shadow-lg">
-          <CardContent className="p-6">
-            <div className="flex items-center space-x-2 mb-2">
-              <Coins className="text-emerald-500" />
-              <h2 className="text-xl font-bold text-white">
-                Your Wallet Balances
-              </h2>
-            </div>
-
-            <div className="text-sm text-white/70 mb-4 flex items-center gap-2">
-              <Wallet className="w-4 h-4 text-white/70" />
-              <span className="truncate w-52">0xA1b2...3c4D</span>
-            </div>
-
-            <div className="mb-4 p-3 bg-slate-800/90 rounded-lg text-sm border border-emerald-600/40 text-white/70">
-              <span className="font-semibold text-emerald-400">Total Balance:</span>{" "}
-              1,500 USDC + 2 ETH
-            </div>
-
-            <ul className="space-y-2 text-white/70 text-sm">
-              <li className="flex justify-between items-center bg-slate-800/80 p-2 rounded-lg">
-                <span className="flex items-center gap-2">
-                  <span className="w-4 h-4 rounded-full bg-cyan-400" /> USDC
-                </span>
-                <span className="font-medium text-white">500 USDC</span>
-              </li>
-              <li className="flex justify-between items-center bg-slate-800/80 p-2 rounded-lg">
-                <span className="flex items-center gap-2">
-                  <span className="w-4 h-4 rounded-full bg-emerald-400" /> DAI
-                </span>
-                <span className="font-medium text-white">300 DAI</span>
-              </li>
-              <li className="flex justify-between items-center bg-slate-800/80 p-2 rounded-lg">
-                <span className="flex items-center gap-2">
-                  <span className="w-4 h-4 rounded-full bg-purple-400" /> ETH
-                </span>
-                <span className="font-medium text-white">2 ETH</span>
-              </li>
-            </ul>
-          </CardContent>
-        </Card>
+        <WalletCard />
 
         <Card className="bg-slate-900/95 border border-cyan-500/30 shadow-lg">
           <CardContent className="p-6 space-y-3">
@@ -172,7 +174,9 @@ export default function EscrowPage() {
             {/* Create Deal Form */}
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-white mb-1">Recipient Address</label>
+                <label className="block text-sm font-medium text-white mb-1">
+                  Recipient Address
+                </label>
                 <Input
                   name="recipient"
                   placeholder="0xA1b2...3c4D"
@@ -183,7 +187,9 @@ export default function EscrowPage() {
               </div>
               <div className="flex space-x-2">
                 <div className="flex-1">
-                  <label className="block text-sm font-medium text-white mb-1">Amount</label>
+                  <label className="block text-sm font-medium text-white mb-1">
+                    Amount
+                  </label>
                   <Input
                     name="amount"
                     placeholder="100"
@@ -193,22 +199,45 @@ export default function EscrowPage() {
                   />
                 </div>
                 <div className="w-32">
-                  <label className="block text-sm font-medium text-white mb-1">Token</label>
+                  <label className="block text-sm font-medium text-white mb-1">
+                    Token
+                  </label>
                   <select
                     name="token"
                     value={form.token}
                     onChange={handleChange}
                     className="bg-slate-800 border border-slate-700 text-white w-full p-2 rounded"
                   >
-                    <option value="">Select</option>
-                    <option value="USDC">USDC</option>
-                    <option value="DAI">DAI</option>
-                    <option value="ETH">ETH</option>
+                    <option value="">
+                      <span>Select</span>
+                    </option>
+                    <option value="USDC">
+                      {" "}
+                      <span className="flex items-center gap-2">
+                        <span className="w-4 h-4 rounded-full bg-cyan-400" />{" "}
+                        USDC
+                      </span>
+                    </option>
+                    <option value="DAI">
+                      <span className="flex items-center gap-2">
+                        <span className="w-4 h-4 rounded-full bg-emerald-400" />{" "}
+                        DAI
+                      </span>
+                    </option>
+                    <option value="ETH">
+                      {" "}
+                      <span className="flex items-center gap-2">
+                        <span className="w-4 h-4 rounded-full bg-purple-400" />{" "}
+                        ETH
+                      </span>
+                    </option>
                   </select>
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-medium text-white mb-1">Deal Description</label>
+                <label className="block text-sm font-medium text-white mb-1">
+                  Deal Description
+                </label>
                 <Textarea
                   name="description"
                   placeholder="Briefly describe the deal so both parties understand the terms."
@@ -218,49 +247,63 @@ export default function EscrowPage() {
                 />
               </div>
 
-              <div className="text-sm text-white/70">
-                Escrow Fee (2%):{" "}
-                <span className="text-emerald-400">
-                  {form.amount ? (Number(form.amount) * 0.02).toFixed(2) : "0"}{" "}
-                  {form.token || ""}
-                </span>
+              <div className="space-y-2">
+                <div className="text-sm text-white/70">
+                  Escrow Fee (2%):{" "}
+                  <span className="text-emerald-400">
+                    {form.amount
+                      ? (Number(form.amount) * 0.02).toFixed(2)
+                      : "0"}{" "}
+                    {form.token || ""}
+                  </span>
+                </div>
+                <div className="text-sm text-white/70">
+                  Total Fee:{" "}
+                  <span className="text-emerald-400">
+                    {form.amount
+                      ? Number(form.amount) * 0.02 + Number(form.amount)
+                      : "0"}{" "}
+                    {form.token || ""}
+                  </span>
+                </div>
               </div>
 
               <Button
-                onClick={createDeal}
+                onClick={handleCreateDealClick}
                 disabled={loadingDeals}
                 className="w-full bg-emerald-600 hover:bg-emerald-700"
               >
-                {loadingDeals ? <Loader2 className="animate-spin mr-2" /> : "Create Deal"}
+                {loadingDeals ? (
+                  <Loader2 className="animate-spin mr-2" />
+                ) : (
+                  "Create Deal"
+                )}
               </Button>
+
+              {/* Modal */}
+              <ConfirmationModal
+                isOpen={modalOpen}
+                onClose={() => setModalOpen(false)}
+                onConfirm={confirmCreateDeal}
+                recipient={pendingDeal.recipient}
+                amount={pendingDeal.amount}
+                token={pendingDeal.token}
+                description={pendingDeal.description}
+              />
             </div>
 
             {/* How It Works Section */}
-            <div
-              id="how-it-works"
-              className="bg-slate-800/90 p-4 rounded-lg border border-emerald-600/30 mt-6"
-            >
-              <div className="flex items-center space-x-2 mb-2">
-                <ShieldCheck className="text-emerald-500" />
-                <h2 className="text-lg font-bold text-white">How Bloom Escrow Works</h2>
-              </div>
-              <ol className="list-decimal list-inside space-y-2 text-slate-200 text-sm">
-                <li>Create a deal and deposit funds</li>
-                <li>Seller acknowledges and completes work</li>
-                <li>Funds released when both sides agree</li>
-              </ol>
-              <div className="mt-2 p-2 bg-slate-700/80 rounded-lg text-xs border border-emerald-500/30 text-white/70">
-                <Lock className="w-4 h-4 inline mr-1 text-emerald-400" />
-                <span className="font-semibold text-emerald-400">Escrow Fee:</span> 2% (paid by sender)
-              </div>
-            </div>
+            <HowItWorks />
 
             {/* Your Deals */}
             <div>
-              <h2 className="text-xl font-bold text-cyan-400 mt-4 mb-2">Your Deals</h2>
+              <h2 className="text-xl font-bold text-cyan-400 mt-4 mb-2">
+                Your Deals
+              </h2>
               <div className="space-y-4">
                 {deals.map((deal) => (
                   <DealCard
+                    currentUser={"sender"}
                     key={deal.id}
                     deal={deal}
                     onCancel={handleCancelDeal}
