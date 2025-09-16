@@ -94,7 +94,7 @@ const EvidencePage = () => {
       <div className="flex flex-col md:flex-row gap-6">
         {/* Left Panel - Upload Card */}
         <div className="flex-none md:w-1/3 space-y-6">
-          <Card className="flex flex-col gap-4 p-4">
+          <Card className="flex flex-col gap-4 p-4 bg-gray-900/95">
             {/* Header with mobile scroll button */}
             <div className="flex justify-between items-center">
               <h2 className="text-white font-semibold text-lg flex items-center gap-2">
