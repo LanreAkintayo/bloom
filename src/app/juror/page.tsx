@@ -114,35 +114,6 @@ export default function JurorDashboard() {
 
           {/* Rewards Card */}
           <RewardsCard rewards={dummyStats.rewards} onClaim={handleClaim} />
-
-          {/* <Card className="bg-gradient-to-br from-slate-900/95 via-slate-950 to-black/95 border border-cyan-500/30 shadow-xl hover:shadow-2xl transition-all rounded-2xl">
-          <CardContent className="px-4 space-y-4">
-            <h3 className="text-xl font-semibold text-cyan-400">
-              Total Rewards
-            </h3>
-
-            <div className="space-y-3">
-              {Object.entries(dummyStats.rewards).map(([token, amount]) => (
-                <div
-                  key={token}
-                  className="flex justify-between items-center bg-slate-800/60 rounded-xl p-3 shadow-md hover:shadow-lg transition-shadow"
-                >
-                  <span className="flex items-center gap-2 text-sm">
-                    <span className="w-4 h-4 rounded-full bg-green-500" />
-                    <span className="text-white/80 font-medium">{token}</span>
-                  </span>
-                  <span className="font-bold text-white">
-                    {amount} {token}
-                  </span>
-                </div>
-              ))}
-            </div>
-
-            <Button className="w-full bg-emerald-600 hover:bg-emerald-700 shadow-md hover:shadow-lg transition-all mt-2">
-              Claim Rewards
-            </Button>
-          </CardContent>
-        </Card> */}
         </div>
 
         {/* Right Panel */}

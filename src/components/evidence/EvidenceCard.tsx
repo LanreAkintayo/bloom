@@ -16,12 +16,14 @@ interface EvidenceCardProps {
   e: Evidence;
   index: number;
   setEvidenceList: React.Dispatch<React.SetStateAction<Evidence[]>>;
+  isJurorView: boolean;
 }
 
 const EvidenceCard: React.FC<EvidenceCardProps> = ({
   e,
   index,
   setEvidenceList,
+  isJurorView,
 }) => {
   const getFileIcon = (type: string) => {
     if (type === "pdf") return <FileText className="w-6 h-6 text-red-500" />;
@@ -33,9 +35,7 @@ const EvidenceCard: React.FC<EvidenceCardProps> = ({
   return (
     <Card
       key={e.id}
-      className={`bg-slate-900/95 border ${
-        e.status === "Verified" ? "border-cyan-500/50" : "border-emerald-500/20"
-      } shadow-md hover:shadow-xl hover:shadow-emerald-400/20 transition-transform transform hover:-translate-y-1 p-4 rounded-2xl`}
+      className={`bg-slate-900/95 border border-emerald-500/20 shadow-md hover:shadow-sm hover:shadow-emerald-400/20 transition-transform transform hover:-translate-y-1 p-y-4 rounded-2xl`}
     >
       <CardContent className="flex flex-col gap-3">
         {/* Preview */}
@@ -94,7 +94,24 @@ const EvidenceCard: React.FC<EvidenceCardProps> = ({
           </div>
 
           {/* Remove Button */}
-          <button
+          {/* Remove Button (only if not juror view) */}
+          {!isJurorView && (
+            <button
+              onClick={() => {
+                if (confirm("Are you sure you want to remove this evidence?")) {
+                  setEvidenceList((prev) =>
+                    prev.filter((ev) => ev.id !== e.id)
+                  );
+                }
+              }}
+              className="flex items-center gap-1 text-red-500 hover:text-red-400 bg-slate-800/50 hover:bg-slate-700 px-3 py-1 rounded text-sm font-medium"
+              title="Remove Evidence"
+            >
+              Remove <X className="w-4 h-4" />
+            </button>
+          )}
+
+          {/* <button
             onClick={() => {
               if (confirm("Are you sure you want to remove this evidence?")) {
                 setEvidenceList((prev) => prev.filter((ev) => ev.id !== e.id));
@@ -104,7 +121,7 @@ const EvidenceCard: React.FC<EvidenceCardProps> = ({
             title="Remove Evidence"
           >
             Remove <X className="w-4 h-4" />
-          </button>
+          </button> */}
         </div>
 
         {/* Description */}
