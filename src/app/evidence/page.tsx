@@ -9,11 +9,16 @@ import {
   UploadCloud,
   ArrowDown,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  User,
+  DollarSign,
 } from "lucide-react";
 import EvidencePicker from "@/components/evidence/EvidencePicker";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
+import EvidenceCard from "@/components/evidence/EvidenceCard";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 
 interface Evidence {
   id: number;
@@ -24,7 +29,30 @@ interface Evidence {
   description?: string;
 }
 
+// Dummy deal data
+const dummyDeals: Record<string, any> = {
+  "123": {
+    id: 123,
+    sender: "0xA1B2...C3D4",
+    recipient: "0xE5F6...G7H8",
+    token: "USDC",
+    amount: 500,
+    arbitrationFee: 20,
+  },
+  "456": {
+    id: 456,
+    sender: "0xI9J0...K1L2",
+    recipient: "0xM3N4...O5P6",
+    token: "ETH",
+    amount: 1.2,
+    arbitrationFee: 0.05,
+  },
+};
+
 const EvidencePage = () => {
+  const [dealId, setDealId] = useState("");
+  const [dealData, setDealData] = useState<any>(null);
+
   const [evidenceList, setEvidenceList] = useState<Evidence[]>([
     {
       id: 1,
@@ -32,7 +60,8 @@ const EvidencePage = () => {
       fileType: "pdf",
       uploadDate: "2025-09-16",
       status: "Pending",
-      description: "Signed agreement",
+      description:
+        "Read this doc. This was what I had to give him for me to submit it. He is a very bad person oo. Like I tried all my best to listen and to understand him but everything proved abortive. I'm already tired.",
     },
     {
       id: 2,
@@ -40,7 +69,8 @@ const EvidencePage = () => {
       fileType: "image",
       uploadDate: "2025-09-15",
       status: "Verified",
-      description: "Proof of communication",
+      description:
+        "This image is like a guard and it has 5 separate moves apart from the one everyone used to know. So, it would be nice if you carefully read out and make the best judgement.",
     },
   ]);
 
@@ -48,6 +78,15 @@ const EvidencePage = () => {
   const [description, setDescription] = useState("");
   const evidenceRef = useRef<HTMLDivElement>(null);
   const [showRules, setShowRules] = useState(true);
+
+  const handleDealChange = (id: string) => {
+    setDealId(id);
+    if (dummyDeals[id]) {
+      setDealData(dummyDeals[id]);
+    } else {
+      setDealData(null);
+    }
+  };
 
   const handleUpload = () => {
     if (!selectedFile) return;
@@ -85,16 +124,18 @@ const EvidencePage = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-900 via-slate-950 to-black p-6">
-      <h1 className="text-3xl font-bold text-white mb-2">Your Evidence</h1>
-      <p className="text-gray-300 mb-6">
-        Upload and manage your evidence for this dispute. Only you can see what
-        you upload.
-      </p>
+      <div className="text-center">
+        <h1 className="text-3xl font-bold text-white mb-2">Your Evidence</h1>
+        <p className="text-gray-300 mb-6">
+          Upload and manage your evidence for this dispute. Only you can see
+          what you upload.
+        </p>
+      </div>
 
       <div className="flex flex-col md:flex-row gap-6">
         {/* Left Panel - Upload Card */}
-        <div className="flex-none md:w-1/3 space-y-6">
-          <Card className="flex flex-col gap-4 p-4 bg-gray-900/95">
+        <div className="flex-none md:w-5/12 space-y-6">
+          <Card className="flex flex-col gap-4 p-4 bg-slate-900/95">
             {/* Header with mobile scroll button */}
             <div className="flex justify-between items-center">
               <h2 className="text-white font-semibold text-lg flex items-center gap-2">
@@ -109,22 +150,76 @@ const EvidencePage = () => {
               </button>
             </div>
 
+            <div className="space-y-2">
+              <Label htmlFor="dealId" className="text-slate-300">
+                Deal ID
+              </Label>
+              <Input
+                id="dealId"
+                placeholder="Enter deal ID"
+                value={dealId}
+                onChange={(e) => handleDealChange(e.target.value)}
+                className="bg-slate-800 border-slate-700 text-white placeholder:text-slate-500"
+              />
+            </div>
+
+            {/* Deal Details */}
+            <div className="bg-slate-900/95 rounded-2xl p-5 shadow-md border border-slate-700">
+              <h3 className="text-white text-lg font-semibold mb-4">
+                Deal Details
+              </h3>
+
+              {/* Deal ID */}
+              <div className="flex flex-wrap gap-2 mb-3">
+                <span className="bg-slate-700/50 text-gray-200 text-xs px-3 py-1 rounded-full">
+                  Deal ID: {dealData?.id ?? "—"}
+                </span>
+              </div>
+
+              {/* Metadata badges */}
+              <div className="flex flex-wrap gap-3 mb-4">
+                <span className="bg-slate-700/50 text-gray-200 text-xs px-3 py-1 rounded-full flex items-center gap-1">
+                  <User className="w-3 h-3" /> Sender: {dealData?.sender ?? "—"}
+                </span>
+                <span className="bg-slate-700/50 text-gray-200 text-xs px-3 py-1 rounded-full flex items-center gap-1">
+                  <User className="w-3 h-3" /> Recipient:{" "}
+                  {dealData?.recipient ?? "—"}
+                </span>
+                <span className="bg-emerald-500/20 text-emerald-400 text-xs px-3 py-1 rounded-full flex items-center gap-1 font-semibold">
+                  <DollarSign className="w-3 h-3" /> {dealData?.amount ?? 0}{" "}
+                  {dealData?.token ?? ""}
+                </span>
+              </div>
+
+              {/* Optional description or notes */}
+              {dealData?.notes && (
+                <div className="bg-slate-700/50 rounded-lg p-2 text-gray-300 text-sm italic">
+                  {dealData.notes}
+                </div>
+              )}
+            </div>
+
             {/* EvidencePicker Component */}
-            <EvidencePicker
-              selectedFile={selectedFile}
-              setSelectedFile={setSelectedFile}
-              description={description}
-              setDescription={setDescription}
-            />
+            <div className="space-y-2">
+              <Label htmlFor="dealId" className="text-slate-300">
+                Add Evidence
+              </Label>
+              <EvidencePicker
+                selectedFile={selectedFile}
+                setSelectedFile={setSelectedFile}
+                description={description}
+                setDescription={setDescription}
+              />
+            </div>
 
             {/* Submit button */}
-            <button
+            <Button
               onClick={handleUpload}
-              className="bg-emerald-500 text-white px-4 py-2 rounded hover:bg-emerald-600 transition w-full"
+              className="mx-auto flex bg-emerald-500 text-white px-4 py-2 rounded hover:bg-emerald-600 transition w-full"
               disabled={!selectedFile}
             >
               Submit Evidence
-            </button>
+            </Button>
 
             {/* Learn More / Tips & Guidelines Section */}
             <div className="mt-4 border-t border-slate-700 pt-4">
@@ -167,45 +262,52 @@ const EvidencePage = () => {
         </div>
 
         {/* Right Panel - Evidence List */}
-        <div className="flex-1" ref={evidenceRef}>
-          {evidenceList.length === 0 ? (
-            <div className="bg-slate-800 p-6 rounded-2xl shadow-md text-center text-gray-400">
-              No evidence uploaded yet. Use the panel on the left to upload your
-              evidence.
+
+        <div className="" ref={evidenceRef}>
+          <Card className="flex flex-col gap-4 p-4 bg-slate-900/95 border border-slate-800/95">
+            <h2 className="text-white text-xl font-semibold mb-4">
+              Uploaded Evidences
+            </h2>
+            <div className="grid gap-4">
+              {evidenceList.length === 0 ? (
+                <div className="bg-slate-800 p-6 rounded-2xl shadow-md text-center text-gray-400">
+                  No evidence uploaded yet.
+                </div>
+              ) : (
+                evidenceList.map((e, index) => (
+                  <EvidenceCard
+                    key={e.id}
+                    e={e}
+                    index={index}
+                    setEvidenceList={setEvidenceList}
+                  />
+                ))
+              )}
             </div>
+          </Card>
+        </div>
+
+        {/* <div className="flex-1" ref={evidenceRef}>
+          {evidenceList.length === 0 ? (
+            <Card className="bg-slate-900/95 border border-emerald-500/30 shadow-lg hover:shadow-emerald-500/50 transition-transform transform hover:-translate-y-1 p-4">
+              <CardContent className="text-center text-gray-400 p-6">
+                No evidence uploaded yet. Use the panel on the left to upload
+                your evidence.
+              </CardContent>
+            </Card>
           ) : (
             <ul className="space-y-4">
-              {evidenceList.map((e) => (
-                <li
+              {evidenceList.map((e, index) => (
+                <EvidenceCard
                   key={e.id}
-                  className="bg-gradient-to-r from-slate-800 via-slate-850 to-slate-800 p-4 rounded-2xl shadow-md flex flex-col gap-2 hover:scale-[1.02] transition-transform"
-                >
-                  <div className="flex items-center gap-3">
-                    {getFileIcon(e.fileType)}
-                    <div>
-                      <p className="font-semibold text-white">{e.fileName}</p>
-                      <p className="text-sm text-gray-400">{e.uploadDate}</p>
-                    </div>
-                  </div>
-                  {e.description && (
-                    <p className="text-gray-300 text-sm italic">
-                      {e.description}
-                    </p>
-                  )}
-                  <span
-                    className={`px-2 py-1 text-sm rounded-full w-max ${
-                      e.status === "Verified"
-                        ? "bg-cyan-500 text-black"
-                        : "bg-gray-600 text-white"
-                    }`}
-                  >
-                    {e.status}
-                  </span>
-                </li>
+                  e={e}
+                  index={index}
+                  setEvidenceList={setEvidenceList}
+                />
               ))}
             </ul>
           )}
-        </div>
+        </div> */}
       </div>
     </div>
   );
