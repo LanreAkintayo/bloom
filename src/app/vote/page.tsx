@@ -5,12 +5,41 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { User, FileText, Info, ArrowRight } from "lucide-react";
+import {
+  User,
+  FileText,
+  Info,
+  ArrowRight,
+  Clock,
+  Hash,
+  Layers,
+} from "lucide-react";
 import { Label } from "@/components/ui/label";
 import EvidenceCard from "@/components/evidence/EvidenceCard";
 
 export default function DisputeVotingPage() {
   const [selectedVote, setSelectedVote] = useState<string>("");
+
+  const metaInfo = [
+    {
+      label: "Deal ID",
+      value: "#D-29301",
+      icon: Hash,
+      color: "text-emerald-400",
+    },
+    {
+      label: "Dispute ID",
+      value: "#DS-9810",
+      icon: Layers,
+      color: "text-cyan-400",
+    },
+    {
+      label: "Time Left",
+      value: "2d 14h",
+      icon: Clock,
+      color: "text-amber-400 animate-pulse",
+    },
+  ];
 
   // Dummy parties
   const plaintiff = {
@@ -76,26 +105,54 @@ export default function DisputeVotingPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left Panel: Parties */}
-        <div className="space-y-6">
-          {/* Plaintiff */}
-          <Card className="bg-slate-900/95 border border-emerald-500/30 shadow-md rounded-2xl">
-            <CardContent className="p-4 space-y-2">
-              <h3 className="text-lg font-semibold flex items-center gap-2 text-emerald-400">
-                <User className="w-5 h-5" /> Plaintiff
-              </h3>
-              <p className="text-sm text-white/80">{plaintiff.name}</p>
-              <p className="text-sm text-white/60">{plaintiff.claim}</p>
-            </CardContent>
-          </Card>
+        <div>
+          <Card className="bg-slate-900/95 border border-slate-700 shadow-lg rounded-2xl overflow-hidden">
+            <CardContent className="p-0">
+              {/* Meta Info Section */}
+              <div className="bg-slate-800/80 border-b border-slate-700 px-5 py-6 grid grid-cols-2 gap-4 text-sm text-white/80 -mt-8">
+                <div className="flex items-center gap-2">
+                  <Hash className="w-4 h-4 text-emerald-400" />
+                  <span>
+                    Deal ID:{" "}
+                    <span className="font-semibold text-white">#D-29301</span>
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Layers className="w-4 h-4 text-cyan-400" />
+                  <span>
+                    Dispute ID:{" "}
+                    <span className="font-semibold text-white">#DS-9810</span>
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Clock className="w-4 h-4 text-amber-400 animate-pulse" />
+                  <span>
+                    Time Left:{" "}
+                    <span className="font-semibold text-white">2d 14h</span>
+                  </span>
+                </div>
+              </div>
 
-          {/* Defendant */}
-          <Card className="bg-slate-900/95 border border-cyan-500/30 shadow-md rounded-2xl">
-            <CardContent className="p-4 space-y-2">
-              <h3 className="text-lg font-semibold flex items-center gap-2 text-cyan-400">
-                <User className="w-5 h-5" /> Defendant
-              </h3>
-              <p className="text-sm text-white/80">{defendant.name}</p>
-              <p className="text-sm text-white/60">{defendant.defense}</p>
+              {/* Parties Section */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-0">
+                {/* Plaintiff */}
+                <div className="p-5 border-r border-slate-700">
+                  <h3 className="text-lg font-semibold flex items-center gap-2 text-emerald-400">
+                    <User className="w-5 h-5" /> Plaintiff
+                  </h3>
+                  <p className="text-sm text-white/80 mt-2">{plaintiff.name}</p>
+                  {/* <p className="text-sm text-white/60">{plaintiff.claim}</p> */}
+                </div>
+
+                {/* Defendant */}
+                <div className="p-5">
+                  <h3 className="text-lg font-semibold flex items-center gap-2 text-cyan-400">
+                    <User className="w-5 h-5" /> Defendant
+                  </h3>
+                  <p className="text-sm text-white/80 mt-2">{defendant.name}</p>
+                  {/* <p className="text-sm text-white/60">{defendant.defense}</p> */}
+                </div>
+              </div>
             </CardContent>
           </Card>
         </div>
