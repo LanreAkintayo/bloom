@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import StatsCard from "@/components/juror/StatsCard";
 import RewardsCard from "@/components/juror/RewardsCard";
+import Header from "@/components/Header";
 
 export default function JurorDashboard() {
   const [activeTab, setActiveTab] = useState<"active" | "past">("active");
@@ -94,6 +95,8 @@ export default function JurorDashboard() {
   };
 
   return (
+    <>
+    <Header />
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-950 to-black text-white p-6">
       {/* Page Header */}
       <div className="my-10 text-center">
@@ -323,5 +326,7 @@ export default function JurorDashboard() {
         </div>
       </div>
     </div>
+    </>
+    
   );
 }

@@ -18,6 +18,7 @@ import DealCard from "@/components/escrow/DealCard"; // Import your new DealCard
 import WalletCard from "@/components/escrow/WalletCard";
 import HowItWorks from "@/components/escrow/HowItWorks";
 import ConfirmationModal from "@/components/escrow/ConfirmationModal";
+import Header from "@/components/Header";
 
 export default function EscrowPage() {
   const [loadingDeals, setLoadingDeals] = useState(false);
@@ -128,194 +129,197 @@ export default function EscrowPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-950 to-black text-white p-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
-      {/* Left Panel */}
-      <div className="lg:col-span-1 space-y-6">
-        <WalletCard />
+    <>
+      <Header />
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-950 to-black text-white p-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Left Panel */}
+        <div className="lg:col-span-1 space-y-6">
+          <WalletCard />
 
-        <Card className="bg-slate-900/95 border border-cyan-500/30 shadow-lg">
-          <CardContent className="p-6 space-y-3">
-            <h3 className="text-lg font-bold text-cyan-400">Quick Links</h3>
-            <Button className="w-full bg-cyan-600/20 hover:bg-cyan-600/30 text-white/70 flex items-center gap-2">
-              <Coins className="w-4 h-4" /> View All Deals
-            </Button>
-            <Button className="w-full bg-cyan-600/20 hover:bg-cyan-600/30 text-white/70 flex items-center gap-2">
-              <Wallet className="w-4 h-4" /> Your Disputes
-            </Button>
-            <Button className="w-full bg-cyan-600/20 hover:bg-cyan-600/30 text-white/70 flex items-center gap-2">
-              <ShieldCheck className="w-4 h-4" /> Escrow FAQ
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Right Panel */}
-      <div className="lg:col-span-2 space-y-6">
-        <Card className="bg-slate-900/95 border border-emerald-500/30 shadow-lg w-full max-w-4xl">
-          <CardContent className="p-6 space-y-6">
-            {/* Header + How It Works Button */}
-            <div className="flex justify-between items-center">
-              <h2 className="text-2xl font-bold text-emerald-400">
-                Create New Escrow Deal
-              </h2>
-              <Button
-                variant="secondary"
-                onClick={() =>
-                  document
-                    .getElementById("how-it-works")
-                    ?.scrollIntoView({ behavior: "smooth" })
-                }
-                className="text-cyan-400 hover:bg-slate-900/50  text-sm font-medium bg-slate-800/50 border border-cyan-500/30"
-              >
-                How it Works
+          <Card className="bg-slate-900/95 border border-cyan-500/30 shadow-lg">
+            <CardContent className="p-6 space-y-3">
+              <h3 className="text-lg font-bold text-cyan-400">Quick Links</h3>
+              <Button className="w-full bg-cyan-600/20 hover:bg-cyan-600/30 text-white/70 flex items-center gap-2">
+                <Coins className="w-4 h-4" /> View All Deals
               </Button>
-            </div>
+              <Button className="w-full bg-cyan-600/20 hover:bg-cyan-600/30 text-white/70 flex items-center gap-2">
+                <Wallet className="w-4 h-4" /> Your Disputes
+              </Button>
+              <Button className="w-full bg-cyan-600/20 hover:bg-cyan-600/30 text-white/70 flex items-center gap-2">
+                <ShieldCheck className="w-4 h-4" /> Escrow FAQ
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
 
-            {/* Create Deal Form */}
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-white mb-1">
-                  Recipient Address
-                </label>
-                <Input
-                  name="recipient"
-                  placeholder="0xA1b2...3c4D"
-                  value={form.recipient}
-                  onChange={handleChange}
-                  className="bg-slate-800 border border-slate-700 placeholder:text-white/50 text-white"
-                />
+        {/* Right Panel */}
+        <div className="lg:col-span-2 space-y-6">
+          <Card className="bg-slate-900/95 border border-emerald-500/30 shadow-lg w-full max-w-4xl">
+            <CardContent className="p-6 space-y-6">
+              {/* Header + How It Works Button */}
+              <div className="flex justify-between items-center">
+                <h2 className="text-2xl font-bold text-emerald-400">
+                  Create New Escrow Deal
+                </h2>
+                <Button
+                  variant="secondary"
+                  onClick={() =>
+                    document
+                      .getElementById("how-it-works")
+                      ?.scrollIntoView({ behavior: "smooth" })
+                  }
+                  className="text-cyan-400 hover:bg-slate-900/50  text-sm font-medium bg-slate-800/50 border border-cyan-500/30"
+                >
+                  How it Works
+                </Button>
               </div>
-              <div className="flex space-x-2">
-                <div className="flex-1">
+
+              {/* Create Deal Form */}
+              <div className="space-y-4">
+                <div>
                   <label className="block text-sm font-medium text-white mb-1">
-                    Amount
+                    Recipient Address
                   </label>
                   <Input
-                    name="amount"
-                    placeholder="100"
-                    value={form.amount}
+                    name="recipient"
+                    placeholder="0xA1b2...3c4D"
+                    value={form.recipient}
                     onChange={handleChange}
                     className="bg-slate-800 border border-slate-700 placeholder:text-white/50 text-white"
                   />
                 </div>
-                <div className="w-32">
-                  <label className="block text-sm font-medium text-white mb-1">
-                    Token
-                  </label>
-                  <select
-                    name="token"
-                    value={form.token}
-                    onChange={handleChange}
-                    className="bg-slate-800 border border-slate-700 text-white w-full p-2 rounded"
-                  >
-                    <option value="">
-                      <span>Select</span>
-                    </option>
-                    <option value="USDC">
-                      {" "}
-                      <span className="flex items-center gap-2">
-                        <span className="w-4 h-4 rounded-full bg-cyan-400" />{" "}
+                <div className="flex space-x-2">
+                  <div className="flex-1">
+                    <label className="block text-sm font-medium text-white mb-1">
+                      Amount
+                    </label>
+                    <Input
+                      name="amount"
+                      placeholder="100"
+                      value={form.amount}
+                      onChange={handleChange}
+                      className="bg-slate-800 border border-slate-700 placeholder:text-white/50 text-white"
+                    />
+                  </div>
+                  <div className="w-32">
+                    <label className="block text-sm font-medium text-white mb-1">
+                      Token
+                    </label>
+                    <select
+                      name="token"
+                      value={form.token}
+                      onChange={handleChange}
+                      className="bg-slate-800 border border-slate-700 text-white w-full p-2 rounded"
+                    >
+                      <option value="">Select</option>
+                      <option value="USDC">
+                        {" "}
                         USDC
-                      </span>
-                    </option>
-                    <option value="DAI">
-                      <span className="flex items-center gap-2">
-                        <span className="w-4 h-4 rounded-full bg-emerald-400" />{" "}
+                        {/* <span className="flex items-center gap-2">
+                          <span className="w-4 h-4 rounded-full bg-cyan-400" />{" "}
+                          USDC
+                        </span> */}
+                      </option>
+                      <option value="DAI">
                         DAI
-                      </span>
-                    </option>
-                    <option value="ETH">
-                      {" "}
-                      <span className="flex items-center gap-2">
-                        <span className="w-4 h-4 rounded-full bg-purple-400" />{" "}
-                        ETH
-                      </span>
-                    </option>
-                  </select>
+                        {/* <span className="flex items-center gap-2">
+                          <span className="w-4 h-4 rounded-full bg-emerald-400" />{" "}
+                          DAI
+                        </span> */}
+                      </option>
+                      <option value="ETH">
+                        {" "}ETH
+                        {/* <span className="flex items-center gap-2">
+                          <span className="w-4 h-4 rounded-full bg-purple-400" />{" "}
+                          ETH
+                        </span> */}
+                      </option>
+                    </select>
+                  </div>
                 </div>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-white mb-1">
-                  Deal Description
-                </label>
-                <Textarea
-                  name="description"
-                  placeholder="Briefly describe the deal so both parties understand the terms."
-                  value={form.description}
-                  onChange={handleChange}
-                  className="bg-slate-800 border border-slate-700 placeholder:text-white/50 text-white"
+                <div>
+                  <label className="block text-sm font-medium text-white mb-1">
+                    Deal Description
+                  </label>
+                  <Textarea
+                    name="description"
+                    placeholder="Briefly describe the deal so both parties understand the terms."
+                    value={form.description}
+                    onChange={handleChange}
+                    className="bg-slate-800 border border-slate-700 placeholder:text-white/50 text-white"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <div className="text-sm text-white/70">
+                    Escrow Fee (2%):{" "}
+                    <span className="text-emerald-400">
+                      {form.amount
+                        ? (Number(form.amount) * 0.02).toFixed(2)
+                        : "0"}{" "}
+                      {form.token || ""}
+                    </span>
+                  </div>
+                  <div className="text-sm text-white/70">
+                    Total Fee:{" "}
+                    <span className="text-emerald-400">
+                      {form.amount
+                        ? Number(form.amount) * 0.02 + Number(form.amount)
+                        : "0"}{" "}
+                      {form.token || ""}
+                    </span>
+                  </div>
+                </div>
+
+                <Button
+                  onClick={handleCreateDealClick}
+                  disabled={loadingDeals}
+                  className="w-full bg-emerald-600 hover:bg-emerald-700"
+                >
+                  {loadingDeals ? (
+                    <Loader2 className="animate-spin mr-2" />
+                  ) : (
+                    "Create Deal"
+                  )}
+                </Button>
+
+                {/* Modal */}
+                <ConfirmationModal
+                  isOpen={modalOpen}
+                  onClose={() => setModalOpen(false)}
+                  onConfirm={confirmCreateDeal}
+                  recipient={pendingDeal.recipient}
+                  amount={pendingDeal.amount}
+                  token={pendingDeal.token}
+                  description={pendingDeal.description}
                 />
               </div>
 
-              <div className="space-y-2">
-                <div className="text-sm text-white/70">
-                  Escrow Fee (2%):{" "}
-                  <span className="text-emerald-400">
-                    {form.amount
-                      ? (Number(form.amount) * 0.02).toFixed(2)
-                      : "0"}{" "}
-                    {form.token || ""}
-                  </span>
-                </div>
-                <div className="text-sm text-white/70">
-                  Total Fee:{" "}
-                  <span className="text-emerald-400">
-                    {form.amount
-                      ? Number(form.amount) * 0.02 + Number(form.amount)
-                      : "0"}{" "}
-                    {form.token || ""}
-                  </span>
+              {/* How It Works Section */}
+              <HowItWorks />
+
+              {/* Your Deals */}
+              <div>
+                <h2 className="text-xl font-bold text-cyan-400 mt-4 mb-2">
+                  Your Deals
+                </h2>
+                <div className="space-y-4">
+                  {deals.map((deal) => (
+                    <DealCard
+                      currentUser={"sender"}
+                      key={deal.id}
+                      deal={deal}
+                      onCancel={handleCancelDeal}
+                      onRelease={handleReleaseDeal}
+                      onClaim={handleClaimDeal}
+                    />
+                  ))}
                 </div>
               </div>
-
-              <Button
-                onClick={handleCreateDealClick}
-                disabled={loadingDeals}
-                className="w-full bg-emerald-600 hover:bg-emerald-700"
-              >
-                {loadingDeals ? (
-                  <Loader2 className="animate-spin mr-2" />
-                ) : (
-                  "Create Deal"
-                )}
-              </Button>
-
-              {/* Modal */}
-              <ConfirmationModal
-                isOpen={modalOpen}
-                onClose={() => setModalOpen(false)}
-                onConfirm={confirmCreateDeal}
-                recipient={pendingDeal.recipient}
-                amount={pendingDeal.amount}
-                token={pendingDeal.token}
-                description={pendingDeal.description}
-              />
-            </div>
-
-            {/* How It Works Section */}
-            <HowItWorks />
-
-            {/* Your Deals */}
-            <div>
-              <h2 className="text-xl font-bold text-cyan-400 mt-4 mb-2">
-                Your Deals
-              </h2>
-              <div className="space-y-4">
-                {deals.map((deal) => (
-                  <DealCard
-                    currentUser={"sender"}
-                    key={deal.id}
-                    deal={deal}
-                    onCancel={handleCancelDeal}
-                    onRelease={handleReleaseDeal}
-                    onClaim={handleClaimDeal}
-                  />
-                ))}
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        </div>
       </div>
-    </div>
+    </>
   );
 }

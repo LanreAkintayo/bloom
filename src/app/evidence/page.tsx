@@ -19,6 +19,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import EvidenceCard from "@/components/evidence/EvidenceCard";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
+import Header from "@/components/Header";
 
 interface Evidence {
   id: number;
@@ -123,171 +124,174 @@ const EvidencePage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-900 via-slate-950 to-black p-6">
-      <div className="text-center">
-        <h1 className="text-3xl font-bold text-white mb-2">Your Evidence</h1>
-        <p className="text-gray-300 mb-6">
-          Upload and manage your evidence for this dispute. Only you can see
-          what you upload.
-        </p>
-      </div>
+    <>
+      <Header />
+      <div className="min-h-screen bg-gradient-to-b from-slate-900 via-slate-950 to-black p-6">
+        <div className="text-center">
+          <h1 className="text-3xl font-bold text-white mb-2">Your Evidence</h1>
+          <p className="text-gray-300 mb-6">
+            Upload and manage your evidence for this dispute. Only you can see
+            what you upload.
+          </p>
+        </div>
 
-      <div className="flex flex-col md:flex-row gap-6">
-        {/* Left Panel - Upload Card */}
-        <div className="flex-none md:w-5/12 space-y-6">
-          <Card className="flex flex-col gap-4 p-4 bg-slate-900/95">
-            {/* Header with mobile scroll button */}
-            <div className="flex justify-between items-center">
-              <h2 className="text-white font-semibold text-lg flex items-center gap-2">
-                <UploadCloud className="w-5 h-5" /> Upload Your Evidence
-              </h2>
-              {/* Mobile-only button */}
-              <button
-                onClick={scrollToEvidence}
-                className="md:hidden bg-cyan-500 text-black px-3 py-1 rounded hover:bg-cyan-600 transition flex items-center gap-1 text-sm"
-              >
-                <ArrowDown className="w-4 h-4" /> View Evidence
-              </button>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="dealId" className="text-slate-300">
-                Deal ID
-              </Label>
-              <Input
-                id="dealId"
-                placeholder="Enter deal ID"
-                value={dealId}
-                onChange={(e) => handleDealChange(e.target.value)}
-                className="bg-slate-800 border-slate-700 text-white placeholder:text-slate-500"
-              />
-            </div>
-
-            {/* Deal Details */}
-            <div className="bg-slate-900/95 rounded-2xl p-5 shadow-md border border-slate-700">
-              <h3 className="text-white text-lg font-semibold mb-4">
-                Deal Details
-              </h3>
-
-              {/* Deal ID */}
-              <div className="flex flex-wrap gap-2 mb-3">
-                <span className="bg-slate-700/50 text-gray-200 text-xs px-3 py-1 rounded-full">
-                  Deal ID: {dealData?.id ?? "—"}
-                </span>
-              </div>
-
-              {/* Metadata badges */}
-              <div className="flex flex-wrap gap-3 mb-4">
-                <span className="bg-slate-700/50 text-gray-200 text-xs px-3 py-1 rounded-full flex items-center gap-1">
-                  <User className="w-3 h-3" /> Sender: {dealData?.sender ?? "—"}
-                </span>
-                <span className="bg-slate-700/50 text-gray-200 text-xs px-3 py-1 rounded-full flex items-center gap-1">
-                  <User className="w-3 h-3" /> Recipient:{" "}
-                  {dealData?.recipient ?? "—"}
-                </span>
-                <span className="bg-emerald-500/20 text-emerald-400 text-xs px-3 py-1 rounded-full flex items-center gap-1 font-semibold">
-                  <DollarSign className="w-3 h-3" /> {dealData?.amount ?? 0}{" "}
-                  {dealData?.token ?? ""}
-                </span>
-              </div>
-
-              {/* Optional description or notes */}
-              {dealData?.notes && (
-                <div className="bg-slate-700/50 rounded-lg p-2 text-gray-300 text-sm italic">
-                  {dealData.notes}
-                </div>
-              )}
-            </div>
-
-            {/* EvidencePicker Component */}
-            <div className="space-y-2">
-              <Label htmlFor="dealId" className="text-slate-300">
-                Add Evidence
-              </Label>
-              <EvidencePicker
-                selectedFile={selectedFile}
-                setSelectedFile={setSelectedFile}
-                description={description}
-                setDescription={setDescription}
-              />
-            </div>
-
-            {/* Submit button */}
-            <Button
-              onClick={handleUpload}
-              className="mx-auto flex bg-emerald-500 text-white px-4 py-2 rounded hover:bg-emerald-600 transition w-full"
-              disabled={!selectedFile}
-            >
-              Submit Evidence
-            </Button>
-
-            {/* Learn More / Tips & Guidelines Section */}
-            <div className="mt-4 border-t border-slate-700 pt-4">
-              <button
-                onClick={() => setShowRules(!showRules)}
-                className="flex items-center justify-between w-full text-white/80 hover:text-white transition-colors"
-              >
-                <div className="flex items-center gap-2">
-                  <Lightbulb className="w-4 h-4 text-yellow-400" />
-                  <span className="font-medium">Tips and Guidelines</span>
-                </div>
-                {showRules ? (
-                  <ChevronUp className="w-4 h-4" />
-                ) : (
-                  <ChevronDown className="w-4 h-4" />
-                )}
-              </button>
-
-              <div
-                className={`overflow-hidden transition-all duration-300 ${
-                  showRules ? "max-h-96 mt-3" : "max-h-0"
-                }`}
-              >
-                <ul className="list-disc list-inside text-white/70 space-y-2 text-sm">
-                  <li>Allowed formats: PDF, JPG, PNG, MP4</li>
-                  <li>Max file size: 20MB</li>
-                  <li>Use clear file names</li>
-                  <li>Provide a short description for clarity</li>
-                </ul>
-
-                <Button
-                  target="_blank"
-                  className="bg-slate-800 my-5 w-full border border-slate-700"
+        <div className="flex flex-col md:flex-row gap-6">
+          {/* Left Panel - Upload Card */}
+          <div className="flex-none md:w-5/12 space-y-6">
+            <Card className="flex flex-col gap-4 p-4 bg-slate-900/95">
+              {/* Header with mobile scroll button */}
+              <div className="flex justify-between items-center">
+                <h2 className="text-white font-semibold text-lg flex items-center gap-2">
+                  <UploadCloud className="w-5 h-5" /> Upload Your Evidence
+                </h2>
+                {/* Mobile-only button */}
+                <button
+                  onClick={scrollToEvidence}
+                  className="md:hidden bg-cyan-500 text-black px-3 py-1 rounded hover:bg-cyan-600 transition flex items-center gap-1 text-sm"
                 >
-                  Learn More
-                </Button>
+                  <ArrowDown className="w-4 h-4" /> View Evidence
+                </button>
               </div>
-            </div>
-          </Card>
-        </div>
 
-        {/* Right Panel - Evidence List */}
+              <div className="space-y-2">
+                <Label htmlFor="dealId" className="text-slate-300">
+                  Deal ID
+                </Label>
+                <Input
+                  id="dealId"
+                  placeholder="Enter deal ID"
+                  value={dealId}
+                  onChange={(e) => handleDealChange(e.target.value)}
+                  className="bg-slate-800 border-slate-700 text-white placeholder:text-slate-500"
+                />
+              </div>
 
-        <div className="" ref={evidenceRef}>
-          <Card className="flex flex-col gap-4 p-4 bg-slate-900/95 border border-slate-800/95">
-            <h2 className="text-white text-xl font-semibold mb-4">
-              Uploaded Evidences
-            </h2>
-            <div className="grid gap-4">
-              {evidenceList.length === 0 ? (
-                <div className="bg-slate-800 p-6 rounded-2xl shadow-md text-center text-gray-400">
-                  No evidence uploaded yet.
+              {/* Deal Details */}
+              <div className="bg-slate-900/95 rounded-2xl p-5 shadow-md border border-slate-700">
+                <h3 className="text-white text-lg font-semibold mb-4">
+                  Deal Details
+                </h3>
+
+                {/* Deal ID */}
+                <div className="flex flex-wrap gap-2 mb-3">
+                  <span className="bg-slate-700/50 text-gray-200 text-xs px-3 py-1 rounded-full">
+                    Deal ID: {dealData?.id ?? "—"}
+                  </span>
                 </div>
-              ) : (
-                evidenceList.map((e, index) => (
-                  <EvidenceCard
-                    key={e.id}
-                    e={e}
-                    index={index}
-                    setEvidenceList={setEvidenceList}
-                  />
-                ))
-              )}
-            </div>
-          </Card>
-        </div>
 
-        {/* <div className="flex-1" ref={evidenceRef}>
+                {/* Metadata badges */}
+                <div className="flex flex-wrap gap-3 mb-4">
+                  <span className="bg-slate-700/50 text-gray-200 text-xs px-3 py-1 rounded-full flex items-center gap-1">
+                    <User className="w-3 h-3" /> Sender:{" "}
+                    {dealData?.sender ?? "—"}
+                  </span>
+                  <span className="bg-slate-700/50 text-gray-200 text-xs px-3 py-1 rounded-full flex items-center gap-1">
+                    <User className="w-3 h-3" /> Recipient:{" "}
+                    {dealData?.recipient ?? "—"}
+                  </span>
+                  <span className="bg-emerald-500/20 text-emerald-400 text-xs px-3 py-1 rounded-full flex items-center gap-1 font-semibold">
+                    <DollarSign className="w-3 h-3" /> {dealData?.amount ?? 0}{" "}
+                    {dealData?.token ?? ""}
+                  </span>
+                </div>
+
+                {/* Optional description or notes */}
+                {dealData?.notes && (
+                  <div className="bg-slate-700/50 rounded-lg p-2 text-gray-300 text-sm italic">
+                    {dealData.notes}
+                  </div>
+                )}
+              </div>
+
+              {/* EvidencePicker Component */}
+              <div className="space-y-2">
+                <Label htmlFor="dealId" className="text-slate-300">
+                  Add Evidence
+                </Label>
+                <EvidencePicker
+                  selectedFile={selectedFile}
+                  setSelectedFile={setSelectedFile}
+                  description={description}
+                  setDescription={setDescription}
+                />
+              </div>
+
+              {/* Submit button */}
+              <Button
+                onClick={handleUpload}
+                className="mx-auto flex bg-emerald-500 text-white px-4 py-2 rounded hover:bg-emerald-600 transition w-full"
+                disabled={!selectedFile}
+              >
+                Submit Evidence
+              </Button>
+
+              {/* Learn More / Tips & Guidelines Section */}
+              <div className="mt-4 border-t border-slate-700 pt-4">
+                <button
+                  onClick={() => setShowRules(!showRules)}
+                  className="flex items-center justify-between w-full text-white/80 hover:text-white transition-colors"
+                >
+                  <div className="flex items-center gap-2">
+                    <Lightbulb className="w-4 h-4 text-yellow-400" />
+                    <span className="font-medium">Tips and Guidelines</span>
+                  </div>
+                  {showRules ? (
+                    <ChevronUp className="w-4 h-4" />
+                  ) : (
+                    <ChevronDown className="w-4 h-4" />
+                  )}
+                </button>
+
+                <div
+                  className={`overflow-hidden transition-all duration-300 ${
+                    showRules ? "max-h-96 mt-3" : "max-h-0"
+                  }`}
+                >
+                  <ul className="list-disc list-inside text-white/70 space-y-2 text-sm">
+                    <li>Allowed formats: PDF, JPG, PNG, MP4</li>
+                    <li>Max file size: 20MB</li>
+                    <li>Use clear file names</li>
+                    <li>Provide a short description for clarity</li>
+                  </ul>
+
+                  <Button
+                    target="_blank"
+                    className="bg-slate-800 my-5 w-full border border-slate-700"
+                  >
+                    Learn More
+                  </Button>
+                </div>
+              </div>
+            </Card>
+          </div>
+
+          {/* Right Panel - Evidence List */}
+
+          <div className="" ref={evidenceRef}>
+            <Card className="flex flex-col gap-4 p-4 bg-slate-900/95 border border-slate-800/95">
+              <h2 className="text-white text-xl font-semibold mb-4">
+                Uploaded Evidences
+              </h2>
+              <div className="grid gap-4">
+                {evidenceList.length === 0 ? (
+                  <div className="bg-slate-800 p-6 rounded-2xl shadow-md text-center text-gray-400">
+                    No evidence uploaded yet.
+                  </div>
+                ) : (
+                  evidenceList.map((e, index) => (
+                    <EvidenceCard
+                      key={e.id}
+                      e={e}
+                      index={index}
+                      setEvidenceList={setEvidenceList}
+                    />
+                  ))
+                )}
+              </div>
+            </Card>
+          </div>
+
+          {/* <div className="flex-1" ref={evidenceRef}>
           {evidenceList.length === 0 ? (
             <Card className="bg-slate-900/95 border border-emerald-500/30 shadow-lg hover:shadow-emerald-500/50 transition-transform transform hover:-translate-y-1 p-4">
               <CardContent className="text-center text-gray-400 p-6">
@@ -308,8 +312,9 @@ const EvidencePage = () => {
             </ul>
           )}
         </div> */}
+        </div>
       </div>
-    </div>
+    </>
   );
 };
 

@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Clock, FileText, Scale, BookOpen } from "lucide-react";
+import Header from "@/components/Header";
 
 // Dummy deal data
 const dummyDeals: Record<string, any> = {
@@ -58,7 +59,9 @@ export default function DisputePage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-950 to-black text-white p-6">
+    <>
+    <Header />
+       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-950 to-black text-white p-6">
       <div className="my-10 text-center">
         <h1 className="text-3xl font-bold text-white">Dispute</h1>
         <p className="text-white/70 mt-1 text-sm">
@@ -245,5 +248,7 @@ export default function DisputePage() {
         </div>
       </div>
     </div>
+    </>
+ 
   );
 }

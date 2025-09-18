@@ -5,7 +5,7 @@ import "@/app/globals.css";
 import Header from "@/components/Header";
 
 
-export const metadata: Metadata = { title: "Chat to Contract" };
+export const metadata: Metadata = { title: "Bloom" };
 
 export default function RootLayout({
   children,

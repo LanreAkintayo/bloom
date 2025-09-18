@@ -22,6 +22,7 @@ import {
   CheckCircleIcon,
 } from "lucide-react";
 import { motion } from "framer-motion";
+import Header from "@/components/Header";
 
 // --------------------------------------------------
 // Tiny utilities
@@ -304,40 +305,11 @@ export default function DashboardPage() {
   const portfolioUSD = useMemo(() => 8400, []);
 
   return (
-    <main className="relative min-h-screen bg-[#0a0c11] text-white">
+    <main className="relative min-h-screen bg-slate-900/95 text-white">
       <Ambient />
       <DashboardBackground />
       {/* Top utility bar (can be moved to layout if you have a global one) */}
-      <header className="sticky top-0 z-30 border-b border-white/10 bg-[#0a0c11]/70 backdrop-blur-xl">
-        <Container>
-          <div className="flex h-16 items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="relative h-8 w-8">
-                <span className="absolute inset-0 rounded-xl bg-gradient-to-tr from-emerald-400 via-emerald-300 to-cyan-300" />
-                <span className="absolute inset-[2px] rounded-lg bg-[#0a0c11]" />
-                <span className="absolute left-1 top-1 h-3 w-3 rounded-full bg-emerald-400 blur-[2px]" />
-              </div>
-              <span className="text-sm font-extrabold tracking-widest text-white/90">
-                BLOOM
-              </span>
-              <Badge>
-                <Sparkles className="h-3.5 w-3.5" /> Dashboard
-              </Badge>
-            </div>
-            <div className="flex items-center gap-2">
-              <button
-                aria-label="Notifications"
-                className="rounded-2xl border border-white/10 bg-white/5 p-2.5 text-white/80 hover:bg-white/10"
-              >
-                <Bell className="h-4.5 w-4.5" />
-              </button>
-              <button className="inline-flex items-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-3 py-2 text-xs font-semibold text-white/80 hover:bg-white/10">
-                <Settings className="h-4 w-4" /> Settings
-              </button>
-            </div>
-          </div>
-        </Container>
-      </header>
+     <Header/>
 
       <Container>
         <div className="py-8 space-y-8">
