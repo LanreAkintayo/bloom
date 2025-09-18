@@ -8,10 +8,16 @@ const web3AuthContextConfig: Web3AuthContextConfig = {
     clientId,
     web3AuthNetwork: WEB3AUTH_NETWORK.SAPPHIRE_DEVNET,
     uiConfig: {
-      logoLight: "red", // Provide a valid logo URL or path
-      logoDark: "white", // Provide a valid logo URL or path
+      logoLight: "/icon.svg", // Provide a valid logo URL or path
+      logoDark: "/icon.svg", // Provide a valid logo URL or path
+      mode: "dark",
+      appName: "Bloom",
+      useLogoLoader: true,
+
     },
+  
   },
+
 };
 
 export default web3AuthContextConfig;

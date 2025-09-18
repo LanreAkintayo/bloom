@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
+  <defs>
+    <!-- Border gradient for the rounded square -->
+    <linearGradient id="borderGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#5EEAD4"/>
+      <stop offset="100%" stop-color="#34D399"/>
+    </linearGradient>
+
+    <!-- Green → cyan radial for the circle under the square -->
+    <radialGradient id="circleGrad" cx="35%" cy="30%" r="60%">
+      <stop offset="0%" stop-color="#34D399" stop-opacity="1"/>
+      <stop offset="55%" stop-color="#42E9D6" stop-opacity="0.85"/>
+      <stop offset="100%" stop-color="#42E9D6" stop-opacity="0"/>
+    </radialGradient>
+
+    <!-- Heavy blur filter for the top glow -->
+    <filter id="glowBlur" x="-60%" y="-60%" width="220%" height="220%">
+      <feGaussianBlur stdDeviation="18" result="b"/>
+    </filter>
+  </defs>
+
+  <!-- LAYER 1: green-cyan circle UNDER the square -->
+  <circle cx="62" cy="50" r="28" fill="url(#circleGrad)" />
+
+  <!-- LAYER 2: slate rounded square (stroke only) -->
+  <rect x="14" y="14" width="172" height="172" rx="36"
+        fill="none"
+        stroke="url(#borderGrad)"
+        stroke-width="6"
+        stroke-linejoin="round" />
+
+  <!-- LAYER 3: bright green glow ON TOP of everything -->
+  <!-- <circle cx="62" cy="50" r="22" fill="#34D399" opacity="0.95" filter="url(#glowBlur)" /> -->
+</svg>

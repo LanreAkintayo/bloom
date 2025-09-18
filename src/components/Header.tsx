@@ -191,20 +191,14 @@ export default function Header({
         </nav>
 
         {/* Desktop Connect Wallet */}
+        <div className="hidden lg:flex items-center gap-2">
           <ConnectButton />
-        {/* <div className="hidden lg:flex items-center gap-2">
-          <button className="px-3 py-1.5 rounded-md font-semibold bg-emerald-500 hover:bg-emerald-400 text-black shadow transition-all">
-            Connect Wallet
-          </button>
-        </div> */}
+        </div>
 
         {/* Mobile Connect Wallet + Hamburger */}
         <div className="lg:hidden flex items-center gap-2">
           {/* Always visible Connect Wallet button */}
-          {/* <ConnectButton /> */}
-          <button className="px-3 py-1 rounded-md font-semibold bg-emerald-500 hover:bg-emerald-400 text-black shadow text-sm md:text-base transition-all whitespace-nowrap">
-            Connect Wallet
-          </button>
+          <ConnectButton />
 
           {/* Hamburger menu */}
           <button
@@ -292,7 +286,6 @@ export default function Header({
                               onClick={() => setMenuOpen(false)} // close mobile menu after selecting
                             >
                               <div className="flex space-x-2 items-center">
-                                
                                 <Goal className="w-4 h-4" />
                                 <p>{sub.label}</p>
                               </div>
