@@ -6,13 +6,20 @@ import { ReactNode, useState } from "react";
 import { config } from "@/lib/wagmi";
 import { Web3AuthProvider } from "@web3auth/modal/react";
 import web3AuthContextConfig from "@/app/web3AuthContext";
+import DefiProvider from "@/providers/DefiProvider";
+import DeFiLoader from "./loader";
 
 export default function Providers({ children }: { children: ReactNode }) {
   const [qc] = useState(() => new QueryClient());
   return (
     <Web3AuthProvider config={web3AuthContextConfig}>
       <WagmiProvider config={config}>
-        <QueryClientProvider client={qc}>{children}</QueryClientProvider>
+        <DefiProvider>
+          <QueryClientProvider client={qc}>
+            <DeFiLoader />
+            {children}
+          </QueryClientProvider>
+        </DefiProvider>
       </WagmiProvider>
     </Web3AuthProvider>
   );

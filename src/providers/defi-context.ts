@@ -1,6 +1,7 @@
 import { WalletToken } from "@/types";
 import React from "react";
 
+
 interface IDefiContext {
 //   userWalletTokens: WalletToken[];
   userWalletTokens: any[];
@@ -9,7 +10,7 @@ interface IDefiContext {
 
 const DefiContext = React.createContext<IDefiContext>({
   userWalletTokens: [],
-  loadUserWalletTokens: (signerAdress) => Promise.resolve([]), 
+  loadUserWalletTokens: (signerAdress) => Promise.resolve([]),
 });
 
 export default DefiContext;

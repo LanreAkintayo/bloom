@@ -10,6 +10,7 @@ import {
 } from "@/constants";
 import { config } from "@/lib/wagmi";
 import { readContracts } from "@wagmi/core";
+import { bloomLog } from "@/lib/utils";
 
 const defaultDefiState = {
   userWalletToken: null,
@@ -42,6 +43,8 @@ const DefiProvider = (props: any) => {
   const loadUserWalletTokensHandler = async (
     signerAddress: string
   ): Promise<any[]> => {
+
+    bloomLog("Inside loadUserWalletTokensHandler");
     try {
       const tokens = supportedTokens.flatMap((_tokenAddress) => {
         const tokenAddress = _tokenAddress as Address;
@@ -77,7 +80,7 @@ const DefiProvider = (props: any) => {
 
       const erc20Results = await readContracts(config, { contracts: tokens });
 
-      console.log("Result: ", erc20Results)
+      bloomLog("Result: ", erc20Results)
 
       //   const walletTokens = [];
 

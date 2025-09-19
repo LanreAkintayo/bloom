@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,6 +19,9 @@ import WalletCard from "@/components/escrow/WalletCard";
 import HowItWorks from "@/components/escrow/HowItWorks";
 import ConfirmationModal from "@/components/escrow/ConfirmationModal";
 import Header from "@/components/Header";
+import useDefi from "@/hooks/useDefi";
+import { useAccount } from "wagmi";
+import { bloomLog } from "@/lib/utils";
 
 export default function EscrowPage() {
   const [loadingDeals, setLoadingDeals] = useState(false);
@@ -31,6 +34,7 @@ export default function EscrowPage() {
     token: "",
     description: "",
   });
+
 
   const handleCreateDealClick = () => {
     // store current form in pendingDeal and open modal
@@ -228,7 +232,8 @@ export default function EscrowPage() {
                         </span> */}
                       </option>
                       <option value="ETH">
-                        {" "}ETH
+                        {" "}
+                        ETH
                         {/* <span className="flex items-center gap-2">
                           <span className="w-4 h-4 rounded-full bg-purple-400" />{" "}
                           ETH
