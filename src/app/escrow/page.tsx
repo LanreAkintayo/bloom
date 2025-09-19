@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { Fragment, useEffect, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,6 +13,8 @@ import {
   Wallet,
   Coins,
   FileText,
+  Check,
+  ChevronDown,
 } from "lucide-react";
 import DealCard from "@/components/escrow/DealCard"; // Import your new DealCard
 import WalletCard from "@/components/escrow/WalletCard";
@@ -22,10 +24,31 @@ import Header from "@/components/Header";
 import useDefi from "@/hooks/useDefi";
 import { useAccount } from "wagmi";
 import { bloomLog } from "@/lib/utils";
+import { isAddress } from "viem";
+import { ChangeEvent } from "react";
+import { Listbox, Transition } from "@headlessui/react";
+
+function formatWithCommas(value: string) {
+  if (!value) return "";
+  const parts = value.split(".");
+  parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+  return parts.join(".");
+}
 
 export default function EscrowPage() {
   const [loadingDeals, setLoadingDeals] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
+  const [errors, setErrors] = useState<{
+    recipient?: string;
+    amount?: string;
+    description?: string;
+  }>({});
+
+  const tokens = [
+    { id: 1, name: "USDC" },
+    { id: 2, name: "DAI" },
+    { id: 3, name: "ETH" },
+  ];
 
   // This state stores the deal temporarily for confirmation
   const [pendingDeal, setPendingDeal] = useState({
@@ -34,7 +57,6 @@ export default function EscrowPage() {
     token: "",
     description: "",
   });
-
 
   const handleCreateDealClick = () => {
     // store current form in pendingDeal and open modal
@@ -90,9 +112,41 @@ export default function EscrowPage() {
   });
 
   const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+    e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
   ) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+
+    let newErrors = { ...errors };
+    let newForm = { ...form, [name]: value };
+
+    if (name === "recipient") {
+      if (value && !isAddress(value.trim())) {
+        newErrors.recipient = "Invalid wallet address";
+      } else {
+        delete newErrors.recipient;
+      }
+    }
+
+    if (name === "amount") {
+      // Remove commas and invalid chars
+      const raw = value.replace(/,/g, "").replace(/[^0-9.]/g, "");
+      // Prevent more than one decimal point
+      const validRaw = raw.split(".").length > 2 ? raw.slice(0, -1) : raw;
+
+      // Format display with commas
+      const formatted = formatWithCommas(validRaw);
+
+      newForm.amount = formatted;
+
+      if (!validRaw || isNaN(Number(validRaw)) || Number(validRaw) <= 0) {
+        newErrors.amount = "Enter a valid amount";
+      } else {
+        delete newErrors.amount;
+      }
+    }
+
+    setErrors(newErrors);
+    setForm(newForm);
   };
 
   const createDeal = () => {
@@ -191,7 +245,13 @@ export default function EscrowPage() {
                     onChange={handleChange}
                     className="bg-slate-800 border border-slate-700 placeholder:text-white/50 text-white"
                   />
+                  {errors.recipient && (
+                    <p className="text-red-400 text-xs mt-1">
+                      {errors.recipient}
+                    </p>
+                  )}
                 </div>
+
                 <div className="flex space-x-2">
                   <div className="flex-1">
                     <label className="block text-sm font-medium text-white mb-1">
@@ -204,63 +264,110 @@ export default function EscrowPage() {
                       onChange={handleChange}
                       className="bg-slate-800 border border-slate-700 placeholder:text-white/50 text-white"
                     />
+                    {errors.amount && (
+                      <p className="text-red-400 text-xs mt-1">
+                        {errors.amount}
+                      </p>
+                    )}
                   </div>
                   <div className="w-32">
                     <label className="block text-sm font-medium text-white mb-1">
                       Token
                     </label>
-                    <select
-                      name="token"
+                    <Listbox
                       value={form.token}
-                      onChange={handleChange}
-                      className="bg-slate-800 border border-slate-700 text-white w-full p-2 rounded"
+                      onChange={(value) => setForm({ ...form, token: value })}
                     >
-                      <option value="">Select</option>
-                      <option value="USDC">
-                        {" "}
-                        USDC
-                        {/* <span className="flex items-center gap-2">
-                          <span className="w-4 h-4 rounded-full bg-cyan-400" />{" "}
-                          USDC
-                        </span> */}
-                      </option>
-                      <option value="DAI">
-                        DAI
-                        {/* <span className="flex items-center gap-2">
-                          <span className="w-4 h-4 rounded-full bg-emerald-400" />{" "}
-                          DAI
-                        </span> */}
-                      </option>
-                      <option value="ETH">
-                        {" "}
-                        ETH
-                        {/* <span className="flex items-center gap-2">
-                          <span className="w-4 h-4 rounded-full bg-purple-400" />{" "}
-                          ETH
-                        </span> */}
-                      </option>
-                    </select>
+                      <div className="relative">
+                        <Listbox.Button className="relative w-full cursor-pointer rounded bg-slate-800 border border-slate-700 py-2 pl-3 pr-10 text-left text-white focus:outline-none">
+                          <span className="flex items-center gap-2">
+                            {form.token ? (
+                              <>
+                                {/* <span
+                    className={`w-3 h-3 rounded-full ${
+                      tokens.find((t) => t.name === form.token)?.color
+                    }`}
+                  /> */}
+                                {form.token}
+                              </>
+                            ) : (
+                              "Select"
+                            )}
+                          </span>
+                          <span className="absolute inset-y-0 right-0 flex items-center pr-2">
+                            <ChevronDown className="h-4 w-4 text-gray-400" />
+                          </span>
+                        </Listbox.Button>
+                        <Transition
+                          as={Fragment}
+                          leave="transition ease-in duration-100"
+                          leaveFrom="opacity-100"
+                          leaveTo="opacity-0"
+                        >
+                          <Listbox.Options className="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded bg-slate-800 border border-slate-700 text-white shadow-lg">
+                            {tokens.map((token) => (
+                              <Listbox.Option
+                                key={token.id}
+                                value={token.name}
+                                className={({ active }) =>
+                                  `relative cursor-pointer select-none py-2 pl-8 pr-4 ${
+                                    active
+                                      ? "bg-slate-700 text-white"
+                                      : "text-gray-300"
+                                  }`
+                                }
+                              >
+                                {({ selected }) => (
+                                  <>
+                                    <span className="flex items-center gap-2">
+                                      <span
+                                        className={`w-3 h-3 rounded-full`}
+                                      />
+                                      {token.name}
+                                    </span>
+                                    {selected && (
+                                      <span className="absolute inset-y-0 left-0 flex items-center pl-2 text-emerald-400">
+                                        <Check className="h-4 w-4" />
+                                      </span>
+                                    )}
+                                  </>
+                                )}
+                              </Listbox.Option>
+                            ))}
+                          </Listbox.Options>
+                        </Transition>
+                      </div>
+                    </Listbox>
                   </div>
                 </div>
-                <div>
+
+                <div className="relative">
                   <label className="block text-sm font-medium text-white mb-1">
                     Deal Description
                   </label>
                   <Textarea
                     name="description"
-                    placeholder="Briefly describe the deal so both parties understand the terms."
+                    placeholder="Leave a description"
                     value={form.description}
                     onChange={handleChange}
-                    className="bg-slate-800 border border-slate-700 placeholder:text-white/50 text-white"
+                    maxLength={100}
+                    className="bg-slate-800 border border-slate-700 placeholder:text-white/50 text-white pr-12"
                   />
+                  {/* Character counter */}
+                  <span className="absolute bottom-2 right-2 text-xs text-white/50">
+                    {form.description.length}/100
+                  </span>
                 </div>
 
+                {/* Escrow Fee and Total Fee */}
                 <div className="space-y-2">
                   <div className="text-sm text-white/70">
                     Escrow Fee (2%):{" "}
                     <span className="text-emerald-400">
                       {form.amount
-                        ? (Number(form.amount) * 0.02).toFixed(2)
+                        ? (
+                            Number(form.amount.replace(/,/g, "")) * 0.02
+                          ).toFixed(2)
                         : "0"}{" "}
                       {form.token || ""}
                     </span>
@@ -269,7 +376,10 @@ export default function EscrowPage() {
                     Total Fee:{" "}
                     <span className="text-emerald-400">
                       {form.amount
-                        ? Number(form.amount) * 0.02 + Number(form.amount)
+                        ? (
+                            Number(form.amount.replace(/,/g, "")) * 0.02 +
+                            Number(form.amount.replace(/,/g, ""))
+                          ).toFixed(2)
                         : "0"}{" "}
                       {form.token || ""}
                     </span>

@@ -1,8 +1,11 @@
 import { Abi } from "viem";
 import _erc20Abi from "./erc20Abi.json";
+import _bloomEscrowAbi from "./bloomEscrowAbi.json";
 
 const erc20Abi = _erc20Abi as Abi;
-export { erc20Abi };
+const bloomEscrowAbi = _bloomEscrowAbi as Abi;
+
+export { erc20Abi, bloomEscrowAbi };
 
 export const IMAGES: Record<string, string> = {
   DAI: "/dai.svg",
@@ -24,6 +27,7 @@ export interface ChainConfig {
   priceFeeds: Record<string, string>;
   wrapperAddress: string;
   wrappedNativeTokenAddress: string;
+  bloomEscrowAddress: string;
 }
 
 export const CHAINS: Record<string, ChainConfig> = {
@@ -45,6 +49,7 @@ export const CHAINS: Record<string, ChainConfig> = {
     },
     wrapperAddress: "0xab18414CD93297B0d12ac29E63Ca20f515b3DB46",
     wrappedNativeTokenAddress: "0xC558DBdd856501FCd9aaF1E62eae57A9F0629a3c",
+    bloomEscrowAddress: "0x4138941D4b55b864ceC671E6737636107587c695"
   },
 };
 

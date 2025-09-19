@@ -1,8 +1,9 @@
 import React, { useReducer } from "react";
 import { Address } from "viem";
-import { WalletToken } from "@/types";
+import { Token, WalletToken } from "@/types";
 import DefiContext from "./defi-context";
 import {
+  bloomEscrowAbi,
   erc20Abi,
   IMAGES,
   SUPPORTED_CHAIN_ID,
@@ -10,25 +11,34 @@ import {
   TOKEN_META,
 } from "@/constants";
 import { config } from "@/lib/wagmi";
-import { readContracts } from "@wagmi/core";
+import { readContract, readContracts } from "@wagmi/core";
 import { bloomLog } from "@/lib/utils";
 import { getChainConfig } from "../constants";
 
 const defaultDefiState = {
   userWalletTokens: null,
+  allSupportedTokens: null,
 };
 
 const defiReducer = (
   state: any,
   action: {
     type: string;
-    userWalletTokens: WalletToken[];
+    userWalletTokens?: WalletToken[];
+    // allSupportedTokens: Token[];
+    allSupportedTokens?: any;
   }
 ) => {
   if (action.type === "USER_WALLET_TOKENS") {
     return {
       ...state,
       userWalletTokens: action.userWalletTokens,
+    };
+  }
+  if (action.type === "ALL_SUPPORTED_TOKENS") {
+    return {
+      ...state,
+      allSupportedTokens: action.allSupportedTokens,
     };
   }
 
@@ -92,10 +102,55 @@ const DefiProvider = (props: any) => {
     }
   };
 
+  const loadAllSupportedTokensHandler = async (): Promise<any[]> => {
+    // bloomLog("Inside loadUserWalletTokensHandler");
+    try {
+      const chainId = SUPPORTED_CHAIN_ID as 1 | 11155111;
+      const supportedTokens = currentChain.supportedTokens;
+      const bloomEscrowAddress = currentChain.bloomEscrowAddress as Address;
+
+      const allSupportedTokensResults = (await readContract(config, {
+        abi: bloomEscrowAbi,
+        address: bloomEscrowAddress,
+        functionName: "getAllSupportedTokens",
+      })) as any;
+
+      // Execute all reads
+      bloomLog("Bloom Escrow Results:", allSupportedTokensResults);
+
+      // // Rebuild into WalletToken[]
+      // const allSupportedTokens: Token[] = allSupportedTokensResults.map((_symbol, i) => {
+      //   const tokenMeta = TOKEN_META[chainId][_symbol];
+      //   return {
+      //     ...tokenMeta,
+      //     balance: BigInt(erc20Results[i].result as string),
+      //     image: IMAGES[_symbol],
+      //     address: currentChain.tokenAddresses[_symbol],
+      //   };
+      // });
+
+      // bloomLog("Wallet Tokens: ", walletTokens);
+
+      dispatchDefiAction({
+        type: "ALL_SUPPORTED_TOKENS",
+        allSupportedTokens: allSupportedTokensResults,
+      });
+      return allSupportedTokensResults;
+    } catch (error) {
+      console.error("Failed to load user wallet tokens:", error);
+      dispatchDefiAction({
+        type: "ALL_SUPPORTED_TOKENS",
+        allSupportedTokens: [],
+      });
+      return [];
+    }
+  };
 
   const defiContext = {
     userWalletTokens: defiState.userWalletTokens,
+    allSupportedTokens: defiState.allSupportedTokens,
     loadUserWalletTokens: loadUserWalletTokensHandler,
+    loadAllSupportedTokens: loadAllSupportedTokensHandler,
   };
 
   return (
