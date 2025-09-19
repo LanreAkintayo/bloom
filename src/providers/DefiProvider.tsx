@@ -4,7 +4,7 @@ import { WalletToken } from "@/types";
 import DefiContext from "./defi-context";
 import {
   erc20Abi,
-  sepoliaConfig,
+  IMAGES,
   SUPPORTED_CHAIN_ID,
   supportedTokens,
 } from "@/constants";
@@ -43,12 +43,11 @@ const DefiProvider = (props: any) => {
   const loadUserWalletTokensHandler = async (
     signerAddress: string
   ): Promise<any[]> => {
-
     bloomLog("Inside loadUserWalletTokensHandler");
     try {
       const tokens = supportedTokens.flatMap((_tokenAddress) => {
         const tokenAddress = _tokenAddress as Address;
-        const chainId = SUPPORTED_CHAIN_ID as typeof SUPPORTED_CHAIN_ID;
+        const chainId = SUPPORTED_CHAIN_ID as 1 | 11155111;
         return [
           {
             chainId,
@@ -78,11 +77,23 @@ const DefiProvider = (props: any) => {
         ];
       });
 
+      // Execute all reads
       const erc20Results = await readContracts(config, { contracts: tokens });
+      bloomLog("Raw ERC20 Results:", erc20Results);
 
-      bloomLog("Result: ", erc20Results)
-
-      //   const walletTokens = [];
+      // Rebuild into WalletToken[]
+      const walletTokens: WalletToken[] = supportedTokens.map((_token, i) => {
+        const baseIndex = i * 4; // 4 calls per token
+        const symbol = erc20Results[baseIndex + 1].result as string;
+        return {
+          name: erc20Results[baseIndex].result as string,
+          symbol,
+          decimal: Number(erc20Results[baseIndex + 2].result),
+          balance: BigInt(erc20Results[baseIndex + 3].result as string),
+          image: IMAGES[symbol],
+          address: _token.address,
+        };
+      });
 
       dispatchDefiAction({
         type: "USER_WALLET_TOKENS",
