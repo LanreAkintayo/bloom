@@ -77,6 +77,8 @@ const DefiProvider = (props: any) => {
 
       const erc20Results = await readContracts(config, { contracts: tokens });
 
+      console.log("Result: ", erc20Results)
+
       //   const walletTokens = [];
 
       dispatchDefiAction({
