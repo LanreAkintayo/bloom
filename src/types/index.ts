@@ -6,7 +6,7 @@ export type Token = {
 };
 
 export type WalletToken = Token & {
-  //   image: string;
-  //   chainId: number;
-  //   address: string;
+    image: string;
+    // chainId: number;
+    address: string;
 };

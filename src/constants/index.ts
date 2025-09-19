@@ -5,18 +5,21 @@ const erc20Abi = _erc20Abi as Abi;
 export { erc20Abi };
 
 export const IMAGES: Record<string, string> = {
-  DAI: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSllrF9PNBf88kIx9USP5g73XDYjkMyRBaDig&usqp=CAU",
-  WETH: "https://app.aave.com/icons/tokens/weth.svg",
-  LINK: "https://app.aave.com/icons/tokens/link.svg",
+  DAI: "/dai.svg",
+  WETH: "/weth.svg",
+  LINK: "/link.svg",
   FAU: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT5qUPi3Ar2dQZ2m9K5opr_h9QaQz4_G5HVYA&usqp=CAU",
   LAR: "https://app.aave.com/icons/tokens/wbtc.svg",
   WMATIC: "https://app.aave.com/icons/tokens/wmatic.svg",
   MATIC: "https://app.aave.com/icons/tokens/matic.svg",
+  BLM: "/bloom.svg",
+  USDC: "/usdc.svg"
 };
 
 export interface ChainConfig {
   chainId: number;
   name: string;
+  supportedTokens: string[];
   tokenAddresses: Record<string, string>;
   priceFeeds: Record<string, string>;
   wrapperAddress: string;
@@ -27,12 +30,13 @@ export const CHAINS: Record<string, ChainConfig> = {
   sepolia: {
     chainId: 11155111,
     name: "Sepolia",
+    supportedTokens: ["WETH", "USDC", "DAI", "BLM"],
     tokenAddresses: {
-      weth: "0xC558DBdd856501FCd9aaF1E62eae57A9F0629a3c",
-      usdc: "0x94a9D9AC8a22534E3FaCa9F4e7F2E2cf85d5E4C8",
-      dai: "0xFF34B3d4Aee8ddCd6F9AFFFB6Fe49bD371b8a357",
-      link: "0x779877A7B0D9E8603169DdbD7836e478b4624789",
-      blm: "0x4138941D4b55b864ceC671E6737636107587c695"
+      WETH: "0xC558DBdd856501FCd9aaF1E62eae57A9F0629a3c",
+      USDC: "0x94a9D9AC8a22534E3FaCa9F4e7F2E2cf85d5E4C8",
+      DAI: "0xFF34B3d4Aee8ddCd6F9AFFFB6Fe49bD371b8a357",
+      LINK: "0x779877A7B0D9E8603169DdbD7836e478b4624789",
+      BLM: "0x4138941D4b55b864ceC671E6737636107587c695"
     },
     priceFeeds: {
       ethUsd: "0x694AA1769357215DE4FAC081bf1f309aDC325306",
@@ -43,6 +47,24 @@ export const CHAINS: Record<string, ChainConfig> = {
     wrappedNativeTokenAddress: "0xC558DBdd856501FCd9aaF1E62eae57A9F0629a3c",
   },
 };
+
+
+
+export const TOKEN_META: Record<number, Record<string, { name: string; symbol: string; decimal: number }>> = {
+  1: { // Ethereum mainnet
+    DAI: { name: "Dai Stablecoin", symbol: "DAI", decimal: 18 },
+    USDC: { name: "USD Coin", symbol: "USDC", decimal: 6 },
+    WETH: { name: "Wrapped Ether", symbol: "WETH", decimal: 18 },
+    BLM: { name: "Bloom", symbol: "BLM", decimal: 18 },
+  },
+  11155111: { // Sepolia
+    DAI: { name: "DAI", symbol: "DAI", decimal: 18 },
+    USDC: { name: "USDC", symbol: "USDC", decimal: 6 },
+    WETH: { name: "WETH", symbol: "WETH", decimal: 18 },
+    BLM: { name: "Bloom", symbol: "BLM", decimal: 18 },
+  },
+};
+
 
 // Pick the chain dynamically
 export const getChainConfig = (chainName: string) => {

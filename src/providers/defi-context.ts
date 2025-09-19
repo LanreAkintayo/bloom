@@ -3,9 +3,8 @@ import React from "react";
 
 
 interface IDefiContext {
-//   userWalletTokens: WalletToken[];
-  userWalletTokens: any[];
-  loadUserWalletTokens: (signerAddress: string) => Promise<any[]>;
+  userWalletTokens: WalletToken[];
+  loadUserWalletTokens: (signerAddress: string) => Promise<WalletToken[]>;
 }
 
 const DefiContext = React.createContext<IDefiContext>({

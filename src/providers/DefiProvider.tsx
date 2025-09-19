@@ -7,21 +7,22 @@ import {
   IMAGES,
   SUPPORTED_CHAIN_ID,
   supportedTokens,
+  TOKEN_META,
 } from "@/constants";
 import { config } from "@/lib/wagmi";
 import { readContracts } from "@wagmi/core";
 import { bloomLog } from "@/lib/utils";
+import { getChainConfig } from "../constants";
 
 const defaultDefiState = {
-  userWalletToken: null,
+  userWalletTokens: null,
 };
 
 const defiReducer = (
   state: any,
   action: {
     type: string;
-    // userWalletTokens: WalletToken[];
-    userWalletTokens: any[];
+    userWalletTokens: WalletToken[];
   }
 ) => {
   if (action.type === "USER_WALLET_TOKENS") {
@@ -39,34 +40,19 @@ const DefiProvider = (props: any) => {
     defiReducer,
     defaultDefiState
   );
+  const currentChain = getChainConfig("sepolia");
 
   const loadUserWalletTokensHandler = async (
     signerAddress: string
-  ): Promise<any[]> => {
-    bloomLog("Inside loadUserWalletTokensHandler");
+  ): Promise<WalletToken[]> => {
+    // bloomLog("Inside loadUserWalletTokensHandler");
     try {
-      const tokens = supportedTokens.flatMap((_tokenAddress) => {
-        const tokenAddress = _tokenAddress as Address;
-        const chainId = SUPPORTED_CHAIN_ID as 1 | 11155111;
+      const chainId = SUPPORTED_CHAIN_ID as 1 | 11155111;
+      const supportedTokens = currentChain.supportedTokens;
+
+      const tokens = supportedTokens.flatMap((_token) => {
+        const tokenAddress = currentChain.tokenAddresses[_token] as Address;
         return [
-          {
-            chainId,
-            address: tokenAddress,
-            abi: erc20Abi,
-            functionName: "name",
-          },
-          {
-            chainId,
-            address: tokenAddress,
-            abi: erc20Abi,
-            functionName: "symbol",
-          },
-          {
-            chainId,
-            address: tokenAddress,
-            abi: erc20Abi,
-            functionName: "decimals",
-          },
           {
             chainId,
             address: tokenAddress,
@@ -82,30 +68,30 @@ const DefiProvider = (props: any) => {
       bloomLog("Raw ERC20 Results:", erc20Results);
 
       // Rebuild into WalletToken[]
-      const walletTokens: WalletToken[] = supportedTokens.map((_token, i) => {
-        const baseIndex = i * 4; // 4 calls per token
-        const symbol = erc20Results[baseIndex + 1].result as string;
+      const walletTokens: WalletToken[] = supportedTokens.map((_symbol, i) => {
+        const tokenMeta = TOKEN_META[chainId][_symbol];
         return {
-          name: erc20Results[baseIndex].result as string,
-          symbol,
-          decimal: Number(erc20Results[baseIndex + 2].result),
-          balance: BigInt(erc20Results[baseIndex + 3].result as string),
-          image: IMAGES[symbol],
-          address: _token.address,
+          ...tokenMeta,
+          balance: BigInt(erc20Results[i].result as string),
+          image: IMAGES[_symbol],
+          address: currentChain.tokenAddresses[_symbol],
         };
       });
 
+      bloomLog("Wallet Tokens: ", walletTokens);
+
       dispatchDefiAction({
         type: "USER_WALLET_TOKENS",
-        userWalletTokens: erc20Results,
+        userWalletTokens: walletTokens,
       });
-      return erc20Results;
+      return walletTokens;
     } catch (error) {
       console.error("Failed to load user wallet tokens:", error);
       dispatchDefiAction({ type: "USER_WALLET_TOKENS", userWalletTokens: [] });
       return [];
     }
   };
+
 
   const defiContext = {
     userWalletTokens: defiState.userWalletTokens,

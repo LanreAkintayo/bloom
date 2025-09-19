@@ -6,3 +6,16 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 export const bloomLog = (...args: any[]) => console.log("[Bloom] ", ...args);
+
+export const formatAddress = (address: string) => {
+  return `${address.slice(0, 6)}...${address.slice(-4)}`;
+};
+
+export const inCurrencyFormat = (amount: string) => {
+  const pretty = new Intl.NumberFormat("en-US", {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 2,
+  }).format(Number(amount));
+
+  return pretty;
+};

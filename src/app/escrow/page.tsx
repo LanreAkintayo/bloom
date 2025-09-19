@@ -141,7 +141,7 @@ export default function EscrowPage() {
           <WalletCard />
 
           <Card className="bg-slate-900/95 border border-cyan-500/30 shadow-lg">
-            <CardContent className="p-6 space-y-3">
+            <CardContent className="space-y-3">
               <h3 className="text-lg font-bold text-cyan-400">Quick Links</h3>
               <Button className="w-full bg-cyan-600/20 hover:bg-cyan-600/30 text-white/70 flex items-center gap-2">
                 <Coins className="w-4 h-4" /> View All Deals
@@ -159,7 +159,7 @@ export default function EscrowPage() {
         {/* Right Panel */}
         <div className="lg:col-span-2 space-y-6">
           <Card className="bg-slate-900/95 border border-emerald-500/30 shadow-lg w-full max-w-4xl">
-            <CardContent className="p-6 space-y-6">
+            <CardContent className="space-y-6">
               {/* Header + How It Works Button */}
               <div className="flex justify-between items-center">
                 <h2 className="text-2xl font-bold text-emerald-400">

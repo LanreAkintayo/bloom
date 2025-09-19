@@ -1,0 +1,62 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200" role="img" aria-label="Bloom Coin logo">
+  <!-- Definitions: gradients + glow filter -->
+  <defs>
+    <!-- Emerald -> Cyan gradient for the B -->
+    <radialGradient id="gradB" cx="50%" cy="40%" r="70%">
+      <stop offset="0%" stop-color="#00A86B"/> <!-- emerald -->
+      <stop offset="100%" stop-color="#00D1FF"/> <!-- cyan -->
+    </radialGradient>
+
+    <!-- Halo radial gradient (subtle outer glow) -->
+    <radialGradient id="halo" cx="50%" cy="50%" r="60%">
+      <stop offset="0%" stop-color="#00D1FF" stop-opacity="0.45"/>
+      <stop offset="40%" stop-color="#00A86B" stop-opacity="0.25"/>
+      <stop offset="100%" stop-color="#000000" stop-opacity="0"/>
+    </radialGradient>
+
+    <!-- Soft glow filter used for blurred halo around shapes -->
+    <!-- <filter id="softGlow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="6" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter> -->
+
+    <!-- Thin concentric rings for the "ripple of prosperity" -->
+    <g id="rings">
+      <circle cx="100" cy="100" r="64" fill="none" stroke="#1b6d32ff" stroke-opacity="0.9" stroke-width="1.8"/>
+      <circle cx="100" cy="100" r="72" fill="none" stroke="#00A86B" stroke-opacity="0.06" stroke-width="1.2"/>
+      <circle cx="100" cy="100" r="82" fill="none" stroke="#0b610bff" stroke-opacity="0.9" stroke-width="1"/>
+    </g>
+  </defs>
+
+  <!-- Halo / glow behind the B (keeps background transparent) -->
+  <circle cx="100" cy="92" r="60" fill="url(#halo)" opacity="1" filter="url(#softGlow)"/>
+
+  <!-- Concentric rings (very subtle) -->
+  <use href="#rings" />
+
+  <!-- Coin outline (thin, subtle) -->
+  <!-- <circle cx="100" cy="100" r="90" fill="none" stroke="#00A86B" stroke-opacity="0.06" stroke-width="2"/> -->
+
+  <!-- The main letter B -->
+  <g filter="url(#softGlow)">
+    <!-- Slight offset duplicate for extra glow depth -->
+    <text x="100" y="110" text-anchor="middle" dominant-baseline="middle"
+          font-family="Inter, Arial, Helvetica, sans-serif"
+          font-weight="800" font-size="110" fill="url(#gradB)"
+          style="letter-spacing:-4px;">
+      B
+    </text>
+  </g>
+
+  <!-- A thin highlight stroke on the B for crispness -->
+  <text x="100" y="110" text-anchor="middle" dominant-baseline="middle"
+        font-family="Inter, Arial, Helvetica, sans-serif"
+        font-weight="800" font-size="110" fill="none" stroke="rgba(255,255,255,0.14)" stroke-width="1"
+        style="letter-spacing:-4px;">
+    B
+  </text>
+
+</svg>
