@@ -10,6 +10,7 @@ export { erc20Abi, bloomEscrowAbi };
 export const IMAGES: Record<string, string> = {
   DAI: "/dai.svg",
   WETH: "/weth.svg",
+  ETH: "/eth.svg",
   LINK: "/link.svg",
   FAU: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT5qUPi3Ar2dQZ2m9K5opr_h9QaQz4_G5HVYA&usqp=CAU",
   LAR: "https://app.aave.com/icons/tokens/wbtc.svg",

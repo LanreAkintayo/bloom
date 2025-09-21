@@ -27,6 +27,8 @@ import { bloomLog } from "@/lib/utils";
 import { isAddress } from "viem";
 import { ChangeEvent } from "react";
 import { Listbox, Transition } from "@headlessui/react";
+import Image from "next/image";
+import { IMAGES } from "@/constants";
 
 function formatWithCommas(value: string) {
   if (!value) return "";
@@ -45,9 +47,9 @@ export default function EscrowPage() {
   }>({});
 
   const tokens = [
-    { id: 1, name: "USDC" },
-    { id: 2, name: "DAI" },
-    { id: 3, name: "ETH" },
+    { id: 1, name: "USDC", image: "/usdc.svg" },
+    { id: 2, name: "DAI", image: "/dai.svg" },
+    { id: 3, name: "ETH", image: "eth.svg" },
   ];
 
   // This state stores the deal temporarily for confirmation
@@ -111,6 +113,7 @@ export default function EscrowPage() {
     description: "",
   });
 
+
   const handleChange = (
     e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
   ) => {
@@ -151,6 +154,11 @@ export default function EscrowPage() {
 
   const createDeal = () => {
     setLoadingDeals(true);
+
+    bloomLog("Recipient: ", form.recipient);
+    bloomLog("Amount: ", form.amount);
+    bloomLog("Token: ", form.token);
+
     setTimeout(() => {
       setDeals([
         ...deals,
@@ -283,11 +291,12 @@ export default function EscrowPage() {
                           <span className="flex items-center gap-2">
                             {form.token ? (
                               <>
-                                {/* <span
-                    className={`w-3 h-3 rounded-full ${
-                      tokens.find((t) => t.name === form.token)?.color
-                    }`}
-                  /> */}
+                                <Image
+                                  src={IMAGES[form.token]}
+                                  alt={form.token}
+                                  width={20}
+                                  height={20}
+                                />
                                 {form.token}
                               </>
                             ) : (
@@ -319,12 +328,15 @@ export default function EscrowPage() {
                               >
                                 {({ selected }) => (
                                   <>
-                                    <span className="flex items-center gap-2">
-                                      <span
-                                        className={`w-3 h-3 rounded-full`}
+                                    <div className="flex items-center gap-2">
+                                      <Image
+                                        src={token.image}
+                                        alt={token.name}
+                                        width={20}
+                                        height={20}
                                       />
                                       {token.name}
-                                    </span>
+                                    </div>
                                     {selected && (
                                       <span className="absolute inset-y-0 left-0 flex items-center pl-2 text-emerald-400">
                                         <Check className="h-4 w-4" />
