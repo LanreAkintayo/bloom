@@ -178,11 +178,11 @@ export default function EscrowPage() {
   };
 
   // Handlers for DealCard actions
-  // const handleCancelDeal = (id: number) => {
-  //   setDeals(
-  //     deals.map((d) => (d.id === id ? { ...d, status: "Disputed" } : d))
-  //   );
-  // };
+  const handleCancelDeal = (id: number) => {
+    setDeals(
+      deals.map((d) => (d.id === id ? { ...d, status: "Disputed" } : d))
+    );
+  };
 
   const handleReleaseDeal = (id: number) => {
     setDeals(
