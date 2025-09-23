@@ -190,9 +190,9 @@ export default function EscrowPage() {
     );
   };
 
-  const handleClaimDeal = (id: number) => {
-    alert(`Claim action for deal ID: ${id}`);
-  };
+  // const handleClaimDeal = (id: number) => {
+  //   alert(`Claim action for deal ID: ${id}`);
+  // };
 
   return (
     <>
