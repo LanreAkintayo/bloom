@@ -196,7 +196,7 @@ export default function EscrowPage() {
 
   return (
     <>
-      {/* <Header /> */}
+      <Header />
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-950 to-black text-white p-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left Panel */}
         <div className="lg:col-span-1 space-y-6">
