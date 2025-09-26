@@ -1,6 +1,6 @@
 "use client";
 
-import React, { Fragment, useEffect, useState } from "react";
+import React, { Fragment, useTransition, useRef, useCallback, useEffect, useState, useMemo } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -44,6 +44,7 @@ import {
 } from "@wagmi/core";
 import StatusModal from "@/components/escrow/StatusModal";
 import { parseUnits } from "viem";
+import { MAX_PERCENT } from "@/constants";
 
 function formatWithCommas(value: string) {
   if (!value) return "";
@@ -55,56 +56,254 @@ function formatWithCommas(value: string) {
 type TypeChainId = 1 | 11155111;
 
 export default function EscrowPage() {
-  const { allSupportedTokens, loadAllSupportedTokens } = useDefi();
-  const { address: signerAddress } = useAccount();
 
-  const currentChain = getChainConfig("sepolia");
-  const bloomEscrowAddress = currentChain.bloomEscrowAddress as Address;
+  // --- Hooks & constants ---
+const { allSupportedTokens, loadAllSupportedTokens } = useDefi();
+const { address: signerAddress } = useAccount();
+const escrowFeePercentage = 100; // 1% fee
 
-  useEffect(() => {
-    const setUpTokens = async () => {
-      await loadAllSupportedTokens();
-    };
-    setUpTokens();
+const currentChain = getChainConfig("sepolia");
+const bloomEscrowAddress = currentChain.bloomEscrowAddress as Address;
+
+// --- States ---
+const [escrowFee, setEscrowFee] = useState(0);
+const [totalFee, setTotalFee] = useState(0);
+
+const [form, setForm] = useState({
+  recipient: "",
+  amount: "",
+  token: "",
+  description: "",
+});
+
+const [loadingDeals, setLoadingDeals] = useState(false);
+const [modalOpen, setModalOpen] = useState(false);
+const [statusModalOpen, setStatusModalOpen] = useState(false);
+const [statusType, setStatusType] = useState<"success" | "failure">("success");
+const [buttonMessage, setButtonMessage] = useState("Create Deal");
+
+const [errors, setErrors] = useState<{
+  recipient?: string;
+  amount?: string;
+  description?: string;
+}>({});
+
+const [pendingDeal, setPendingDeal] = useState({
+  recipient: "",
+  amount: "",
+  token: "",
+  description: "",
+});
+
+const [deals, setDeals] = useState([
+  {
+    id: 1,
+    recipient: "0xA1b2...3c4D",
+    sender: "You",
+    amount: "500 USDC",
+    status: "Pending" as const,
+    description: "Freelance website design project",
+    createdAt: "2025-09-15",
+  },
+  {
+    id: 2,
+    recipient: "0xE5f6...7g8H",
+    sender: "You",
+    amount: "300 DAI",
+    status: "Acknowledged" as const,
+    description: "Logo + Branding work",
+    createdAt: "2025-09-10",
+  },
+]);
+
+// --- Refs & transitions ---
+const rawAmountRef = useRef<string>("");
+const recipientTimerRef = useRef<number | null>(null);
+const [isPending, startTransition] = useTransition();
+
+// --- Effects ---
+useEffect(() => {
+  loadAllSupportedTokens();
+}, []);
+
+useEffect(() => {
+  return () => {
+    if (recipientTimerRef.current) window.clearTimeout(recipientTimerRef.current);
+  };
+}, []);
+
+// --- Memos ---
+const tokenOptions = useMemo(() => {
+  if (!allSupportedTokens) return [];
+  return allSupportedTokens.map((token: Token) => ({
+    value: token.name === "WETH" ? "ETH" : token.name,
+    image: token.name === "WETH" ? IMAGES.ETH : token.image,
+    name: token.name === "WETH" ? "ETH" : token.name,
+  }));
+}, [allSupportedTokens]);
+
+const TokenOptionsList = useMemo(() => (
+  <Listbox.Options className="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded bg-slate-800 border border-slate-700 text-white shadow-lg">
+    {tokenOptions.map((t:any, idx:number) => (
+      <Listbox.Option
+        key={idx}
+        value={t.value}
+        className={({ active }) =>
+          `relative cursor-pointer select-none py-2 pl-8 pr-4 ${
+            active ? "bg-slate-700 text-white" : "text-gray-300"
+          }`
+        }
+      >
+        {({ selected }) => (
+          <>
+            <div className="flex items-center gap-2">
+              <Image src={t.image} alt={t.name} width={20} height={20} />
+              {t.name}
+            </div>
+            {selected && (
+              <span className="absolute inset-y-0 left-0 flex items-center pl-2 text-emerald-400">
+                <Check className="h-4 w-4" />
+              </span>
+            )}
+          </>
+        )}
+      </Listbox.Option>
+    ))}
+  </Listbox.Options>
+), [tokenOptions]);
+
+// --- Handlers (form) ---
+ // amount handler designed for speed
+  const handleAmountChange = useCallback(
+    (e: ChangeEvent<HTMLInputElement>) => {
+      const rawTyped = e.target.value;
+      // allow only digits and dot
+      const cleaned = rawTyped.replace(/,/g, "").replace(/[^0-9.]/g, "");
+      // prevent more than one dot
+      const validRaw =
+        cleaned.split(".").length > 2 ? cleaned.slice(0, -1) : cleaned;
+
+      rawAmountRef.current = validRaw;
+
+      // update display quickly with raw value so typing is snappy
+      setForm((prev) => ({ ...prev, amount: validRaw }));
+
+      // compute validation and fee as low priority so they don't block typing
+      startTransition(() => {
+        const amountNum = Number(validRaw);
+        if (!validRaw || isNaN(amountNum) || amountNum <= 0) {
+          setErrors((prev) => ({ ...prev, amount: "Enter a valid amount" }));
+          setEscrowFee(0);
+          setTotalFee(0);
+        } else {
+          setErrors((prev) => {
+            const next = { ...prev };
+            delete next.amount;
+            return next;
+          });
+          const fee = (escrowFeePercentage * amountNum) / MAX_PERCENT;
+          setEscrowFee(fee);
+          setTotalFee(fee + amountNum);
+        }
+      });
+    },
+    [escrowFeePercentage]
+  );
+
+  // format amount for display when the user leaves the input
+  const handleAmountBlur = useCallback(() => {
+    const formatted = formatWithCommas(rawAmountRef.current);
+    setForm((prev) => ({ ...prev, amount: formatted }));
   }, []);
 
-  // bloomLog("All Supported Tokens: ", allSupportedTokens);
 
-  const [loadingDeals, setLoadingDeals] = useState(false);
-  const [modalOpen, setModalOpen] = useState(false);
-  const [statusModalOpen, setStatusModalOpen] = useState(false);
-  const [statusType, setStatusType] = useState<"success" | "failure">(
-    "success"
+ // recipient handler with debounce for address check
+  const handleRecipientChange = useCallback((e: ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value;
+    setForm((prev) => ({ ...prev, recipient: val }));
+
+    if (recipientTimerRef.current) {
+      window.clearTimeout(recipientTimerRef.current);
+    }
+
+    recipientTimerRef.current = window.setTimeout(() => {
+      startTransition(() => {
+        if (val && !isAddress(val.trim())) {
+          setErrors((prev) => ({ ...prev, recipient: "Invalid wallet address" }));
+        } else {
+          setErrors((prev) => {
+            const next = { ...prev };
+            delete next.recipient;
+            return next;
+          });
+        }
+      });
+    }, 250);
+  }, []);
+
+ // token select, small update so no heavy work needed
+  const handleTokenSelect = useCallback((value: string) => {
+    setForm((prev) => ({ ...prev, token: value }));
+  }, []);
+
+    // generic handler for description and similar cheap fields
+  const handleGenericChange = useCallback(
+    (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+      const { name, value } = e.target;
+      setForm((prev) => ({ ...prev, [name]: value }));
+      // if description change affects errors we can handle it here cheaply
+      if (name === "description") {
+        startTransition(() => {
+          setErrors((prev) => {
+            const next = { ...prev };
+            if (!value) next.description = "Enter a description";
+            else delete next.description;
+            return next;
+          });
+        });
+      }
+    },
+    []
   );
-  const [buttonMessage, setButtonMessage] = useState("Create Deal");
 
-  const [errors, setErrors] = useState<{
-    recipient?: string;
-    amount?: string;
-    description?: string;
-  }>({});
+  // quick helper to decide if form is invalid
+  const invalidForm = useCallback(() => {
+    const raw = rawAmountRef.current;
+    return (
+      !form.recipient ||
+      !raw ||
+      !form.token ||
+      !form.description ||
+      Object.keys(errors).length > 0
+    );
+  }, [form, errors]);
 
-  const tokens = [
-    { id: 1, name: "USDC", image: "/usdc.svg" },
-    { id: 2, name: "DAI", image: "/dai.svg" },
-    { id: 3, name: "ETH", image: "eth.svg" },
-  ];
-
-  // This state stores the deal temporarily for confirmation
-  const [pendingDeal, setPendingDeal] = useState({
-    recipient: "",
-    amount: "",
-    token: "",
-    description: "",
-  });
-
-  const handleCreateDealClick = () => {
+// --- Handlers (deal actions) ---
+   const handleCreateDealClick = () => {
     // store current form in pendingDeal and open modal
     setPendingDeal({ ...form });
     setModalOpen(true);
   };
 
-  const approveByTransaction = async (
+  // Handlers for DealCard actions
+  const handleCancelDeal = (id: number) => {
+    // setDeals(
+    //   deals.map((d) => (d.id === id ? { ...d, status: "Disputed" } : d))
+    // );
+  };
+
+  const handleReleaseDeal = (id: number) => {
+    // setDeals(
+    //   deals.map((d) => (d.id === id ? { ...d, status: "Completed" } : d))
+    // );
+  };
+
+  const handleClaimDeal = (id: number) => {
+    alert(`Claim action for deal ID: ${id}`);
+  };
+
+// --- Handlers (contracts) ---
+ const approveByTransaction = async (
     amountToApprove: bigint,
     token: Token
   ) => {
@@ -148,8 +347,6 @@ export default function EscrowPage() {
     // Call create deal here;
     bloomLog("Creating Deal");
 
-    //  createDeal(address sender, address receiver, address tokenAddress, uint256 amount, string calldata description)
-
     // Let me check all the form values;
     bloomLog("Form values: ", form);
 
@@ -160,19 +357,18 @@ export default function EscrowPage() {
     const validatedSender = signerAddress;
     const validatedReceiver = form.recipient;
     const validatedTokenAddress = token.address;
-    // const totalAmount = form.amount + 
+    const totalAmount = Number(form.amount) + escrowFee;
     const validatedAmount = parseUnits(
-      form.amount || "0",
+      totalAmount.toString(),
       token.decimal
     ).toString();
+    const validatedDealAmount = parseUnits(
+      form.amount,
+      token.decimal
+    ).toString();
+
     const validatedDescription = form.description;
     let transactionReceipt;
-
-    bloomLog("Validated sender: ", validatedSender);
-    bloomLog("Validated receiver: ", validatedReceiver);
-    bloomLog("Validated token address: ", validatedTokenAddress);
-    bloomLog("Validated amount: ", validatedAmount);
-    bloomLog("Validated description: ", validatedDescription);
 
     try {
       if (token.name == "WETH") {
@@ -184,7 +380,7 @@ export default function EscrowPage() {
             validatedSender,
             validatedReceiver,
             validatedTokenAddress,
-            validatedAmount,
+            validatedDealAmount,
             validatedDescription,
           ],
           chainId: currentChain.chainId as TypeChainId,
@@ -196,7 +392,10 @@ export default function EscrowPage() {
         });
       } else {
         // Approve the token transfer first
-        const isSuccess = await approveByTransaction(BigInt(validatedAmount), token);
+        const isSuccess = await approveByTransaction(
+          BigInt(validatedAmount),
+          token
+        );
         if (!isSuccess) return;
 
         // Then create deal
@@ -208,7 +407,7 @@ export default function EscrowPage() {
             validatedSender,
             validatedReceiver,
             validatedTokenAddress,
-            validatedAmount,
+            validatedDealAmount,
             validatedDescription,
           ],
           chainId: currentChain.chainId as TypeChainId,
@@ -235,168 +434,6 @@ export default function EscrowPage() {
       setStatusModalOpen(true);
       setLoadingDeals(false);
     }
-
-    // // When you are done, show something
-    // setTimeout(() => {
-    //   setDeals([
-    //     ...deals,
-    //     {
-    //       id: deals.length + 1,
-    //       recipient: pendingDeal.recipient,
-    //       sender: "You",
-    //       amount: `${pendingDeal.amount} ${pendingDeal.token}`,
-    //       status: "Pending" as const,
-    //       description: pendingDeal.description,
-    //       createdAt: new Date().toISOString().slice(0, 10),
-    //     },
-    //   ]);
-    //   setForm({ recipient: "", amount: "", token: "", description: "" });
-    //   setLoadingDeals(false);
-
-    //   setStatusModalOpen(true);
-    // }, 2000);
-  };
-
-  const invalidForm = () => {
-    return (
-      !form.recipient ||
-      !form.amount ||
-      !form.token ||
-      !form.description ||
-      Object.keys(errors).length > 0
-    );
-  };
-
-  const [deals, setDeals] = useState([
-    {
-      id: 1,
-      recipient: "0xA1b2...3c4D",
-      sender: "You",
-      amount: "500 USDC",
-      status: "Pending" as const,
-      description: "Freelance website design project",
-      createdAt: "2025-09-15",
-    },
-    {
-      id: 2,
-      recipient: "0xE5f6...7g8H",
-      sender: "You",
-      amount: "300 DAI",
-      status: "Acknowledged" as const,
-      description: "Logo + Branding work",
-      createdAt: "2025-09-10",
-    },
-  ]);
-
-  const [form, setForm] = useState({
-    recipient: "",
-    amount: "",
-    token: "",
-    description: "",
-  });
-
-  const handleChange = (
-    e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
-  ) => {
-    const { name, value } = e.target;
-
-    let newErrors = { ...errors };
-    let newForm = { ...form, [name]: value };
-
-    if (name === "recipient") {
-      if (value && !isAddress(value.trim())) {
-        newErrors.recipient = "Invalid wallet address";
-      } else {
-        delete newErrors.recipient;
-      }
-    }
-
-    if (name === "amount") {
-      // Remove commas and invalid chars
-      const raw = value.replace(/,/g, "").replace(/[^0-9.]/g, "");
-      // Prevent more than one decimal point
-      const validRaw = raw.split(".").length > 2 ? raw.slice(0, -1) : raw;
-
-      // Format display with commas
-      const formatted = formatWithCommas(validRaw);
-
-      newForm.amount = formatted;
-
-      if (!validRaw || isNaN(Number(validRaw)) || Number(validRaw) <= 0) {
-        newErrors.amount = "Enter a valid amount";
-      } else {
-        delete newErrors.amount;
-      }
-    }
-
-    setErrors(newErrors);
-    setForm(newForm);
-  };
-
-  const createDeal = async () => {
-    // Call the smart contract and pass all the data to it;
-
-    bloomLog("Creating Deal");
-
-    //  createDeal(address sender, address receiver, address tokenAddress, uint256 amount, string calldata description)
-    type TypeChainId = 1 | 11155111;
-
-    const token: Token = allSupportedTokens?.find(
-      (t: Token) => t.name === form.token
-    ) as Token;
-
-    const validatedSender = signerAddress;
-    const validatedReceiver = form.recipient;
-    const validatedTokenAddress = token.address;
-    const validatedAmount = parseUnits(
-      form.amount || "0",
-      token.decimal
-    ).toString();
-    const validatedDescription = form.description;
-
-    try {
-      const { request: createDealRequest } = await simulateContract(config, {
-        abi: bloomEscrowAbi,
-        address: bloomEscrowAddress as Address,
-        functionName: "createDeal",
-        args: [
-          validatedSender,
-          validatedReceiver,
-          validatedTokenAddress,
-          validatedAmount,
-          validatedDescription,
-        ],
-        chainId: currentChain.chainId as TypeChainId,
-      });
-      const hash = await writeContract(config, createDealRequest);
-
-      const transactionReceipt = await waitForTransactionReceipt(config, {
-        hash,
-      });
-
-      if (transactionReceipt.status === "success") {
-        bloomLog("Deal created successfully!");
-      }
-    } catch (error) {
-      bloomLog("Error creating deal: ", error);
-    }
-  };
-
-  // Handlers for DealCard actions
-  const handleCancelDeal = (id: number) => {
-    setDeals(
-      deals.map((d) => (d.id === id ? { ...d, status: "Disputed" } : d))
-    );
-  };
-
-  const handleReleaseDeal = (id: number) => {
-    setDeals(
-      deals.map((d) => (d.id === id ? { ...d, status: "Completed" } : d))
-    );
-  };
-
-  const handleClaimDeal = (id: number) => {
-    alert(`Claim action for deal ID: ${id}`);
   };
 
   return (
@@ -455,7 +492,7 @@ export default function EscrowPage() {
                     name="recipient"
                     placeholder="0xA1b2...3c4D"
                     value={form.recipient}
-                    onChange={handleChange}
+                    onChange={handleRecipientChange}
                     className="bg-slate-800 border border-slate-700 placeholder:text-white/50 text-white"
                   />
                   {errors.recipient && (
@@ -470,11 +507,13 @@ export default function EscrowPage() {
                     <label className="block text-sm font-medium text-white mb-1">
                       Amount
                     </label>
-                    <Input
+                   <Input
                       name="amount"
                       placeholder="100"
                       value={form.amount}
-                      onChange={handleChange}
+                      onChange={handleAmountChange}
+                      onBlur={handleAmountBlur}
+                      inputMode="decimal"
                       className="bg-slate-800 border border-slate-700 placeholder:text-white/50 text-white"
                     />
                     {errors.amount && (
@@ -518,54 +557,7 @@ export default function EscrowPage() {
                           leaveFrom="opacity-100"
                           leaveTo="opacity-0"
                         >
-                          <Listbox.Options className="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded bg-slate-800 border border-slate-700 text-white shadow-lg">
-                            {allSupportedTokens?.map(
-                              (token: Token, index: number) => (
-                                <Listbox.Option
-                                  key={index}
-                                  value={
-                                    token.name == "WETH" ? "ETH" : token.name
-                                  }
-                                  className={({ active }) =>
-                                    `relative cursor-pointer select-none py-2 pl-8 pr-4 ${
-                                      active
-                                        ? "bg-slate-700 text-white"
-                                        : "text-gray-300"
-                                    }`
-                                  }
-                                >
-                                  {({ selected }) => (
-                                    <>
-                                      <div className="flex items-center gap-2">
-                                        <Image
-                                          src={
-                                            token.name == "WETH"
-                                              ? IMAGES.ETH
-                                              : token.image
-                                          }
-                                          alt={
-                                            token.name == "WETH"
-                                              ? "ETH"
-                                              : token.name
-                                          }
-                                          width={20}
-                                          height={20}
-                                        />
-                                        {token.name == "WETH"
-                                          ? "ETH"
-                                          : token.name}
-                                      </div>
-                                      {selected && (
-                                        <span className="absolute inset-y-0 left-0 flex items-center pl-2 text-emerald-400">
-                                          <Check className="h-4 w-4" />
-                                        </span>
-                                      )}
-                                    </>
-                                  )}
-                                </Listbox.Option>
-                              )
-                            )}
-                          </Listbox.Options>
+                         {TokenOptionsList}
                         </Transition>
                       </div>
                     </Listbox>
@@ -580,11 +572,10 @@ export default function EscrowPage() {
                     name="description"
                     placeholder="Leave a description"
                     value={form.description}
-                    onChange={handleChange}
+                    onChange={handleGenericChange}
                     maxLength={100}
                     className="bg-slate-800 border border-slate-700 placeholder:text-white/50 text-white pr-12"
                   />
-                  {/* Character counter */}
                   <span className="absolute bottom-2 right-2 text-xs text-white/50">
                     {form.description.length}/100
                   </span>
@@ -593,30 +584,18 @@ export default function EscrowPage() {
                 {/* Escrow Fee and Total Fee */}
                 <div className="space-y-2">
                   <div className="text-sm text-white/70">
-                    Escrow Fee (2%):{" "}
+                    Escrow Fee{" "}
                     <span className="text-emerald-400">
-                      {form.amount
-                        ? (
-                            Number(form.amount.replace(/,/g, "")) * 0.02
-                          ).toFixed(2)
-                        : "0"}{" "}
-                      {form.token || ""}
+                      {rawAmountRef.current ? escrowFee.toFixed(2) : "0"} {form.token || ""}
                     </span>
                   </div>
                   <div className="text-sm text-white/70">
-                    Total Fee:{" "}
+                    Total Fee{" "}
                     <span className="text-emerald-400">
-                      {form.amount
-                        ? (
-                            Number(form.amount.replace(/,/g, "")) * 0.02 +
-                            Number(form.amount.replace(/,/g, ""))
-                          ).toFixed(2)
-                        : "0"}{" "}
-                      {form.token || ""}
+                      {rawAmountRef.current ? totalFee.toFixed(2) : "0"} {form.token || ""}
                     </span>
                   </div>
                 </div>
-
                 <Button
                   onClick={handleCreateDealClick}
                   disabled={loadingDeals || invalidForm()}
@@ -638,7 +617,7 @@ export default function EscrowPage() {
                   onClose={() => setModalOpen(false)}
                   onConfirm={confirmCreateDeal}
                   recipient={pendingDeal.recipient}
-                  amount={pendingDeal.amount}
+                  amount={totalFee.toString()}
                   token={pendingDeal.token}
                   description={pendingDeal.description}
                 />

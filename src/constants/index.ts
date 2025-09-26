@@ -7,6 +7,8 @@ const bloomEscrowAbi = _bloomEscrowAbi as Abi;
 
 export { erc20Abi, bloomEscrowAbi };
 
+export const MAX_PERCENT = 10000; // 100.00%
+
 export const IMAGES: Record<string, string> = {
   DAI: "/dai.svg",
   WETH: "/weth.svg",
