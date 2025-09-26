@@ -1,6 +1,14 @@
 "use client";
 
-import React, { Fragment, useTransition, useRef, useCallback, useEffect, useState, useMemo } from "react";
+import React, {
+  Fragment,
+  useTransition,
+  useRef,
+  useCallback,
+  useEffect,
+  useState,
+  useMemo,
+} from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -45,6 +53,7 @@ import {
 import StatusModal from "@/components/escrow/StatusModal";
 import { parseUnits } from "viem";
 import { MAX_PERCENT } from "@/constants";
+import Link from "next/link";
 
 function formatWithCommas(value: string) {
   if (!value) return "";
@@ -53,127 +62,132 @@ function formatWithCommas(value: string) {
   return parts.join(".");
 }
 
-type TypeChainId = 1 | 11155111;
+type TypeChainId = 11155111;
 
 export default function EscrowPage() {
-
   // --- Hooks & constants ---
-const { allSupportedTokens, loadAllSupportedTokens } = useDefi();
-const { address: signerAddress } = useAccount();
-const escrowFeePercentage = 100; // 1% fee
+  const { allSupportedTokens, loadAllSupportedTokens } = useDefi();
+  const { address: signerAddress } = useAccount();
+  const escrowFeePercentage = 100; // 1% fee
 
-const currentChain = getChainConfig("sepolia");
-const bloomEscrowAddress = currentChain.bloomEscrowAddress as Address;
+  const currentChain = getChainConfig("sepolia");
+  const bloomEscrowAddress = currentChain.bloomEscrowAddress as Address;
 
-// --- States ---
-const [escrowFee, setEscrowFee] = useState(0);
-const [totalFee, setTotalFee] = useState(0);
+  // --- States ---
+  const [escrowFee, setEscrowFee] = useState(0);
+  const [totalFee, setTotalFee] = useState(0);
 
-const [form, setForm] = useState({
-  recipient: "",
-  amount: "",
-  token: "",
-  description: "",
-});
+  const [form, setForm] = useState({
+    recipient: "",
+    amount: "",
+    token: "",
+    description: "",
+  });
 
-const [loadingDeals, setLoadingDeals] = useState(false);
-const [modalOpen, setModalOpen] = useState(false);
-const [statusModalOpen, setStatusModalOpen] = useState(false);
-const [statusType, setStatusType] = useState<"success" | "failure">("success");
-const [buttonMessage, setButtonMessage] = useState("Create Deal");
+  const [loadingDeals, setLoadingDeals] = useState(false);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [statusModalOpen, setStatusModalOpen] = useState(false);
+  const [statusType, setStatusType] = useState<"success" | "failure">(
+    "success"
+  );
+  const [buttonMessage, setButtonMessage] = useState("Create Deal");
 
-const [errors, setErrors] = useState<{
-  recipient?: string;
-  amount?: string;
-  description?: string;
-}>({});
+  const [errors, setErrors] = useState<{
+    recipient?: string;
+    amount?: string;
+    description?: string;
+  }>({});
 
-const [pendingDeal, setPendingDeal] = useState({
-  recipient: "",
-  amount: "",
-  token: "",
-  description: "",
-});
+  const [pendingDeal, setPendingDeal] = useState({
+    recipient: "",
+    amount: "",
+    token: "",
+    description: "",
+  });
 
-const [deals, setDeals] = useState([
-  {
-    id: 1,
-    recipient: "0xA1b2...3c4D",
-    sender: "You",
-    amount: "500 USDC",
-    status: "Pending" as const,
-    description: "Freelance website design project",
-    createdAt: "2025-09-15",
-  },
-  {
-    id: 2,
-    recipient: "0xE5f6...7g8H",
-    sender: "You",
-    amount: "300 DAI",
-    status: "Acknowledged" as const,
-    description: "Logo + Branding work",
-    createdAt: "2025-09-10",
-  },
-]);
+  const [deals, setDeals] = useState([
+    {
+      id: 1,
+      recipient: "0xA1b2...3c4D",
+      sender: "You",
+      amount: "500 USDC",
+      status: "Pending" as const,
+      description: "Freelance website design project",
+      createdAt: "2025-09-15",
+    },
+    {
+      id: 2,
+      recipient: "0xE5f6...7g8H",
+      sender: "You",
+      amount: "300 DAI",
+      status: "Acknowledged" as const,
+      description: "Logo + Branding work",
+      createdAt: "2025-09-10",
+    },
+  ]);
 
-// --- Refs & transitions ---
-const rawAmountRef = useRef<string>("");
-const recipientTimerRef = useRef<number | null>(null);
-const [isPending, startTransition] = useTransition();
+  // --- Refs & transitions ---
+  const rawAmountRef = useRef<string>("");
+  const recipientTimerRef = useRef<number | null>(null);
+  const [isPending, startTransition] = useTransition();
 
-// --- Effects ---
-useEffect(() => {
-  loadAllSupportedTokens();
-}, []);
+  // --- Effects ---
+  useEffect(() => {
+    loadAllSupportedTokens();
+  }, []);
 
-useEffect(() => {
-  return () => {
-    if (recipientTimerRef.current) window.clearTimeout(recipientTimerRef.current);
-  };
-}, []);
+  useEffect(() => {
+    return () => {
+      if (recipientTimerRef.current)
+        window.clearTimeout(recipientTimerRef.current);
+    };
+  }, []);
 
-// --- Memos ---
-const tokenOptions = useMemo(() => {
-  if (!allSupportedTokens) return [];
-  return allSupportedTokens.map((token: Token) => ({
-    value: token.name === "WETH" ? "ETH" : token.name,
-    image: token.name === "WETH" ? IMAGES.ETH : token.image,
-    name: token.name === "WETH" ? "ETH" : token.name,
-  }));
-}, [allSupportedTokens]);
+  // --- Memos ---
+  const tokenOptions = useMemo(() => {
+    if (!allSupportedTokens) return [];
+    return allSupportedTokens.map((token: Token) => ({
+      value: token.name === "WETH" ? "ETH" : token.name,
+      image: token.name === "WETH" ? IMAGES.ETH : token.image,
+      name: token.name === "WETH" ? "ETH" : token.name,
+    }));
+  }, [allSupportedTokens]);
 
-const TokenOptionsList = useMemo(() => (
-  <Listbox.Options className="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded bg-slate-800 border border-slate-700 text-white shadow-lg">
-    {tokenOptions.map((t:any, idx:number) => (
-      <Listbox.Option
-        key={idx}
-        value={t.value}
-        className={({ active }) =>
-          `relative cursor-pointer select-none py-2 pl-8 pr-4 ${
-            active ? "bg-slate-700 text-white" : "text-gray-300"
-          }`
-        }
-      >
-        {({ selected }) => (
-          <>
-            <div className="flex items-center gap-2">
-              <Image src={t.image} alt={t.name} width={20} height={20} />
-              {t.name}
-            </div>
-            {selected && (
-              <span className="absolute inset-y-0 left-0 flex items-center pl-2 text-emerald-400">
-                <Check className="h-4 w-4" />
-              </span>
+  const TokenOptionsList = useMemo(
+    () => (
+      <Listbox.Options className="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded bg-slate-800 border border-slate-700 text-white shadow-lg">
+        {tokenOptions.map((t: any, idx: number) => (
+          <Listbox.Option
+            key={idx}
+            value={t.value}
+            className={({ active }) =>
+              `relative cursor-pointer select-none py-2 pl-8 pr-4 ${
+                active ? "bg-slate-700 text-white" : "text-gray-300"
+              }`
+            }
+          >
+            {({ selected }) => (
+              <>
+                <div className="flex items-center gap-2">
+                  <Image src={t.image} alt={t.name} width={20} height={20} />
+                  {t.name}
+                </div>
+                {selected && (
+                  <span className="absolute inset-y-0 left-0 flex items-center pl-2 text-emerald-400">
+                    <Check className="h-4 w-4" />
+                  </span>
+                )}
+              </>
             )}
-          </>
-        )}
-      </Listbox.Option>
-    ))}
-  </Listbox.Options>
-), [tokenOptions]);
+          </Listbox.Option>
+        ))}
+      </Listbox.Options>
+    ),
+    [tokenOptions]
+  );
 
-// --- Handlers (form) ---
- // amount handler designed for speed
+  // --- Handlers (form) ---
+  // amount handler designed for speed
   const handleAmountChange = useCallback(
     (e: ChangeEvent<HTMLInputElement>) => {
       const rawTyped = e.target.value;
@@ -216,37 +230,42 @@ const TokenOptionsList = useMemo(() => (
     setForm((prev) => ({ ...prev, amount: formatted }));
   }, []);
 
+  // recipient handler with debounce for address check
+  const handleRecipientChange = useCallback(
+    (e: ChangeEvent<HTMLInputElement>) => {
+      const val = e.target.value;
+      setForm((prev) => ({ ...prev, recipient: val }));
 
- // recipient handler with debounce for address check
-  const handleRecipientChange = useCallback((e: ChangeEvent<HTMLInputElement>) => {
-    const val = e.target.value;
-    setForm((prev) => ({ ...prev, recipient: val }));
+      if (recipientTimerRef.current) {
+        window.clearTimeout(recipientTimerRef.current);
+      }
 
-    if (recipientTimerRef.current) {
-      window.clearTimeout(recipientTimerRef.current);
-    }
+      recipientTimerRef.current = window.setTimeout(() => {
+        startTransition(() => {
+          if (val && !isAddress(val.trim())) {
+            setErrors((prev) => ({
+              ...prev,
+              recipient: "Invalid wallet address",
+            }));
+          } else {
+            setErrors((prev) => {
+              const next = { ...prev };
+              delete next.recipient;
+              return next;
+            });
+          }
+        });
+      }, 250);
+    },
+    []
+  );
 
-    recipientTimerRef.current = window.setTimeout(() => {
-      startTransition(() => {
-        if (val && !isAddress(val.trim())) {
-          setErrors((prev) => ({ ...prev, recipient: "Invalid wallet address" }));
-        } else {
-          setErrors((prev) => {
-            const next = { ...prev };
-            delete next.recipient;
-            return next;
-          });
-        }
-      });
-    }, 250);
-  }, []);
-
- // token select, small update so no heavy work needed
+  // token select, small update so no heavy work needed
   const handleTokenSelect = useCallback((value: string) => {
     setForm((prev) => ({ ...prev, token: value }));
   }, []);
 
-    // generic handler for description and similar cheap fields
+  // generic handler for description and similar cheap fields
   const handleGenericChange = useCallback(
     (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
       const { name, value } = e.target;
@@ -278,8 +297,8 @@ const TokenOptionsList = useMemo(() => (
     );
   }, [form, errors]);
 
-// --- Handlers (deal actions) ---
-   const handleCreateDealClick = () => {
+  // --- Handlers (deal actions) ---
+  const handleCreateDealClick = () => {
     // store current form in pendingDeal and open modal
     setPendingDeal({ ...form });
     setModalOpen(true);
@@ -302,8 +321,8 @@ const TokenOptionsList = useMemo(() => (
     alert(`Claim action for deal ID: ${id}`);
   };
 
-// --- Handlers (contracts) ---
- const approveByTransaction = async (
+  // --- Handlers (contracts) ---
+  const approveByTransaction = async (
     amountToApprove: bigint,
     token: Token
   ) => {
@@ -447,15 +466,25 @@ const TokenOptionsList = useMemo(() => (
           <Card className="bg-slate-900/95 border border-cyan-500/30 shadow-lg">
             <CardContent className="space-y-3">
               <h3 className="text-lg font-bold text-cyan-400">Quick Links</h3>
-              <Button className="w-full bg-cyan-600/20 hover:bg-cyan-600/30 text-white/70 flex items-center gap-2">
-                <Coins className="w-4 h-4" /> View All Deals
-              </Button>
-              <Button className="w-full bg-cyan-600/20 hover:bg-cyan-600/30 text-white/70 flex items-center gap-2">
-                <Wallet className="w-4 h-4" /> Your Disputes
-              </Button>
-              <Button className="w-full bg-cyan-600/20 hover:bg-cyan-600/30 text-white/70 flex items-center gap-2">
-                <ShieldCheck className="w-4 h-4" /> Escrow FAQ
-              </Button>
+              <div className="space-y-2">
+                <Link href="/deals/my_deals" className="block">
+                  <Button className="w-full bg-cyan-600/20 hover:bg-cyan-600/30 text-white/70 flex items-center gap-2">
+                    <Coins className="w-4 h-4" /> View All Deals
+                  </Button>
+                </Link>
+
+                <Link href="/deals/my_deal" className="block">
+                  <Button className="w-full bg-cyan-600/20 hover:bg-cyan-600/30 text-white/70 flex items-center gap-2">
+                    <Wallet className="w-4 h-4" /> Your Disputes
+                  </Button>
+                </Link>
+
+                <Link href="/deals/my_deal" className="block">
+                  <Button className="w-full bg-cyan-600/20 hover:bg-cyan-600/30 text-white/70 flex items-center gap-2">
+                    <ShieldCheck className="w-4 h-4" /> Escrow FAQ
+                  </Button>
+                </Link>
+              </div>
             </CardContent>
           </Card>
         </div>
@@ -507,7 +536,7 @@ const TokenOptionsList = useMemo(() => (
                     <label className="block text-sm font-medium text-white mb-1">
                       Amount
                     </label>
-                   <Input
+                    <Input
                       name="amount"
                       placeholder="100"
                       value={form.amount}
@@ -557,7 +586,7 @@ const TokenOptionsList = useMemo(() => (
                           leaveFrom="opacity-100"
                           leaveTo="opacity-0"
                         >
-                         {TokenOptionsList}
+                          {TokenOptionsList}
                         </Transition>
                       </div>
                     </Listbox>
@@ -586,13 +615,15 @@ const TokenOptionsList = useMemo(() => (
                   <div className="text-sm text-white/70">
                     Escrow Fee{" "}
                     <span className="text-emerald-400">
-                      {rawAmountRef.current ? escrowFee.toFixed(2) : "0"} {form.token || ""}
+                      {rawAmountRef.current ? escrowFee.toFixed(2) : "0"}{" "}
+                      {form.token || ""}
                     </span>
                   </div>
                   <div className="text-sm text-white/70">
                     Total Fee{" "}
                     <span className="text-emerald-400">
-                      {rawAmountRef.current ? totalFee.toFixed(2) : "0"} {form.token || ""}
+                      {rawAmountRef.current ? totalFee.toFixed(2) : "0"}{" "}
+                      {form.token || ""}
                     </span>
                   </div>
                 </div>
@@ -638,7 +669,7 @@ const TokenOptionsList = useMemo(() => (
               <HowItWorks />
 
               {/* Your Deals */}
-              <div>
+              {/* <div>
                 <h2 className="text-xl font-bold text-cyan-400 mt-4 mb-2">
                   Your Deals
                 </h2>
@@ -654,7 +685,7 @@ const TokenOptionsList = useMemo(() => (
                     />
                   ))}
                 </div>
-              </div>
+              </div> */}
             </CardContent>
           </Card>
         </div>

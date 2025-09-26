@@ -4,13 +4,19 @@ import React from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Wallet, Coins, FileText } from "lucide-react";
+import { bloomLog, formatAddress } from "@/lib/utils";
+import { Token, Status } from "@/types";
+import useDefi from "@/hooks/useDefi";
+import { formatUnits } from "viem";
+import Image from "next/image";
 
 interface Deal {
   id: number;
-  recipient: string;
+  receiver: string;
   sender: string;
-  amount: string;
-  status: "Pending" | "Acknowledged" | "Completed" | "Disputed" | "Finalized";
+  amount: bigint;
+  tokenAddress: string;
+  status: number;
   description: string;
   createdAt: string;
 }
@@ -30,13 +36,25 @@ export default function DealCard({
   onRelease,
   onClaim,
 }: DealCardProps) {
+  const { allSupportedTokens } = useDefi();
+
+  const token: Token = allSupportedTokens?.find(
+    (t: Token) => t.address === deal.tokenAddress
+  ) as Token;
+
+  bloomLog("Token in DealCard: ", token);
+
+  bloomLog("Current Deal: ", deal);
+
+  const currentStatus = Status[deal.status] as string;
+
   // Determine milestones dynamically
   const milestones =
-    deal.status === "Disputed"
+    currentStatus === "Disputed"
       ? ["Pending", "Acknowledged", "Disputed", "Finalized"]
       : ["Pending", "Acknowledged", "Completed"];
 
-  const currentIndex = milestones.indexOf(deal.status);
+  const currentIndex = milestones.indexOf(currentStatus);
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -57,25 +75,41 @@ export default function DealCard({
   const progressPercentage = (currentIndex / (milestones.length - 1)) * 100;
 
   return (
-    <Card className="bg-slate-900 border border-slate-800 hover:border-emerald-500/40 transition">
+    <Card className="bg-slate-900 border border-slate-800 hover:border-emerald-500/40 transition py-0">
       <CardContent className="p-4 space-y-4">
         {/* Recipient + Status */}
         <div className="flex justify-between items-center">
           <div className="flex items-center space-x-2">
             <Wallet className="w-4 h-4 text-slate-400" />
-            <span className="font-medium text-white">Recipient: {deal.recipient}</span>
+            <span className="font-medium text-white">
+              Recipient: {formatAddress(deal.receiver)}
+            </span>
           </div>
           <span
-            className={`${getStatusColor(deal.status)} text-white px-2 py-0.5 rounded-md text-sm round-full`}
+            className={`${getStatusColor(
+              currentStatus
+            )} text-white px-2 py-0.5 rounded-md text-sm round-full`}
           >
-            {deal.status}
+            {currentStatus}
           </span>
         </div>
 
         {/* Amount + Description */}
         <div className="flex items-center space-x-2 text-slate-400 text-sm">
-          <Coins className="w-4 h-4" />
-          <span>{deal.amount}</span>
+          {token && (
+            <div className="flex items-center gap-2">
+              <Image
+                src={token.image}
+                alt={token.name}
+                width={20}
+                height={20}
+              />
+              <span>
+                {formatUnits(deal.amount, token.decimal)}{" "}
+                {token.symbol}
+              </span>
+            </div>
+          )}
         </div>
         <div className="flex items-center space-x-2 text-slate-400 text-sm">
           <FileText className="w-4 h-4" />
@@ -95,7 +129,10 @@ export default function DealCard({
           {/* Milestone circles */}
           <div className="flex justify-between relative z-10">
             {milestones.map((milestone, index) => (
-              <div key={milestone} className="flex flex-col items-center text-xs">
+              <div
+                key={milestone}
+                className="flex flex-col items-center text-xs"
+              >
                 <div
                   className={`w-6 h-6 rounded-full border-2 flex items-center justify-center
                     ${
@@ -114,7 +151,7 @@ export default function DealCard({
 
         {/* Actions based on status and role */}
         <div className="flex space-x-2 mt-4">
-          {deal.status === "Pending" && currentUser === "sender" && (
+          {currentStatus === "Pending" && deal.sender === "sender" && (
             <Button
               onClick={() => onCancel(deal.id)}
               className="bg-red-800 hover:bg-red-700"
@@ -122,7 +159,7 @@ export default function DealCard({
               Cancel Deal
             </Button>
           )}
-          {deal.status === "Acknowledged" && currentUser === "sender" && (
+          {currentStatus === "Acknowledged" && currentUser === "sender" && (
             <Button
               onClick={() => onRelease(deal.id)}
               className="bg-emerald-600 hover:bg-emerald-700"
@@ -130,7 +167,7 @@ export default function DealCard({
               Release Now
             </Button>
           )}
-          {deal.status === "Completed" && currentUser === "receiver" && (
+          {currentStatus === "Completed" && currentUser === "receiver" && (
             <Button
               onClick={() => onClaim(deal.id)}
               className="bg-cyan-600 hover:bg-cyan-700"
@@ -138,7 +175,7 @@ export default function DealCard({
               Claim
             </Button>
           )}
-          {deal.status === "Disputed" && currentUser === "sender" && (
+          {currentStatus === "Disputed" && currentUser === "sender" && (
             <Button
               onClick={() => onCancel(deal.id)}
               className="bg-red-800 hover:bg-red-700"

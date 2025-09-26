@@ -53,7 +53,7 @@ function formatWithCommas(value: string) {
   return parts.join(".");
 }
 
-type TypeChainId = 1 | 11155111;
+type TypeChainId = 11155111;
 
 export default function EscrowPage() {
 
