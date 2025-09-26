@@ -39,8 +39,8 @@ const defaultNavItems: HeaderItem[] = [
     label: "Deals",
     type: "dropdown",
     dropdownItems: [
-      { label: "Create deal", href: "/escrow" },
-      { label: "My deals", href: "/deals/mine" },
+      { label: "Create deal", href: "/deals/create" },
+      { label: "My deals", href: "/deals/my_deals" },
     ],
   },
   {
