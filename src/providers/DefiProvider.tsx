@@ -25,8 +25,7 @@ const defiReducer = (
   action: {
     type: string;
     userWalletTokens?: WalletToken[];
-    // allSupportedTokens: Token[];
-    allSupportedTokens?: any;
+    allSupportedTokens?: Token[];
   }
 ) => {
   if (action.type === "USER_WALLET_TOKENS") {
@@ -75,7 +74,7 @@ const DefiProvider = (props: any) => {
 
       // Execute all reads
       const erc20Results = await readContracts(config, { contracts: tokens });
-      bloomLog("Raw ERC20 Results:", erc20Results);
+      // bloomLog("Raw ERC20 Results:", erc20Results);
 
       // Rebuild into WalletToken[]
       const walletTokens: WalletToken[] = supportedTokens.map((_symbol, i) => {
@@ -88,7 +87,7 @@ const DefiProvider = (props: any) => {
         };
       });
 
-      bloomLog("Wallet Tokens: ", walletTokens);
+      // bloomLog("Wallet Tokens: ", walletTokens);
 
       dispatchDefiAction({
         type: "USER_WALLET_TOKENS",
@@ -102,8 +101,8 @@ const DefiProvider = (props: any) => {
     }
   };
 
-  const loadAllSupportedTokensHandler = async (): Promise<any[]> => {
-    // bloomLog("Inside loadUserWalletTokensHandler");
+  const loadAllSupportedTokensHandler = async (): Promise<Token[]> => {
+    bloomLog("Inside loadAllSupportedTokensHandler");
     try {
       const chainId = SUPPORTED_CHAIN_ID as 1 | 11155111;
       const supportedTokens = currentChain.supportedTokens;
@@ -113,29 +112,40 @@ const DefiProvider = (props: any) => {
         abi: bloomEscrowAbi,
         address: bloomEscrowAddress,
         functionName: "getAllSupportedTokens",
+        chainId,
       })) as any;
 
       // Execute all reads
       bloomLog("Bloom Escrow Results:", allSupportedTokensResults);
 
-      // // Rebuild into WalletToken[]
-      // const allSupportedTokens: Token[] = allSupportedTokensResults.map((_symbol, i) => {
-      //   const tokenMeta = TOKEN_META[chainId][_symbol];
-      //   return {
-      //     ...tokenMeta,
-      //     balance: BigInt(erc20Results[i].result as string),
-      //     image: IMAGES[_symbol],
-      //     address: currentChain.tokenAddresses[_symbol],
-      //   };
-      // });
+      // Precompute address-to-symbol map
+      const addressToSymbol: Record<string, string> = {};
+      for (const [symbol, addr] of Object.entries(
+        currentChain.tokenAddresses
+      )) {
+        addressToSymbol[addr.toLowerCase()] = symbol;
+      }
 
-      // bloomLog("Wallet Tokens: ", walletTokens);
+      // Rebuild into WalletToken[] symbol, icon.
+      const allSupportedTokens: Token[] = allSupportedTokensResults.map(
+        (_tokenAddress: Address, i: number) => {
+          const symbol =addressToSymbol[_tokenAddress.toLowerCase()];
+          const tokenMeta = TOKEN_META[chainId][symbol!];
+          return {
+            ...tokenMeta,
+            image: IMAGES[symbol!],
+            address: _tokenAddress,
+          };
+        }
+      );
+
+      bloomLog("All Supported Tokens: ", allSupportedTokens);
 
       dispatchDefiAction({
         type: "ALL_SUPPORTED_TOKENS",
-        allSupportedTokens: allSupportedTokensResults,
+        allSupportedTokens: allSupportedTokens,
       });
-      return allSupportedTokensResults;
+      return allSupportedTokens;
     } catch (error) {
       console.error("Failed to load user wallet tokens:", error);
       dispatchDefiAction({

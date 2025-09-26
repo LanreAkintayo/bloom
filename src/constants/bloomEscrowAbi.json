@@ -1,4 +1,4 @@
-[
+ [
     {
       "type": "constructor",
       "inputs": [
@@ -81,10 +81,21 @@
           "type": "address",
           "internalType": "address"
         },
-        { "name": "amount", "type": "uint256", "internalType": "uint256" }
+        { "name": "amount", "type": "uint256", "internalType": "uint256" },
+        { "name": "description", "type": "string", "internalType": "string" }
       ],
       "outputs": [],
       "stateMutability": "payable"
+    },
+    {
+      "type": "function",
+      "name": "creatorToDeals",
+      "inputs": [
+        { "name": "", "type": "address", "internalType": "address" },
+        { "name": "", "type": "uint256", "internalType": "uint256" }
+      ],
+      "outputs": [{ "name": "", "type": "uint256", "internalType": "uint256" }],
+      "stateMutability": "view"
     },
     {
       "type": "function",
@@ -101,6 +112,7 @@
         { "name": "sender", "type": "address", "internalType": "address" },
         { "name": "receiver", "type": "address", "internalType": "address" },
         { "name": "amount", "type": "uint256", "internalType": "uint256" },
+        { "name": "description", "type": "string", "internalType": "string" },
         {
           "name": "tokenAddress",
           "type": "address",
@@ -140,6 +152,15 @@
     },
     {
       "type": "function",
+      "name": "getAllSupportedTokens",
+      "inputs": [],
+      "outputs": [
+        { "name": "", "type": "address[]", "internalType": "address[]" }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
       "name": "getDeal",
       "inputs": [
         { "name": "id", "type": "uint256", "internalType": "uint256" }
@@ -158,6 +179,11 @@
             },
             { "name": "amount", "type": "uint256", "internalType": "uint256" },
             {
+              "name": "description",
+              "type": "string",
+              "internalType": "string"
+            },
+            {
               "name": "tokenAddress",
               "type": "address",
               "internalType": "address"
@@ -170,6 +196,17 @@
             { "name": "id", "type": "uint256", "internalType": "uint256" }
           ]
         }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "getDeals",
+      "inputs": [
+        { "name": "creator", "type": "address", "internalType": "address" }
+      ],
+      "outputs": [
+        { "name": "", "type": "uint256[]", "internalType": "uint256[]" }
       ],
       "stateMutability": "view"
     },

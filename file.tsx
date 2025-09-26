@@ -28,22 +28,11 @@ import { Address, isAddress } from "viem";
 import { ChangeEvent } from "react";
 import { Listbox, Transition } from "@headlessui/react";
 import Image from "next/image";
-import {
-  bloomEscrowAbi,
-  erc20Abi,
-  getChainConfig,
-  IMAGES,
-  TOKEN_META,
-} from "@/constants";
+import { bloomEscrowAbi, getChainConfig, IMAGES } from "@/constants";
 import { Token } from "@/types";
 import { config } from "@/lib/wagmi";
-import {
-  simulateContract,
-  waitForTransactionReceipt,
-  writeContract,
-} from "@wagmi/core";
-import StatusModal from "@/components/escrow/StatusModal";
-import { parseUnits } from "viem";
+import {simulateContract, waitForTransactionReceipt, writeContract} from "@wagmi/core";
+
 
 function formatWithCommas(value: string) {
   if (!value) return "";
@@ -51,8 +40,6 @@ function formatWithCommas(value: string) {
   parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ",");
   return parts.join(".");
 }
-
-type TypeChainId = 1 | 11155111;
 
 export default function EscrowPage() {
   const { allSupportedTokens, loadAllSupportedTokens } = useDefi();
@@ -72,12 +59,6 @@ export default function EscrowPage() {
 
   const [loadingDeals, setLoadingDeals] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
-  const [statusModalOpen, setStatusModalOpen] = useState(false);
-  const [statusType, setStatusType] = useState<"success" | "failure">(
-    "success"
-  );
-  const [buttonMessage, setButtonMessage] = useState("Create Deal");
-
   const [errors, setErrors] = useState<{
     recipient?: string;
     amount?: string;
@@ -104,167 +85,32 @@ export default function EscrowPage() {
     setModalOpen(true);
   };
 
-  const approveByTransaction = async (
-    amountToApprove: bigint,
-    token: Token
-  ) => {
-    let isSuccessful = true;
-
-    setButtonMessage(`Approving ${token.symbol}...`);
-
-    try {
-      const { request: approveRequest } = await simulateContract(config, {
-        abi: erc20Abi,
-        address: token.address as Address,
-        functionName: "approve",
-        args: [bloomEscrowAddress, amountToApprove],
-        chainId: currentChain.chainId as TypeChainId,
-      });
-      const hash = await writeContract(config, approveRequest);
-
-      const approveReceipt = await waitForTransactionReceipt(config, {
-        hash,
-      });
-      if (approveReceipt.status == "success") {
-        bloomLog("Approved");
-        setButtonMessage("Creating Deal...");
-      }
-    } catch (error) {
-      bloomLog("Error creating deal: ", error);
-      setButtonMessage("Create Deal");
-      setStatusType("failure");
-      setStatusModalOpen(true);
-      setLoadingDeals(false);
-      isSuccessful = false;
-    } finally {
-      return isSuccessful;
-    }
-  };
-
-  const confirmCreateDeal = async () => {
+  const confirmCreateDeal = () => {
     setLoadingDeals(true);
-    setButtonMessage("Creating Deal ...");
 
     // Call create deal here;
-    bloomLog("Creating Deal");
 
-    //  createDeal(address sender, address receiver, address tokenAddress, uint256 amount, string calldata description)
-
-    // Let me check all the form values;
-    bloomLog("Form values: ", form);
-
-    const token: Token = allSupportedTokens?.find(
-      (t: Token) => t.name === form.token
-    ) as Token;
-
-    const validatedSender = signerAddress;
-    const validatedReceiver = form.recipient;
-    const validatedTokenAddress = token.address;
-    // const totalAmount = form.amount + 
-    const validatedAmount = parseUnits(
-      form.amount || "0",
-      token.decimal
-    ).toString();
-    const validatedDescription = form.description;
-    let transactionReceipt;
-
-    bloomLog("Validated sender: ", validatedSender);
-    bloomLog("Validated receiver: ", validatedReceiver);
-    bloomLog("Validated token address: ", validatedTokenAddress);
-    bloomLog("Validated amount: ", validatedAmount);
-    bloomLog("Validated description: ", validatedDescription);
-
-    try {
-      if (token.name == "WETH") {
-        const { request: createDealRequest } = await simulateContract(config, {
-          abi: bloomEscrowAbi,
-          address: bloomEscrowAddress as Address,
-          functionName: "createDeal",
-          args: [
-            validatedSender,
-            validatedReceiver,
-            validatedTokenAddress,
-            validatedAmount,
-            validatedDescription,
-          ],
-          chainId: currentChain.chainId as TypeChainId,
-        });
-        const hash = await writeContract(config, createDealRequest);
-
-        transactionReceipt = await waitForTransactionReceipt(config, {
-          hash,
-        });
-      } else {
-        // Approve the token transfer first
-        const isSuccess = await approveByTransaction(BigInt(validatedAmount), token);
-        if (!isSuccess) return;
-
-        // Then create deal
-        const { request: createDealRequest } = await simulateContract(config, {
-          abi: bloomEscrowAbi,
-          address: bloomEscrowAddress as Address,
-          functionName: "createDeal",
-          args: [
-            validatedSender,
-            validatedReceiver,
-            validatedTokenAddress,
-            validatedAmount,
-            validatedDescription,
-          ],
-          chainId: currentChain.chainId as TypeChainId,
-        });
-        const hash = await writeContract(config, createDealRequest);
-
-        transactionReceipt = await waitForTransactionReceipt(config, {
-          hash,
-        });
-      }
-
-      if (transactionReceipt.status === "success") {
-        bloomLog("Deal created successfully!");
-        setButtonMessage("Create Deal");
-        setStatusType("success");
-        setStatusModalOpen(true);
-        setLoadingDeals(false);
-      }
-    } catch (error) {
-      bloomLog("Error creating deal: ", error);
-      setButtonMessage("Create Deal");
-
-      setStatusType("failure");
-      setStatusModalOpen(true);
+    // When you are done, show something 
+    setTimeout(() => {
+      setDeals([
+        ...deals,
+        {
+          id: deals.length + 1,
+          recipient: pendingDeal.recipient,
+          sender: "You",
+          amount: `${pendingDeal.amount} ${pendingDeal.token}`,
+          status: "Pending" as const,
+          description: pendingDeal.description,
+          createdAt: new Date().toISOString().slice(0, 10),
+        },
+      ]);
+      setForm({ recipient: "", amount: "", token: "", description: "" });
       setLoadingDeals(false);
-    }
-
-    // // When you are done, show something
-    // setTimeout(() => {
-    //   setDeals([
-    //     ...deals,
-    //     {
-    //       id: deals.length + 1,
-    //       recipient: pendingDeal.recipient,
-    //       sender: "You",
-    //       amount: `${pendingDeal.amount} ${pendingDeal.token}`,
-    //       status: "Pending" as const,
-    //       description: pendingDeal.description,
-    //       createdAt: new Date().toISOString().slice(0, 10),
-    //     },
-    //   ]);
-    //   setForm({ recipient: "", amount: "", token: "", description: "" });
-    //   setLoadingDeals(false);
-
-    //   setStatusModalOpen(true);
-    // }, 2000);
+    }, 2000);
   };
 
   const invalidForm = () => {
-    return (
-      !form.recipient ||
-      !form.amount ||
-      !form.token ||
-      !form.description ||
-      Object.keys(errors).length > 0
-    );
+    return !form.recipient || !form.amount || !form.token || !form.description || Object.keys(errors).length > 0;
   };
 
   const [deals, setDeals] = useState([
@@ -336,51 +182,39 @@ export default function EscrowPage() {
   const createDeal = async () => {
     // Call the smart contract and pass all the data to it;
 
-    bloomLog("Creating Deal");
+    bloomLog("Creating Deal")
 
     //  createDeal(address sender, address receiver, address tokenAddress, uint256 amount, string calldata description)
-    type TypeChainId = 1 | 11155111;
+     type TypeChainId =  1 | 11155111;
+    
 
-    const token: Token = allSupportedTokens?.find(
-      (t: Token) => t.name === form.token
-    ) as Token;
-
-    const validatedSender = signerAddress;
-    const validatedReceiver = form.recipient;
-    const validatedTokenAddress = token.address;
-    const validatedAmount = parseUnits(
-      form.amount || "0",
-      token.decimal
-    ).toString();
-    const validatedDescription = form.description;
+    const validatedSender = ""
+    const validatedReceiver = ""
+    const validatedTokenAddress = ""
+    const validatedAmount = ""
+    const validatedDescription = ""
 
     try {
-      const { request: createDealRequest } = await simulateContract(config, {
+      const {request: createDealRequest} = await simulateContract( config, {
         abi: bloomEscrowAbi,
         address: bloomEscrowAddress as Address,
         functionName: "createDeal",
-        args: [
-          validatedSender,
-          validatedReceiver,
-          validatedTokenAddress,
-          validatedAmount,
-          validatedDescription,
-        ],
-        chainId: currentChain.chainId as TypeChainId,
+        args: [validatedSender, validatedReceiver, validatedTokenAddress, validatedAmount, validatedDescription],
+        chainId: currentChain.chainId as  TypeChainId,
       });
       const hash = await writeContract(config, createDealRequest);
 
-      const transactionReceipt = await waitForTransactionReceipt(config, {
-        hash,
-      });
+      const transactionReceipt = await waitForTransactionReceipt(config, {hash})
 
       if (transactionReceipt.status === "success") {
         bloomLog("Deal created successfully!");
       }
-    } catch (error) {
-      bloomLog("Error creating deal: ", error);
     }
-  };
+    catch (error) {
+      console.error("Error creating deal: ", error);
+    }
+
+  }
 
   // Handlers for DealCard actions
   const handleCancelDeal = (id: number) => {
@@ -403,25 +237,6 @@ export default function EscrowPage() {
     <>
       <Header />
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-950 to-black text-white p-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left Panel */}
-        <div className="lg:col-span-1 space-y-6">
-          <WalletCard />
-
-          <Card className="bg-slate-900/95 border border-cyan-500/30 shadow-lg">
-            <CardContent className="space-y-3">
-              <h3 className="text-lg font-bold text-cyan-400">Quick Links</h3>
-              <Button className="w-full bg-cyan-600/20 hover:bg-cyan-600/30 text-white/70 flex items-center gap-2">
-                <Coins className="w-4 h-4" /> View All Deals
-              </Button>
-              <Button className="w-full bg-cyan-600/20 hover:bg-cyan-600/30 text-white/70 flex items-center gap-2">
-                <Wallet className="w-4 h-4" /> Your Disputes
-              </Button>
-              <Button className="w-full bg-cyan-600/20 hover:bg-cyan-600/30 text-white/70 flex items-center gap-2">
-                <ShieldCheck className="w-4 h-4" /> Escrow FAQ
-              </Button>
-            </CardContent>
-          </Card>
-        </div>
 
         {/* Right Panel */}
         <div className="lg:col-span-2 space-y-6">
@@ -432,17 +247,7 @@ export default function EscrowPage() {
                 <h2 className="text-2xl font-bold text-emerald-400">
                   Create New Escrow Deal
                 </h2>
-                <Button
-                  variant="secondary"
-                  onClick={() =>
-                    document
-                      .getElementById("how-it-works")
-                      ?.scrollIntoView({ behavior: "smooth" })
-                  }
-                  className="text-cyan-400 hover:bg-slate-900/50  text-sm font-medium bg-slate-800/50 border border-cyan-500/30"
-                >
-                  How it Works
-                </Button>
+             
               </div>
 
               {/* Create Deal Form */}
@@ -623,12 +428,9 @@ export default function EscrowPage() {
                   className="w-full bg-emerald-600 hover:bg-emerald-700"
                 >
                   {loadingDeals ? (
-                    <div className="flex space-x-2 items-center">
-                      <Loader2 className="animate-spin mr-2" />
-                      {buttonMessage}
-                    </div>
+                    <Loader2 className="animate-spin mr-2" />
                   ) : (
-                    <p> {buttonMessage}</p>
+                    "Create Deal"
                   )}
                 </Button>
 
@@ -642,40 +444,8 @@ export default function EscrowPage() {
                   token={pendingDeal.token}
                   description={pendingDeal.description}
                 />
-
-                <StatusModal
-                  isOpen={statusModalOpen}
-                  onClose={() => setStatusModalOpen(false)}
-                  status={statusType}
-                  message={
-                    statusType == "success"
-                      ? `You created a deal of ${pendingDeal.amount} ${pendingDeal.token}`
-                      : `Unable to create deal. Please check your wallet and try again.`
-                  }
-                />
               </div>
 
-              {/* How It Works Section */}
-              <HowItWorks />
-
-              {/* Your Deals */}
-              <div>
-                <h2 className="text-xl font-bold text-cyan-400 mt-4 mb-2">
-                  Your Deals
-                </h2>
-                <div className="space-y-4">
-                  {deals.map((deal) => (
-                    <DealCard
-                      currentUser={"sender"}
-                      key={deal.id}
-                      deal={deal}
-                      onCancel={handleCancelDeal}
-                      onRelease={handleReleaseDeal}
-                      onClaim={handleClaimDeal}
-                    />
-                  ))}
-                </div>
-              </div>
             </CardContent>
           </Card>
         </div>

@@ -50,7 +50,7 @@ export const CHAINS: Record<string, ChainConfig> = {
     },
     wrapperAddress: "0xab18414CD93297B0d12ac29E63Ca20f515b3DB46",
     wrappedNativeTokenAddress: "0xC558DBdd856501FCd9aaF1E62eae57A9F0629a3c",
-    bloomEscrowAddress: "0x4138941D4b55b864ceC671E6737636107587c695"
+    bloomEscrowAddress: "0xBd304f7D8d0F33760b7bf410d356854Da40B2231"
   },
 };
 

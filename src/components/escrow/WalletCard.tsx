@@ -1,8 +1,8 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
-import { Wallet, Coins } from "lucide-react";
+import { Wallet, Coins, Copy, Check } from "lucide-react"; // added Copy + Check
 import useDefi from "@/hooks/useDefi";
 import { formatAddress, inCurrencyFormat } from "@/lib/utils";
 import Image from "next/image";
@@ -10,30 +10,44 @@ import { useAccount } from "wagmi";
 import { formatUnits } from "viem";
 
 export default function WalletCard() {
-  const { userWalletTokens } = useDefi(); // userWalletTokens starts as null
+  const { userWalletTokens } = useDefi();
   const { address } = useAccount();
+  const [copied, setCopied] = useState(false);
 
-  const skeletonCount = 4; // number of placeholder rows
+  const handleCopy = async () => {
+    if (!address) return;
+    await navigator.clipboard.writeText(address);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1500); // reset after 1.5s
+  };
+
+  const skeletonCount = 4;
 
   return (
     <Card className="bg-slate-900/95 border border-emerald-500/30 shadow-lg animate-fadeIn">
-      <CardContent className="">
+      <CardContent>
         {/* Header */}
         <div className="flex items-center space-x-2 mb-2">
           <Coins className="text-emerald-500" />
           <h2 className="text-xl font-bold text-white">Your Wallet Balances</h2>
         </div>
 
-         {/* <div className="mb-4 p-3 bg-slate-800/90 rounded-lg text-sm border border-emerald-600/40 text-white/70">
-          <span className="font-semibold text-emerald-400">Total Balance:</span>{" "}
-          1,500 USDC
-        </div> */}
-
         {/* Wallet address */}
         {address ? (
           <div className="text-sm text-white/70 my-4 flex items-center gap-2">
             <Wallet className="w-4 h-4 text-white/70" />
-            <span className="truncate w-52">{formatAddress(address)}</span>
+            <span className="truncate">{formatAddress(address)}</span>
+            <button
+              onClick={handleCopy}
+              className="ml-1 p-1 rounded hover:bg-slate-700/60 transition-colors cursor-pointer"
+              title="Copy address"
+            >
+              {copied ? (
+                <Check className="w-4 h-4 text-emerald-400" />
+              ) : (
+                <Copy className="w-4 h-4 text-emerald-400" />
+              )}
+            </button>
           </div>
         ) : (
           <div className="h-4 w-52 bg-slate-700/50 rounded animate-pulse mb-4"></div>

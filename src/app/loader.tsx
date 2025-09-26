@@ -5,7 +5,7 @@ import { useAccount } from "wagmi";
 import useDefi from "@/hooks/useDefi";
 
 export default function DeFiLoader() {
-  const { loadUserWalletTokens } = useDefi();
+  const { loadUserWalletTokens, loadAllSupportedTokens } = useDefi();
   const { address: signerAddress } = useAccount();
 
   useEffect(() => {
