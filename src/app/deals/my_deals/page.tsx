@@ -96,7 +96,7 @@ export default function MyDealsPage() {
     loadAllSupportedTokens();
   }, []);
 
-  bloomLog("Creator Deals: ", creatorDeals);
+  //   bloomLog("Creator Deals: ", creatorDeals);
 
   const [activeMainTab, setActiveMainTab] = useState<
     "Created Deals" | "Deals for Me"
@@ -215,6 +215,7 @@ export default function MyDealsPage() {
   };
 
   const cancelDeal = async (id: number) => {
+    bloomLog("We are here with id: ", id);
     setLoadingAction({ dealId: id, type: "cancel" });
 
     try {
@@ -243,7 +244,7 @@ export default function MyDealsPage() {
         await loadCreatorDeals(signerAddress!);
       }
     } catch (err) {
-        bloomLog("Error there is an error oo.")
+      bloomLog("Error there is an error oo.");
       setStatusModal({
         open: true,
         success: false,
@@ -285,14 +286,14 @@ export default function MyDealsPage() {
 
         <div className="w-full lg:px-10 gap-6">
           {/* Right Panel */}
-          <div className="space-y-6 mx-auto ">
+          <div className="space-y-6 mx-auto">
             {/* Main Tabs */}
-            <div className="flex space-x-2">
+            <div className="flex space-x-2 items-center justify-center">
               {["Created Deals", "Deals for Me"].map((tab) => (
                 <Button
                   key={tab}
                   onClick={() => setActiveMainTab(tab as any)}
-                  className={`flex-1 ${
+                  className={`px-6 ${
                     activeMainTab === tab
                       ? "bg-emerald-600 hover:bg-emerald-700"
                       : "bg-slate-800 hover:bg-slate-700 text-white/70"
@@ -367,7 +368,7 @@ export default function MyDealsPage() {
                 onConfirm={async () => {
                   setShowConfirm(false);
                   const dealId = confirmAction?.dealId;
-                  if (!dealId) return;
+                  if (dealId === null || dealId === undefined) return;
 
                   if (confirmAction?.type === "cancel") {
                     await cancelDeal(dealId);

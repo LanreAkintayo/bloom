@@ -150,7 +150,7 @@ const DefiProvider = (props: any) => {
       })) as any;
 
       // Execute all reads
-      bloomLog("Bloom Escrow Results:", allSupportedTokensResults);
+      // bloomLog("Bloom Escrow Results:", allSupportedTokensResults);
 
       // Precompute address-to-symbol map
       const addressToSymbol: Record<string, string> = {};
@@ -179,7 +179,7 @@ const DefiProvider = (props: any) => {
         }
       );
 
-      bloomLog("All Supported Tokens: ", allSupportedTokens);
+      // bloomLog("All Supported Tokens: ", allSupportedTokens);
 
       dispatchDefiAction({
         type: "ALL_SUPPORTED_TOKENS",

@@ -53,9 +53,12 @@ export default function DealCard({
     (t: Token) => t.address === deal.tokenAddress
   ) as Token;
 
-  bloomLog("Token in DealCard: ", token);
+  // bloomLog("Token in DealCard: ", token);
 
-  bloomLog("Current Deal: ", deal);
+  // bloomLog("Current Deal: ", deal);
+
+  bloomLog("Loading action.dealId: ", loadingAction.dealId);
+  bloomLog("Deal.id: ", deal.id);
 
   const currentStatus = Status[deal.status] as string;
 
@@ -85,7 +88,11 @@ export default function DealCard({
     }
   };
 
-  const progressPercentage = (currentIndex / (milestones.length - 1)) * 100;
+  const progressPercentage =
+    (currentIndex / (milestones.length - 1)) * 100 > 0
+      ? (currentIndex / (milestones.length - 1)) * 100
+      : 0;
+
 
   return (
     <Card className="bg-slate-900 border border-slate-800 hover:border-emerald-500/40 transition py-0">
@@ -191,7 +198,7 @@ export default function DealCard({
               loadingAction.type === "cancel" ? (
                 <>
                   <Loader2 className="w-4 h-4 animate-spin" />
-                  Cancelling
+                  Cancelling...
                 </>
               ) : (
                 "Cancel Deal"
