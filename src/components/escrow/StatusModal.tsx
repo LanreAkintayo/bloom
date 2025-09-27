@@ -3,6 +3,7 @@
 import React from "react";
 import { CheckCircle2, XCircle, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import Link from "next/link";
 
 type Status = "success" | "failure";
 
@@ -36,7 +37,7 @@ export default function StatusModal({
           <X size={20} />
         </button>
 
-        {/* Icon */}
+        {/* Icon + Title + Message */}
         <div className="flex flex-col items-center text-center">
           {isSuccess ? (
             <CheckCircle2 className="text-emerald-500 w-16 h-16 mb-4 animate-bounce" />
@@ -44,16 +45,15 @@ export default function StatusModal({
             <XCircle className="text-red-500 w-16 h-16 mb-4 animate-shake" />
           )}
 
-          {/* Title */}
           <h2
             className={`text-2xl font-bold mb-2 ${
               isSuccess ? "text-emerald-400" : "text-red-400"
             }`}
           >
-            {title || (isSuccess ? "Transaction Successful!" : "Transaction Failed!")}
+            {title ||
+              (isSuccess ? "Transaction Successful!" : "Transaction Failed!")}
           </h2>
 
-          {/* Message */}
           <p className="text-white/70">
             {message ||
               (isSuccess
@@ -62,18 +62,33 @@ export default function StatusModal({
           </p>
         </div>
 
-        {/* Action */}
-        <div className="mt-6 flex justify-center">
+        {/* Action Buttons */}
+        <div
+          className={`mt-6 flex ${
+            isSuccess ? "justify-between" : "justify-center"
+          }`}
+        >
           <Button
             onClick={onClose}
             className={`${
               isSuccess
-                ? "bg-emerald-600 hover:bg-emerald-700"
+                ? "bg-slate-700 hover:bg-slate-600"
                 : "bg-red-600 hover:bg-red-700"
             } text-white`}
           >
             Close
           </Button>
+
+          {isSuccess && (
+            <Link href="/deals/my_deals" className="w-full max-w-[120px]">
+              <Button
+                onClick={onClose}
+                className="w-full bg-emerald-600 hover:bg-emerald-700 text-white"
+              >
+                View Deals
+              </Button>
+            </Link>
+          )}
         </div>
       </div>
     </div>

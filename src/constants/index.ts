@@ -69,6 +69,7 @@ export const TOKEN_META: Record<number, Record<string, { name: string; symbol: s
     DAI: { name: "DAI", symbol: "DAI", decimal: 18 },
     USDC: { name: "USDC", symbol: "USDC", decimal: 6 },
     WETH: { name: "WETH", symbol: "WETH", decimal: 18 },
+    ETH: { name: "ETH", symbol: "ETH", decimal: 18 },
     BLM: { name: "Bloom", symbol: "BLM", decimal: 18 },
   },
 };

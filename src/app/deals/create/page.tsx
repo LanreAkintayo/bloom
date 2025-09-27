@@ -66,7 +66,8 @@ type TypeChainId = 11155111;
 
 export default function EscrowPage() {
   // --- Hooks & constants ---
-  const { allSupportedTokens, loadAllSupportedTokens } = useDefi();
+  const { allSupportedTokens, loadAllSupportedTokens, loadUserWalletTokens } =
+    useDefi();
   const { address: signerAddress } = useAccount();
   const escrowFeePercentage = 100; // 1% fee
 
@@ -144,22 +145,22 @@ export default function EscrowPage() {
   }, []);
 
   // --- Memos ---
-  const tokenOptions = useMemo(() => {
-    if (!allSupportedTokens) return [];
-    return allSupportedTokens.map((token: Token) => ({
-      value: token.name === "WETH" ? "ETH" : token.name,
-      image: token.name === "WETH" ? IMAGES.ETH : token.image,
-      name: token.name === "WETH" ? "ETH" : token.name,
-    }));
-  }, [allSupportedTokens]);
+  // const tokenOptions = useMemo(() => {
+  //   if (!allSupportedTokens) return [];
+  //   return allSupportedTokens.map((token: Token) => ({
+  //     value:  token.name,
+  //     image: token.name === "WETH" ? IMAGES.ETH : token.image,
+  //     name: token.name === "WETH" ? "ETH" : token.name,
+  //   }));
+  // }, [allSupportedTokens]);
 
   const TokenOptionsList = useMemo(
     () => (
       <Listbox.Options className="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded bg-slate-800 border border-slate-700 text-white shadow-lg">
-        {tokenOptions.map((t: any, idx: number) => (
+        {allSupportedTokens?.map((t: any, idx: number) => (
           <Listbox.Option
             key={idx}
-            value={t.value}
+            value={t.name}
             className={({ active }) =>
               `relative cursor-pointer select-none py-2 pl-8 pr-4 ${
                 active ? "bg-slate-700 text-white" : "text-gray-300"
@@ -183,7 +184,7 @@ export default function EscrowPage() {
         ))}
       </Listbox.Options>
     ),
-    [tokenOptions]
+    [allSupportedTokens]
   );
 
   // --- Handlers (form) ---
@@ -390,7 +391,7 @@ export default function EscrowPage() {
     let transactionReceipt;
 
     try {
-      if (token.name == "WETH") {
+      if (token.name == "ETH") {
         const { request: createDealRequest } = await simulateContract(config, {
           abi: bloomEscrowAbi,
           address: bloomEscrowAddress as Address,
@@ -403,6 +404,7 @@ export default function EscrowPage() {
             validatedDescription,
           ],
           chainId: currentChain.chainId as TypeChainId,
+          value: BigInt(validatedAmount),
         });
         const hash = await writeContract(config, createDealRequest);
 
@@ -452,6 +454,8 @@ export default function EscrowPage() {
       setStatusType("failure");
       setStatusModalOpen(true);
       setLoadingDeals(false);
+    } finally {
+      await loadUserWalletTokens(signerAddress!);
     }
   };
 
@@ -582,7 +586,7 @@ export default function EscrowPage() {
                         </Listbox.Button>
                         <Transition
                           as={Fragment}
-                          leave="transition ease-in duration-100"
+                          leave="transition ease-in duration-100" 
                           leaveFrom="opacity-100"
                           leaveTo="opacity-0"
                         >
@@ -667,7 +671,6 @@ export default function EscrowPage() {
 
               {/* How It Works Section */}
               <HowItWorks />
-
             </CardContent>
           </Card>
         </div>

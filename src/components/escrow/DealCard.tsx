@@ -69,6 +69,8 @@ export default function DealCard({
 
   const getStatusColor = (status: string) => {
     switch (status) {
+      case "Canceled":
+        return "bg-red-300";
       case "Pending":
         return "bg-yellow-500";
       case "Acknowledged":
@@ -89,24 +91,39 @@ export default function DealCard({
     <Card className="bg-slate-900 border border-slate-800 hover:border-emerald-500/40 transition py-0">
       <CardContent className="p-4 space-y-4">
         {/* Recipient + Status */}
-        <div className="flex justify-between items-center">
-          <div className="flex items-center space-x-2">
-            <Wallet className="w-4 h-4 text-slate-400" />
-            <span className="font-medium text-white">
-              Recipient: {formatAddress(deal.receiver)}
+        <div className="flex justify-between items-start bg-slate-800/50 py-4 px-2 rounded-xl ">
+          {/* Sender & Recipient */}
+          <div className="space-y-2">
+            <div className="flex items-center gap-2 text-xs">
+              <Wallet className="w-4 h-4 text-cyan-400" />
+              <span className="text-xs text-white/70">Sender</span>
+              <span className="font-semibold text-white">
+                {formatAddress(deal.sender)}
+              </span>
+            </div>
+            <div className="flex items-center gap-2 text-xs ">
+              <Wallet className="w-4 h-4 text-emerald-400" />
+              <span className="text-xs text-white/70">Recipient</span>
+              <span className="font-semibold text-white">
+                {formatAddress(deal.receiver)}
+              </span>
+            </div>
+          </div>
+
+          {/* Status Badge */}
+          <div>
+            <span
+              className={`${getStatusColor(
+                currentStatus
+              )} px-3 py-1 rounded-full text-xs font-medium`}
+            >
+              {currentStatus}
             </span>
           </div>
-          <span
-            className={`${getStatusColor(
-              currentStatus
-            )} text-white px-2 py-0.5 rounded-md text-sm round-full`}
-          >
-            {currentStatus}
-          </span>
         </div>
 
         {/* Amount + Description */}
-        <div className="flex items-center space-x-2 text-slate-400 text-sm">
+        <div className="flex items-center space-x-2 text-slate-400 text-sm sm:text-xs">
           {token && (
             <div className="flex items-center gap-2">
               <Image
@@ -121,7 +138,7 @@ export default function DealCard({
             </div>
           )}
         </div>
-        <div className="flex items-center space-x-2 text-slate-400 text-sm">
+        <div className="flex items-center space-x-2 text-slate-400 text-sm sm:text-xs">
           <FileText className="w-4 h-4" />
           <span>{deal.description}</span>
         </div>
@@ -137,11 +154,11 @@ export default function DealCard({
           />
 
           {/* Milestone circles */}
-          <div className="flex justify-between relative z-10">
+          <div className="flex justify-between relative z-10 text-sm sm:text-xs">
             {milestones.map((milestone, index) => (
               <div
                 key={milestone}
-                className="flex flex-col items-center text-xs"
+                className="flex flex-col items-center text-sm sm:text-xs"
               >
                 <div
                   className={`w-6 h-6 rounded-full border-2 flex items-center justify-center
@@ -160,13 +177,25 @@ export default function DealCard({
         </div>
 
         {/* Actions based on status and role */}
-        <div className="flex space-x-2 mt-4">
+        <div className="flex space-x-2 mt-4 text-sm">
           {currentStatus === "Pending" && signerAddress === deal.sender && (
             <Button
               onClick={() => onCancel(deal.id)}
-              className="bg-red-800 hover:bg-red-700"
+              className="bg-red-800 hover:bg-red-700 flex items-center justify-center gap-2"
+              disabled={
+                loadingAction.dealId === deal.id &&
+                loadingAction.type === "cancel"
+              }
             >
-              Cancel Deal
+              {loadingAction.dealId === deal.id &&
+              loadingAction.type === "cancel" ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Cancelling
+                </>
+              ) : (
+                "Cancel Deal"
+              )}
             </Button>
           )}
           {currentStatus === "Acknowledged" &&

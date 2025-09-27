@@ -2,7 +2,15 @@
 
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { X } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { formatAddress } from "@/lib/utils";
 
 interface ConfirmationModalProps {
   isOpen: boolean;
@@ -23,29 +31,23 @@ export default function ConfirmationModal({
   token,
   description,
 }: ConfirmationModalProps) {
-  if (!isOpen) return null;
-
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm animate-fade-in">
-      <div className="bg-slate-900 rounded-2xl w-full max-w-md p-6 relative text-white shadow-xl transform transition-transform duration-300 scale-95 animate-scale-up">
-        {/* Close Button */}
-        <button
-          onClick={onClose}
-          className="absolute top-4 right-4 text-white/70 hover:text-white transition"
-        >
-          <X size={20} />
-        </button>
-
-        {/* Header */}
-        <h2 className="text-2xl font-bold mb-6 text-emerald-400 text-center">
-          Confirm Deal
-        </h2>
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="bg-slate-900 text-white border border-slate-800 rounded-2xl shadow-xl">
+        <DialogHeader>
+          <DialogTitle className="text-xl font-bold text-emerald-400 text-center">
+            Confirm Deal
+          </DialogTitle>
+          <DialogDescription className="text-white/70 text-center">
+            Please review the deal details below before confirming
+          </DialogDescription>
+        </DialogHeader>
 
         {/* Deal Details */}
-        <div className="space-y-4 bg-slate-800 rounded-lg p-4 border border-emerald-500/30 shadow-inner">
+        <div className="space-y-4 bg-slate-800 rounded-lg p-4 border border-emerald-500/30 shadow-inner mt-4">
           <div className="flex justify-between">
             <span className="font-semibold text-white/80">Recipient:</span>
-            <span className="text-white truncate max-w-[200px]">{recipient}</span>
+            <span className="text-white truncate max-w-[200px]">{formatAddress(recipient)}</span>
           </div>
           <div className="flex justify-between">
             <span className="font-semibold text-white/80">Amount:</span>
@@ -59,10 +61,9 @@ export default function ConfirmationModal({
           </div>
         </div>
 
-        {/* Action Buttons */}
-        <div className="mt-6 flex justify-end space-x-3">
+        <DialogFooter className="mt-6 flex justify-end space-x-3">
           <Button
-            variant="secondary"
+            variant="outline"
             onClick={onClose}
             className="bg-red-800 hover:bg-red-700 text-white"
           >
@@ -77,8 +78,8 @@ export default function ConfirmationModal({
           >
             Confirm
           </Button>
-        </div>
-      </div>
-    </div>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }

@@ -11,7 +11,7 @@ import {
   TOKEN_META,
 } from "@/constants";
 import { config } from "@/lib/wagmi";
-import { readContract, readContracts } from "@wagmi/core";
+import { readContract, readContracts, getBalance } from "@wagmi/core";
 import { bloomLog } from "@/lib/utils";
 import { getChainConfig } from "../constants";
 import { AlignVerticalDistributeCenter } from "lucide-react";
@@ -90,6 +90,9 @@ const DefiProvider = (props: any) => {
           },
         ];
       });
+      const nativeBalance = await getBalance(config, {
+        address: signerAddress as Address,
+      });
 
       // Execute all reads
       const erc20Results = await readContracts(config, { contracts: tokens });
@@ -97,11 +100,23 @@ const DefiProvider = (props: any) => {
 
       // Rebuild into WalletToken[]
       const walletTokens: WalletToken[] = supportedTokens.map((_symbol, i) => {
-        const tokenMeta = TOKEN_META[chainId][_symbol];
+        // const tokenMeta = TOKEN_META[chainId][_symbol];
+        const tokenMeta =
+          _symbol === "WETH"
+            ? TOKEN_META[chainId]["ETH"]
+            : TOKEN_META[chainId][_symbol!];
+
+        const balance =
+          _symbol === "WETH"
+            ? nativeBalance.value
+            : BigInt(erc20Results[i].result as string);
+
+        const image = _symbol === "WETH" ? IMAGES["ETH"] : IMAGES[_symbol];
+
         return {
           ...tokenMeta,
-          balance: BigInt(erc20Results[i].result as string),
-          image: IMAGES[_symbol],
+          balance,
+          image,
           address: currentChain.tokenAddresses[_symbol],
         };
       });
@@ -149,10 +164,16 @@ const DefiProvider = (props: any) => {
       const allSupportedTokens: Token[] = allSupportedTokensResults.map(
         (_tokenAddress: Address, i: number) => {
           const symbol = addressToSymbol[_tokenAddress.toLowerCase()];
-          const tokenMeta = TOKEN_META[chainId][symbol!];
+          const tokenMeta =
+            symbol == "WETH"
+              ? TOKEN_META[chainId]["ETH"]
+              : TOKEN_META[chainId][symbol!];
+
+          const image = symbol == "WETH" ? IMAGES["ETH"] : IMAGES[symbol];
+
           return {
             ...tokenMeta,
-            image: IMAGES[symbol!],
+            image,
             address: _tokenAddress,
           };
         }

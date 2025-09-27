@@ -29,12 +29,27 @@ import {
 } from "@wagmi/core";
 import { getChainConfig } from "@/constants";
 
+type StatusOptions =
+  | "All"
+  | "Pending"
+  | "Acknowledged"
+  | "Completed"
+  | "Disputed"
+  | "Finalized"
+  | "Canceled";
+
 interface Deal {
   id: number;
   receiver: string;
   sender: string;
   amount: string;
-  status: "Pending" | "Acknowledged" | "Completed" | "Disputed" | "Finalized";
+  status:
+    | "Canceled"
+    | "Pending"
+    | "Acknowledged"
+    | "Completed"
+    | "Disputed"
+    | "Finalized";
   description: string;
   createdAt: string;
 }
@@ -87,19 +102,24 @@ export default function MyDealsPage() {
     "Created Deals" | "Deals for Me"
   >("Created Deals");
   const [activeStatusFilter, setActiveStatusFilter] = useState<
-    "All" | "Pending" | "Acknowledged" | "Completed" | "Disputed" | "Finalized"
+    | "All"
+    | "Pending"
+    | "Acknowledged"
+    | "Completed"
+    | "Disputed"
+    | "Finalized"
+    | "Canceled"
   >("All");
 
   const dealsToDisplay =
-    activeMainTab === "Created Deals" ? creatorDeals : recipientDeals;
+    (activeMainTab === "Created Deals" ? creatorDeals : recipientDeals) ?? [];
 
   const filteredDeals =
     activeStatusFilter === "All"
-      ? dealsToDisplay
-      : dealsToDisplay.filter(
-          (deal) => Status[deal.status] === activeStatusFilter
-        );
-
+      ? [...dealsToDisplay].reverse() // reverse order here
+      : [...dealsToDisplay]
+          .filter((deal) => Status[deal.status] === activeStatusFilter)
+          .reverse(); // also reverse after filtering
   const statusOptions = [
     "All",
     "Pending",
@@ -107,6 +127,7 @@ export default function MyDealsPage() {
     "Completed",
     "Disputed",
     "Finalized",
+    "Canceled",
   ] as const;
   const sleep = (ms: number) =>
     new Promise((resolve) => setTimeout(resolve, ms));
@@ -114,10 +135,7 @@ export default function MyDealsPage() {
   const handleCancel = (id: number) => console.log("Cancel deal", id);
   const handleRelease = (id: number) => console.log("Release deal", id);
   const handleClaim = (id: number) => console.log("Claim deal", id);
-  const handleAcknowledge = async (id: number) => {
-    setConfirmAction({ type: "acknowledge", dealId: id });
-    setShowConfirm(true);
-  };
+
   const acknowledgeDeal = async (id: number) => {
     setLoadingAction({ dealId: id, type: "acknowledge" });
 
@@ -195,6 +213,46 @@ export default function MyDealsPage() {
       setLoadingAction({ dealId: null, type: null });
     }
   };
+
+  const cancelDeal = async (id: number) => {
+    setLoadingAction({ dealId: id, type: "cancel" });
+
+    try {
+      const { request: cancelRequest } = await simulateContract(config, {
+        abi: bloomEscrowAbi,
+        address: bloomEscrowAddress as Address,
+        functionName: "cancelDeal",
+        args: [id],
+        chainId: currentChain.chainId as TypeChainId,
+      });
+      const hash = await writeContract(config, cancelRequest);
+
+      const transactionReceipt = await waitForTransactionReceipt(config, {
+        hash,
+      });
+
+      if (transactionReceipt.status === "success") {
+        bloomLog("Deal has been canceled successfully!");
+        setStatusModal({
+          open: true,
+          success: true,
+          message: "Deal has been canceled successfully!",
+        });
+        setLoadingAction({ dealId: null, type: null });
+        await loadRecipientDeals(signerAddress!);
+        await loadCreatorDeals(signerAddress!);
+      }
+    } catch (err) {
+        bloomLog("Error there is an error oo.")
+      setStatusModal({
+        open: true,
+        success: false,
+        message: "Transaction failed. Try again.",
+      });
+    } finally {
+      setLoadingAction({ dealId: null, type: null });
+    }
+  };
   const handleUnacknowledge = (id: number) => {
     setConfirmAction({ type: "unacknowledge", dealId: id });
     setShowConfirm(true);
@@ -225,7 +283,7 @@ export default function MyDealsPage() {
           </p>
         </div>
 
-        <div className="w-full lg:px-40 gap-6">
+        <div className="w-full lg:px-10 gap-6">
           {/* Right Panel */}
           <div className="space-y-6 mx-auto ">
             {/* Main Tabs */}
@@ -272,7 +330,6 @@ export default function MyDealsPage() {
             </div>
 
             {/* Deals List */}
-            {/* Deals List */}
             {filteredDeals?.length === 0 ? (
               <div className="text-center text-white/70 mt-10">
                 <Info className="w-6 h-6 mx-auto mb-2" />
@@ -281,21 +338,25 @@ export default function MyDealsPage() {
                   : "No deals created for you"}
               </div>
             ) : (
-              filteredDeals?.map((deal, id) => (
-                <DealCard
-                  key={id}
-                  deal={deal}
-                  currentUser={
-                    activeMainTab === "Created Deals" ? "sender" : "receiver"
-                  }
-                  onCancel={() => openConfirm("cancel", deal.id)}
-                  onRelease={() => openConfirm("release", deal.id)}
-                  onClaim={() => openConfirm("release", deal.id)}
-                  onAcknowledge={() => openConfirm("acknowledge", deal.id)}
-                  onUnacknowledge={() => openConfirm("unacknowledge", deal.id)}
-                  loadingAction={loadingAction}
-                />
-              ))
+              <div className="grid gap-6 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+                {filteredDeals?.map((deal, id) => (
+                  <DealCard
+                    key={id}
+                    deal={deal}
+                    currentUser={
+                      activeMainTab === "Created Deals" ? "sender" : "receiver"
+                    }
+                    onCancel={() => openConfirm("cancel", deal.id)}
+                    onRelease={() => openConfirm("release", deal.id)}
+                    onClaim={() => openConfirm("release", deal.id)}
+                    onAcknowledge={() => openConfirm("acknowledge", deal.id)}
+                    onUnacknowledge={() =>
+                      openConfirm("unacknowledge", deal.id)
+                    }
+                    loadingAction={loadingAction}
+                  />
+                ))}
+              </div>
             )}
 
             {showConfirm && (
@@ -309,7 +370,7 @@ export default function MyDealsPage() {
                   if (!dealId) return;
 
                   if (confirmAction?.type === "cancel") {
-                    await handleCancel(dealId);
+                    await cancelDeal(dealId);
                   }
                   if (confirmAction?.type === "release") {
                     await release(dealId);
