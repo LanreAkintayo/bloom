@@ -1,0 +1,581 @@
+ [
+    {
+      "type": "constructor",
+      "inputs": [
+        {
+          "name": "_storageAddress",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "_linkAddress",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "_wrapperAddress",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "MAX_PERCENT",
+      "inputs": [],
+      "outputs": [{ "name": "", "type": "uint256", "internalType": "uint256" }],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "acceptOwnership",
+      "inputs": [],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "bloomToken",
+      "inputs": [],
+      "outputs": [
+        { "name": "", "type": "address", "internalType": "contract IERC20" }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "breakTie",
+      "inputs": [
+        { "name": "_disputeId", "type": "uint256", "internalType": "uint256" }
+      ],
+      "outputs": [{ "name": "", "type": "uint256", "internalType": "uint256" }],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "checkUpkeep",
+      "inputs": [{ "name": "", "type": "bytes", "internalType": "bytes" }],
+      "outputs": [
+        { "name": "upkeepNeeded", "type": "bool", "internalType": "bool" },
+        { "name": "performData", "type": "bytes", "internalType": "bytes" }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "checkVoteEligibility",
+      "inputs": [
+        {
+          "name": "disputeVoters",
+          "type": "address[]",
+          "internalType": "address[]"
+        },
+        { "name": "voter", "type": "address", "internalType": "address" }
+      ],
+      "outputs": [
+        { "name": "isEligible", "type": "bool", "internalType": "bool" }
+      ],
+      "stateMutability": "pure"
+    },
+    {
+      "type": "function",
+      "name": "ds",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "contract DisputeStorage"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "lastRequestId",
+      "inputs": [],
+      "outputs": [{ "name": "", "type": "uint256", "internalType": "uint256" }],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "owner",
+      "inputs": [],
+      "outputs": [{ "name": "", "type": "address", "internalType": "address" }],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "performUpkeep",
+      "inputs": [
+        { "name": "performData", "type": "bytes", "internalType": "bytes" }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "rawFulfillRandomWords",
+      "inputs": [
+        { "name": "_requestId", "type": "uint256", "internalType": "uint256" },
+        {
+          "name": "_randomWords",
+          "type": "uint256[]",
+          "internalType": "uint256[]"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "registerJuror",
+      "inputs": [
+        { "name": "stakeAmount", "type": "uint256", "internalType": "uint256" }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "requestIds",
+      "inputs": [{ "name": "", "type": "uint256", "internalType": "uint256" }],
+      "outputs": [{ "name": "", "type": "uint256", "internalType": "uint256" }],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "s_requests",
+      "inputs": [{ "name": "", "type": "uint256", "internalType": "uint256" }],
+      "outputs": [
+        { "name": "paid", "type": "uint256", "internalType": "uint256" },
+        { "name": "fulfilled", "type": "bool", "internalType": "bool" }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "selectJurors",
+      "inputs": [
+        { "name": "disputeId", "type": "uint256", "internalType": "uint256" }
+      ],
+      "outputs": [{ "name": "", "type": "uint256", "internalType": "uint256" }],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "stakeMore",
+      "inputs": [
+        {
+          "name": "additionalStake",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "transferOwnership",
+      "inputs": [
+        { "name": "to", "type": "address", "internalType": "address" }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "vote",
+      "inputs": [
+        { "name": "disputeId", "type": "uint256", "internalType": "uint256" },
+        { "name": "support", "type": "address", "internalType": "address" }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "withdrawStake",
+      "inputs": [
+        { "name": "_stakeAmount", "type": "uint256", "internalType": "uint256" }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "event",
+      "name": "ExtendedVotingPeriod",
+      "inputs": [
+        {
+          "name": "_disputeId",
+          "type": "uint256",
+          "indexed": true,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "type": "event",
+      "name": "JurorAdded",
+      "inputs": [
+        {
+          "name": "_disputeId",
+          "type": "uint256",
+          "indexed": true,
+          "internalType": "uint256"
+        },
+        {
+          "name": "newJurors",
+          "type": "address[]",
+          "indexed": true,
+          "internalType": "address[]"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "type": "event",
+      "name": "JurorRegistered",
+      "inputs": [
+        {
+          "name": "juror",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "stakeAmount",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "type": "event",
+      "name": "JurorsSelected",
+      "inputs": [
+        {
+          "name": "disputeId",
+          "type": "uint256",
+          "indexed": true,
+          "internalType": "uint256"
+        },
+        {
+          "name": "selected",
+          "type": "address[]",
+          "indexed": true,
+          "internalType": "address[]"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "type": "event",
+      "name": "MaxStakeAmountUpdated",
+      "inputs": [
+        {
+          "name": "newMaxStakeAmount",
+          "type": "uint256",
+          "indexed": true,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "type": "event",
+      "name": "MinStakeAmountUpdated",
+      "inputs": [
+        {
+          "name": "newMinStakeAmount",
+          "type": "uint256",
+          "indexed": true,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "type": "event",
+      "name": "MoreStaked",
+      "inputs": [
+        {
+          "name": "juror",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "additionalStaked",
+          "type": "uint256",
+          "indexed": true,
+          "internalType": "uint256"
+        },
+        {
+          "name": "newStakeAmount",
+          "type": "uint256",
+          "indexed": true,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "type": "event",
+      "name": "OwnershipTransferRequested",
+      "inputs": [
+        {
+          "name": "from",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "type": "event",
+      "name": "OwnershipTransferred",
+      "inputs": [
+        {
+          "name": "from",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "type": "event",
+      "name": "RequestFulfilled",
+      "inputs": [
+        {
+          "name": "requestId",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        },
+        {
+          "name": "randomWords",
+          "type": "uint256[]",
+          "indexed": false,
+          "internalType": "uint256[]"
+        },
+        {
+          "name": "payment",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "type": "event",
+      "name": "RequestSent",
+      "inputs": [
+        {
+          "name": "requestId",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        },
+        {
+          "name": "numWords",
+          "type": "uint32",
+          "indexed": false,
+          "internalType": "uint32"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "type": "event",
+      "name": "StakeWithdrawn",
+      "inputs": [
+        {
+          "name": "jurorAddress",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "amount",
+          "type": "uint256",
+          "indexed": true,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "type": "event",
+      "name": "StandardVotingDurationExtended",
+      "inputs": [
+        {
+          "name": "_disputeId",
+          "type": "uint256",
+          "indexed": true,
+          "internalType": "uint256"
+        },
+        {
+          "name": "_extendDuration",
+          "type": "uint256",
+          "indexed": true,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "type": "event",
+      "name": "TieSelectionCompleted",
+      "inputs": [
+        {
+          "name": "_disputeId",
+          "type": "uint256",
+          "indexed": true,
+          "internalType": "uint256"
+        },
+        {
+          "name": "indexedselectedJurorAddress",
+          "type": "address",
+          "indexed": false,
+          "internalType": "address"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "type": "event",
+      "name": "Voted",
+      "inputs": [
+        {
+          "name": "disputeId",
+          "type": "uint256",
+          "indexed": true,
+          "internalType": "uint256"
+        },
+        {
+          "name": "jurorAddress",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "support",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "type": "error",
+      "name": "JurorManager__AlreadyAssignedJurors",
+      "inputs": []
+    },
+    {
+      "type": "error",
+      "name": "JurorManager__AlreadyRegistered",
+      "inputs": []
+    },
+    { "type": "error", "name": "JurorManager__AlreadyVoted", "inputs": [] },
+    { "type": "error", "name": "JurorManager__AlreadyWinner", "inputs": [] },
+    { "type": "error", "name": "JurorManager__DisputeNotEnded", "inputs": [] },
+    { "type": "error", "name": "JurorManager__ExceedMaxStake", "inputs": [] },
+    {
+      "type": "error",
+      "name": "JurorManager__InsufficientExperienced",
+      "inputs": []
+    },
+    {
+      "type": "error",
+      "name": "JurorManager__InsufficientJurors",
+      "inputs": []
+    },
+    {
+      "type": "error",
+      "name": "JurorManager__InsufficientNewbies",
+      "inputs": []
+    },
+    {
+      "type": "error",
+      "name": "JurorManager__InvalidStakeAmount",
+      "inputs": []
+    },
+    {
+      "type": "error",
+      "name": "JurorManager__MaxAppealExceeded",
+      "inputs": []
+    },
+    { "type": "error", "name": "JurorManager__MaxVoteExceeded", "inputs": [] },
+    { "type": "error", "name": "JurorManager__MustVote", "inputs": [] },
+    { "type": "error", "name": "JurorManager__NotEligible", "inputs": [] },
+    {
+      "type": "error",
+      "name": "JurorManager__NotEnoughStakeToWithdraw",
+      "inputs": []
+    },
+    { "type": "error", "name": "JurorManager__NotFinished", "inputs": [] },
+    {
+      "type": "error",
+      "name": "JurorManager__NotInStandardVotingPeriod",
+      "inputs": []
+    },
+    {
+      "type": "error",
+      "name": "JurorManager__NotInVotingPeriod",
+      "inputs": []
+    },
+    { "type": "error", "name": "JurorManager__NotRegistered", "inputs": [] },
+    { "type": "error", "name": "JurorManager__RequestNotFound", "inputs": [] },
+    {
+      "type": "error",
+      "name": "JurorManager__ThresholdMismatched",
+      "inputs": []
+    },
+    {
+      "type": "error",
+      "name": "JurorManager__VotingNotFinished",
+      "inputs": []
+    },
+    {
+      "type": "error",
+      "name": "JurorManager__VotingPeriodExpired",
+      "inputs": []
+    },
+    {
+      "type": "error",
+      "name": "JurorManager__WithdrawalCooldownNotOver",
+      "inputs": []
+    },
+    { "type": "error", "name": "JurorManager__ZeroAddress", "inputs": [] },
+    { "type": "error", "name": "JurorManager__ZeroAmount", "inputs": [] },
+    {
+      "type": "error",
+      "name": "SafeERC20FailedOperation",
+      "inputs": [
+        { "name": "token", "type": "address", "internalType": "address" }
+      ]
+    }
+  ]

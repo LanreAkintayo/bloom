@@ -8,6 +8,7 @@ import { Web3AuthProvider } from "@web3auth/modal/react";
 import web3AuthContextConfig from "@/app/web3AuthContext";
 import DefiProvider from "@/providers/DefiProvider";
 import DeFiLoader from "./loader";
+import { ModalProvider } from "@/providers/ModalProvider";
 
 export default function Providers({ children }: { children: ReactNode }) {
   const [qc] = useState(() => new QueryClient());
@@ -17,7 +18,7 @@ export default function Providers({ children }: { children: ReactNode }) {
         <DefiProvider>
           <QueryClientProvider client={qc}>
             <DeFiLoader />
-            {children}
+            <ModalProvider>{children}</ModalProvider>
           </QueryClientProvider>
         </DefiProvider>
       </WagmiProvider>

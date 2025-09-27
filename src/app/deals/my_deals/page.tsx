@@ -17,7 +17,7 @@ import {
 } from "@/components/ui/select";
 import { bloomEscrowAbi } from "@/constants";
 import { bloomLog } from "@/lib/utils";
-import { Status, TypeChainId } from "@/types";
+import { Status, TypeChainId, DealAction } from "@/types";
 import ConfirmActionModal from "@/components/deals/ConfirmationActionModal";
 import StatusModal from "@/components/deals/StatusModal";
 import { Address } from "viem";
@@ -37,6 +37,7 @@ type StatusOptions =
   | "Disputed"
   | "Finalized"
   | "Canceled";
+
 
 interface Deal {
   id: number;
@@ -68,13 +69,13 @@ export default function MyDealsPage() {
 
   const [showConfirm, setShowConfirm] = useState(false);
   const [confirmAction, setConfirmAction] = useState<null | {
-    type: "cancel" | "release" | "acknowledge" | "unacknowledge" | null;
+    type: DealAction;
     dealId: number;
   }>(null);
 
   const [loadingAction, setLoadingAction] = useState<{
     dealId: number | null;
-    type: "cancel" | "release" | "acknowledge" | "unacknowledge" | null;
+    type: DealAction;
   }>({ dealId: null, type: null });
 
   const [statusModal, setStatusModal] = useState<{
@@ -155,6 +156,45 @@ export default function MyDealsPage() {
 
       if (transactionReceipt.status === "success") {
         bloomLog("Deal acknowledged successfully!");
+        setStatusModal({
+          open: true,
+          success: true,
+          message: "Action completed successfully!",
+        });
+        setLoadingAction({ dealId: null, type: null });
+        await loadRecipientDeals(signerAddress!);
+        await loadCreatorDeals(signerAddress!);
+      }
+    } catch (err) {
+      setStatusModal({
+        open: true,
+        success: false,
+        message: "Transaction failed. Try again.",
+      });
+    } finally {
+      setLoadingAction({ dealId: null, type: null });
+    }
+  };
+
+  const unacknowledgeDeal = async (id: number) => {
+    setLoadingAction({ dealId: id, type: "unacknowledge" });
+
+    try {
+      const { request: unacknowledgeRequest } = await simulateContract(config, {
+        abi: bloomEscrowAbi,
+        address: bloomEscrowAddress as Address,
+        functionName: "unacknowledgeDeal",
+        args: [id],
+        chainId: currentChain.chainId as TypeChainId,
+      });
+      const hash = await writeContract(config, unacknowledgeRequest);
+
+      const transactionReceipt = await waitForTransactionReceipt(config, {
+        hash,
+      });
+
+      if (transactionReceipt.status === "success") {
+        bloomLog("Deal unacknowledged successfully!");
         setStatusModal({
           open: true,
           success: true,
@@ -260,7 +300,7 @@ export default function MyDealsPage() {
   };
 
   const openConfirm = (
-    type: "cancel" | "release" | "acknowledge" | "unacknowledge" | null,
+    type: DealAction,
     dealId: number
   ) => {
     setConfirmAction({ type, dealId });
@@ -286,14 +326,14 @@ export default function MyDealsPage() {
 
         <div className="w-full lg:px-10 gap-6">
           {/* Right Panel */}
-          <div className="space-y-6 mx-auto">
+          <div className="space-y-6">
             {/* Main Tabs */}
-            <div className="flex space-x-2 items-center justify-center">
+            <div className="w-full flex justify-center space-x-2 ">
               {["Created Deals", "Deals for Me"].map((tab) => (
                 <Button
                   key={tab}
                   onClick={() => setActiveMainTab(tab as any)}
-                  className={`px-6 ${
+                  className={`px-6 w-4/12 ${
                     activeMainTab === tab
                       ? "bg-emerald-600 hover:bg-emerald-700"
                       : "bg-slate-800 hover:bg-slate-700 text-white/70"
@@ -354,6 +394,7 @@ export default function MyDealsPage() {
                     onUnacknowledge={() =>
                       openConfirm("unacknowledge", deal.id)
                     }
+                    onDispute={() => openConfirm("dispute", deal.id)}
                     loadingAction={loadingAction}
                   />
                 ))}
@@ -380,7 +421,7 @@ export default function MyDealsPage() {
                     await acknowledgeDeal(dealId);
                   }
                   if (confirmAction?.type === "unacknowledge") {
-                    await handleUnacknowledge(dealId);
+                    await unacknowledgeDeal(dealId);
                   }
                   // setShowConfirm(false);
                 }}

@@ -1,363 +1,369 @@
 "use client";
 
-import React, { Fragment, useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Badge } from "@/components/ui/badge";
-import {
-  Loader2,
-  ShieldCheck,
-  Lock,
-  Wallet,
-  Coins,
-  FileText,
-  Check,
-  ChevronDown,
-} from "lucide-react";
-
-import useDefi from "@/hooks/useDefi";
+import { Info, ChevronDown, ChevronUp, Coins, Loader2 } from "lucide-react";
+import WalletCard from "@/components/escrow/WalletCard";
+import Header from "@/components/Header";
 import { useAccount } from "wagmi";
-import { bloomLog } from "@/lib/utils";
-import { Address, isAddress } from "viem";
-import { ChangeEvent } from "react";
-import { Listbox, Transition } from "@headlessui/react";
-import Image from "next/image";
-import {
-  bloomEscrowAbi,
-  erc20Abi,
-  getChainConfig,
-  IMAGES,
-  TOKEN_META,
-} from "@/constants";
-import { Token } from "@/types";
-import { config } from "@/lib/wagmi";
+import useDefi from "@/hooks/useDefi";
+import { Token, TypeChainId, WalletToken } from "@/types";
+import { Address, erc20Abi, formatUnits, parseUnits } from "viem";
+import { useModal } from "@/providers/ModalProvider"; // make sure path correct
+import { bloomLog, inCurrencyFormat } from "@/lib/utils";
 import {
   simulateContract,
-  waitForTransactionReceipt,
   writeContract,
+  waitForTransactionReceipt,
 } from "@wagmi/core";
-import StatusModal from "@/components/escrow/StatusModal";
-import { parseUnits } from "viem";
-import { MAX_PERCENT } from "@/constants";
+import { config } from "@/lib/wagmi";
+import { getChainConfig, jurorManagerAbi } from "@/constants";
 
-function formatWithCommas(value: string) {
-  if (!value) return "";
-  const parts = value.split(".");
-  parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ",");
-  return parts.join(".");
-}
-
-type TypeChainId = 1 | 11155111;
-
-export default function EscrowPage() {
-  const { allSupportedTokens, loadAllSupportedTokens } = useDefi();
+export default function RegisterJuror() {
+  const { juror, loadJuror } = useDefi();
   const { address: signerAddress } = useAccount();
-  const escrowFeePercentage = 100; // 1% fee
+  const [stakeAmount, setStakeAmount] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [showRules, setShowRules] = useState(true);
+  const { userWalletTokens } = useDefi();
+  const { openModal, closeModal } = useModal();
+  const [registerText, setRegisterText] = useState("Register as Juror");
 
   const currentChain = getChainConfig("sepolia");
-  const bloomEscrowAddress = currentChain.bloomEscrowAddress as Address;
+  const jurorManagerAddress = currentChain.jurorManagerAddress as Address;
 
-  const [escrowFee, setEscrowFee] = useState(0);
-  const [totalFee, setTotalFee] = useState(0);
+  // bloomLog("Juror: ", juror);
 
   useEffect(() => {
-    const setUpTokens = async () => {
-      await loadAllSupportedTokens();
+    const getJuror = async () => {
+      if (signerAddress) {
+        await loadJuror(signerAddress);
+      }
     };
-    setUpTokens();
-  }, []);
+    getJuror();
+  }, [signerAddress]);
 
-  // bloomLog("All Supported Tokens: ", allSupportedTokens);
-
-  const [loadingDeals, setLoadingDeals] = useState(false);
-  const [modalOpen, setModalOpen] = useState(false);
-  const [statusModalOpen, setStatusModalOpen] = useState(false);
-  const [statusType, setStatusType] = useState<"success" | "failure">(
-    "success"
+  const bloomToken = userWalletTokens?.find(
+    (token: WalletToken) => token.symbol === "BLM"
   );
-  const [buttonMessage, setButtonMessage] = useState("Create Deal");
 
-  const [errors, setErrors] = useState<{
-    recipient?: string;
-    amount?: string;
-    description?: string;
-  }>({});
+  const bloomBalance = bloomToken?.balance
+    ? parseFloat(formatUnits(bloomToken.balance, 18))
+    : 0;
 
-  // This state stores the deal temporarily for confirmation
-  const [pendingDeal, setPendingDeal] = useState({
-    recipient: "",
-    amount: "",
-    token: "",
-    description: "",
-  });
+  // Check if stake is valid
+  const isStakeValid = () => {
+    const amount = Number(stakeAmount);
+    if (isNaN(amount)) return false;
+    if (amount <= 0) return false;
+    if (amount > bloomBalance) return false;
+    return true;
+  };
 
+  const isFormValid = signerAddress?.trim() !== "" && isStakeValid();
+
+  // Handle input change with max auto-populate
+  const handleStakeAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    let value = e.target.value;
+
+    // Allow only numbers with optional decimal
+    if (!/^\d*\.?\d*$/.test(value)) return;
+
+    // Prevent leading zeros like "00" but allow "0."
+    if (value.startsWith("00")) return;
+
+    const numericValue = parseFloat(value);
+
+    // If value >= balance, auto-set max
+    if (!isNaN(numericValue) && numericValue >= bloomBalance) {
+      setStakeAmount(String(bloomBalance));
+      return;
+    }
+
+    setStakeAmount(value);
+  };
+
+  // Approve BLM tokens for staking
   const approveByTransaction = async (
     amountToApprove: bigint,
     token: Token
-  ) => {};
-
-  const confirmCreateDeal = async () => {
-    setLoadingDeals(true);
-    setButtonMessage("Creating Deal ...");
-
-    // THe logic here;
-  };
-
-  const invalidForm = () => {
-    return (
-      !form.recipient ||
-      !form.amount ||
-      !form.token ||
-      !form.description ||
-      Object.keys(errors).length > 0
-    );
-  };
-
-  const [form, setForm] = useState({
-    recipient: "",
-    amount: "",
-    token: "",
-    description: "",
-  });
-
-  const handleChange = (
-    e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
   ) => {
-    const { name, value } = e.target;
+    setRegisterText("Approving...");
+    try {
+      const { request: approveRequest } = await simulateContract(config, {
+        abi: erc20Abi,
+        address: bloomToken?.address as Address,
+        functionName: "approve",
+        args: [jurorManagerAddress, amountToApprove],
+        chainId: currentChain.chainId as TypeChainId,
+      });
 
-    let newErrors = { ...errors };
-    let newForm = { ...form, [name]: value };
+      const hash = await writeContract(config, approveRequest);
+      const receipt = await waitForTransactionReceipt(config, { hash });
 
-    if (name === "recipient") {
-      if (value && !isAddress(value.trim())) {
-        newErrors.recipient = "Invalid wallet address";
-      } else {
-        delete newErrors.recipient;
+      if (receipt.status === "success") {
+        bloomLog("Approval successful");
+        setRegisterText("Registering as Juror...");
+        return true;
       }
+
+      return false;
+    } catch (error) {
+      bloomLog("Approval Error: ", error);
+      setRegisterText("Register as Juror");
+      setLoading(false);
+      return false;
     }
+  };
 
-    if (name === "amount") {
-      // Remove commas and invalid chars
-      const raw = value.replace(/,/g, "").replace(/[^0-9.]/g, "");
-      // bloomLog("Raw amount:", raw);
-      const escrowFee = (escrowFeePercentage * Number(raw)) / MAX_PERCENT;
+  // Register juror on-chain
+  const registerJurorTransaction = async (validatedAmount: bigint) => {
+    const { request: registerRequest } = await simulateContract(config, {
+      abi: jurorManagerAbi,
+      address: jurorManagerAddress as Address,
+      functionName: "registerJuror",
+      args: [validatedAmount],
+      chainId: currentChain.chainId as TypeChainId,
+    });
 
-      setEscrowFee(escrowFee);
-      setTotalFee(escrowFee + Number(raw));
+    const hash = await writeContract(config, registerRequest);
+    const receipt = await waitForTransactionReceipt(config, { hash });
 
-      // Prevent more than one decimal point
-      const validRaw = raw.split(".").length > 2 ? raw.slice(0, -1) : raw;
+    return receipt.status === "success";
+  };
 
-      // Format display with commas
-      const formatted = formatWithCommas(validRaw);
+  // Open confirmation modal before registering
+  const handleRegisterClick = () => {
+    openModal({
+      type: "confirm",
+      title: "Confirm Registration",
+      description: (
+        <div className="space-y-2 text-[13px]">
+          <p>
+            You are about to stake{" "}
+            <span className="font-bold">{stakeAmount} BLM</span>. Once staked,
+            tokens will be locked for a cooldown period.
+          </p>
+        </div>
+      ),
+      confirmText: "Yes, Register",
+      cancelText: "Cancel",
+      onConfirm: async () => {
+        closeModal(); // Close confirmation modal immediately
+        setLoading(true);
 
-      newForm.amount = formatted;
+        try {
+          const validatedAmount = parseUnits(stakeAmount, 18);
 
-      if (!validRaw || isNaN(Number(validRaw)) || Number(validRaw) <= 0) {
-        newErrors.amount = "Enter a valid amount";
-      } else {
-        delete newErrors.amount;
-      }
-    }
+          // Step 1: Approve token
+          const approvalSuccess = await approveByTransaction(
+            validatedAmount,
+            bloomToken!
+          );
+          if (!approvalSuccess) {
+            return openModal({
+              type: "error",
+              title: "Registration Failed",
+              description: (
+                <div className="space-y-2 text-[13px]">
+                  <p>Token approval failed, please try again.</p>
+                </div>
+              ),
+              confirmText: "Close",
+            });
+          }
 
-    setErrors(newErrors);
-    setForm(newForm);
+          // Step 2: Register juror
+          const registrationSuccess = await registerJurorTransaction(
+            validatedAmount
+          );
+          if (!registrationSuccess) {
+            return openModal({
+              type: "error",
+              title: "Registration Failed",
+              description: (
+                <div className="space-y-2 text-[13px]">
+                  <p>Registration failed, please try again.</p>
+                </div>
+              ),
+              confirmText: "Close",
+            });
+          }
+
+          // Step 3: Success modal
+          openModal({
+            type: "success",
+            title: "Registration Successful",
+            description: (
+              <div className="space-y-2 text-[13px]">
+                <p>
+                  You successfully registered as a juror with{" "}
+                  <span className="font-bold">{stakeAmount} BLM</span>.
+                </p>
+              </div>
+            ),
+            confirmText: "Close",
+          });
+
+          setStakeAmount("");
+        } catch (err: any) {
+          bloomLog("Unexpected Error: ", err);
+
+          // Display error nicely
+          const errorMessage =
+            err?.message || "Something went wrong, please try again.";
+
+          openModal({
+            type: "error",
+            title: "Registration Failed",
+            description: (
+              <div className="space-y-2 text-[13px]">
+                <p>{errorMessage}</p>
+                <p className="text-white/60 text-sm">
+                  If the problem persists, try refreshing or contacting support.
+                </p>
+              </div>
+            ),
+            confirmText: "Close",
+          });
+        } finally {
+          setLoading(false);
+          setRegisterText("Register as Juror");
+        }
+      },
+    });
   };
 
   return (
     <>
+      <Header />
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-950 to-black text-white p-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Left Panel */}
+        <div className="lg:col-span-1 space-y-6">
+          <WalletCard />
+
+          {/* Staked Info Card */}
+          <Card className="bg-gradient-to-br from-slate-900/95 via-slate-800/80 to-slate-900 border border-emerald-500/30 shadow-lg hover:shadow-emerald-500/50 transition-transform transform hover:-translate-y-1 p-4">
+            <CardContent className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-medium text-emerald-400 flex items-center gap-2">
+                  <Coins className="w-5 h-5 text-cyan-400" />
+                  Your Staked BLM
+                </h3>
+                <Button
+                  // as="a"
+                  // href="https://example.com/purchase-blm"
+                  // target="_blank"
+                  className="bg-cyan-800 hover:bg-cyan-900 text-sm"
+                >
+                  Purchase BLM
+                </Button>
+              </div>
+
+              {juror?.stakeAmount && (
+                <div className="text-white text-2xl font-bold">
+                  {inCurrencyFormat(
+                    formatUnits(juror.stakeAmount, 18).toString()
+                  )}{" "}
+                  BLM
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+
         {/* Right Panel */}
         <div className="lg:col-span-2 space-y-6">
-          <Card className="bg-slate-900/95 border border-emerald-500/30 shadow-lg w-full max-w-4xl">
-            <CardContent className="space-y-6">
-              {/* Create Deal Form */}
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-white mb-1">
-                    Recipient Address
-                  </label>
-                  <Input
-                    name="recipient"
-                    placeholder="0xA1b2...3c4D"
-                    value={form.recipient}
-                    onChange={handleChange}
-                    className="bg-slate-800 border border-slate-700 placeholder:text-white/50 text-white"
-                  />
-                  {errors.recipient && (
-                    <p className="text-red-400 text-xs mt-1">
-                      {errors.recipient}
-                    </p>
-                  )}
-                </div>
+          <Card className="bg-slate-900/95 border border-emerald-500/30 shadow-lg py-0">
+            <CardContent className="p-6 space-y-4">
+              <h2 className="text-2xl font-bold text-emerald-400 mb-5">
+                Register as a Juror
+              </h2>
 
-                <div className="flex space-x-2">
-                  <div className="flex-1">
+              {juror?.jurorAddress ? (
+                <div className="bg-slate-800/70 border border-emerald-500/30 rounded-xl p-6 flex flex-col lg:flex-row items-center justify-between gap-6">
+                  {/* Left side: Info */}
+                  <div className="flex-1 space-y-2">
+                    <h3 className="text-xl font-semibold text-white/90">
+                      You are already a juror
+                    </h3>
+
+                    <p className="text-white/70 mt-3 text-sm">
+                      Stake more tokens to increase your score and improve your
+                      chances of selection.
+                    </p>
+                  </div>
+
+                  {/* Right side: Actions */}
+                  <div className="flex flex-col sm:flex-row gap-3">
+                    <Button
+                      asChild
+                      className="bg-emerald-600 hover:bg-emerald-700 text-white"
+                    >
+                      <a href="/juror">Go to Profile</a>
+                    </Button>
+
+                    <Button
+                      asChild
+                      className="bg-cyan-600 hover:bg-cyan-700 text-white"
+                    >
+                      <a href="/juror">Stake More BLM</a>
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-5">
+                  {/* Signer Address Input */}
+                  <div>
                     <label className="block text-sm font-medium text-white mb-1">
-                      Amount
+                      Signer Address
                     </label>
                     <Input
-                      name="amount"
-                      placeholder="100"
-                      value={form.amount}
-                      onChange={handleChange}
+                      placeholder="Enter your wallet address"
+                      value={signerAddress || ""}
                       className="bg-slate-800 border border-slate-700 placeholder:text-white/50 text-white"
+                      disabled
                     />
-                    {errors.amount && (
-                      <p className="text-red-400 text-xs mt-1">
-                        {errors.amount}
-                      </p>
-                    )}
                   </div>
-                  <div className="w-32">
-                    <label className="block text-sm font-medium text-white mb-1">
-                      Token
-                    </label>
-                    <Listbox
-                      value={form.token}
-                      onChange={(value) => setForm({ ...form, token: value })}
-                    >
-                      <div className="relative">
-                        <Listbox.Button className="relative w-full cursor-pointer rounded bg-slate-800 border border-slate-700 py-2 pl-3 pr-10 text-left text-white focus:outline-none">
-                          <span className="flex items-center gap-2">
-                            {form.token ? (
-                              <>
-                                <Image
-                                  src={IMAGES[form.token]}
-                                  alt={form.token}
-                                  width={20}
-                                  height={20}
-                                />
-                                {form.token}
-                              </>
-                            ) : (
-                              "Select"
-                            )}
-                          </span>
-                          <span className="absolute inset-y-0 right-0 flex items-center pr-2">
-                            <ChevronDown className="h-4 w-4 text-gray-400" />
-                          </span>
-                        </Listbox.Button>
-                        <Transition
-                          as={Fragment}
-                          leave="transition ease-in duration-100"
-                          leaveFrom="opacity-100"
-                          leaveTo="opacity-0"
+
+                  {/* Stake Input with Max Button */}
+                  <div className="flex items-center gap-2">
+                    <div className="flex-1">
+                      <label className="block text-sm font-medium text-white mb-1">
+                        Amount to Stake (BLM)
+                      </label>
+                      <div className="flex items-center gap-2">
+                        <Input
+                          placeholder="Enter BLM amount"
+                          value={stakeAmount}
+                          onChange={handleStakeAmountChange}
+                          className="bg-slate-800 border border-slate-700 placeholder:text-white/50 text-white flex-1"
+                        />
+                        <Button
+                          type="button"
+                          onClick={() => setStakeAmount(String(bloomBalance))}
+                          className="bg-slate-700 hover:bg-slate-600 text-sm px-3"
                         >
-                          <Listbox.Options className="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded bg-slate-800 border border-slate-700 text-white shadow-lg">
-                            {allSupportedTokens?.map(
-                              (token: Token, index: number) => (
-                                <Listbox.Option
-                                  key={index}
-                                  value={
-                                    token.name == "WETH" ? "ETH" : token.name
-                                  }
-                                  className={({ active }) =>
-                                    `relative cursor-pointer select-none py-2 pl-8 pr-4 ${
-                                      active
-                                        ? "bg-slate-700 text-white"
-                                        : "text-gray-300"
-                                    }`
-                                  }
-                                >
-                                  {({ selected }) => (
-                                    <>
-                                      <div className="flex items-center gap-2">
-                                        <Image
-                                          src={
-                                            token.name == "WETH"
-                                              ? IMAGES.ETH
-                                              : token.image
-                                          }
-                                          alt={
-                                            token.name == "WETH"
-                                              ? "ETH"
-                                              : token.name
-                                          }
-                                          width={20}
-                                          height={20}
-                                        />
-                                        {token.name == "WETH"
-                                          ? "ETH"
-                                          : token.name}
-                                      </div>
-                                      {selected && (
-                                        <span className="absolute inset-y-0 left-0 flex items-center pl-2 text-emerald-400">
-                                          <Check className="h-4 w-4" />
-                                        </span>
-                                      )}
-                                    </>
-                                  )}
-                                </Listbox.Option>
-                              )
-                            )}
-                          </Listbox.Options>
-                        </Transition>
+                          Max
+                        </Button>
                       </div>
-                    </Listbox>
+                    </div>
                   </div>
+
+                  {/* Register Button */}
+                  <Button
+                    onClick={handleRegisterClick}
+                    disabled={loading || !isFormValid}
+                    className="bg-emerald-600 hover:bg-emerald-700 w-full flex space-x-2"
+                  >
+                    {loading && <Loader2 className="w-4 h-4 animate-spin" />}
+                    {registerText}
+                  </Button>
                 </div>
+              )}
 
-                <div className="relative">
-                  <label className="block text-sm font-medium text-white mb-1">
-                    Deal Description
-                  </label>
-                  <Textarea
-                    name="description"
-                    placeholder="Leave a description"
-                    value={form.description}
-                    onChange={handleChange}
-                    maxLength={100}
-                    className="bg-slate-800 border border-slate-700 placeholder:text-white/50 text-white pr-12"
-                  />
-                  {/* Character counter */}
-                  <span className="absolute bottom-2 right-2 text-xs text-white/50">
-                    {form.description.length}/100
-                  </span>
-                </div>
-
-                {/* Escrow Fee and Total Fee */}
-                <div className="space-y-2">
-                  <div className="text-sm text-white/70">
-                    Escrow Fee ({escrowFeePercentage / 100}%):{" "}
-                    <span className="text-emerald-400">
-                      {form.amount ? escrowFee.toFixed(2) : "0"}{" "}
-                      {form.token || ""}
-                    </span>
-                  </div>
-                  <div className="text-sm text-white/70">
-                    Total Fee:{" "}
-                    <span className="text-emerald-400">
-                      {form.amount
-                        ? (
-                            escrowFee + Number(form.amount.replace(/,/g, ""))
-                          ).toFixed(2)
-                        : "0"}{" "}
-                      {form.token || ""}
-                    </span>
-                  </div>
-                </div>
-
-                <Button>abcd</Button>
-
-                {/* Modal */}
-                <ConfirmationModal
-                
-                />
-
-                <StatusModal
-                  isOpen={statusModalOpen}
-                  onClose={() => setStatusModalOpen(false)}
-                  status={statusType}
-                  message={
-                    statusType == "success"
-                      ? `You created a deal of ${pendingDeal.amount} ${pendingDeal.token}`
-                      : `Unable to create deal. Please check your wallet and try again.`
-                  }
-                />
-              </div>
             </CardContent>
           </Card>
         </div>

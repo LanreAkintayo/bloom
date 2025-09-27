@@ -1,11 +1,13 @@
 import React, { useReducer } from "react";
 import { Address } from "viem";
-import { Token, WalletToken } from "@/types";
+import { Juror, Token, WalletToken } from "@/types";
 import DefiContext from "./defi-context";
 import {
   bloomEscrowAbi,
+  disputeStorageAbi,
   erc20Abi,
   IMAGES,
+  jurorManagerAbi,
   SUPPORTED_CHAIN_ID,
   supportedTokens,
   TOKEN_META,
@@ -23,6 +25,7 @@ const defaultDefiState = {
   allSupportedTokens: null,
   recipientDeals: null,
   creatorDeals: null,
+  juror: null,
 };
 
 const defiReducer = (
@@ -33,6 +36,7 @@ const defiReducer = (
     allSupportedTokens?: Token[];
     recipientDeals?: any[];
     creatorDeals?: any[];
+    juror?: Juror;
   }
 ) => {
   if (action.type === "USER_WALLET_TOKENS") {
@@ -57,6 +61,12 @@ const defiReducer = (
     return {
       ...state,
       creatorDeals: action.creatorDeals,
+    };
+  }
+  if (action.type === "JUROR") {
+    return {
+      ...state,
+      juror: action.juror,
     };
   }
 
@@ -316,15 +326,53 @@ const DefiProvider = (props: any) => {
     }
   };
 
+  const loadJurorHandler = async (
+    signerAddress: Address
+  ): Promise<Juror | null> => {
+    try {
+      const chainId = SUPPORTED_CHAIN_ID as ChainIdType;
+      const disputeStorageAddress =
+        currentChain.disputeStorageAddress as Address;
+
+      // Step 1: get all deal IDs for this creator
+      const juror = (await readContract(config, {
+        abi: disputeStorageAbi,
+        address: disputeStorageAddress,
+        functionName: "getJuror",
+        args: [signerAddress],
+        chainId,
+      })) as Juror;
+
+      // bloomLog("Juror: ", juror);
+
+      // Step 3: dispatch to state
+      dispatchDefiAction({
+        type: "JUROR",
+        juror,
+      });
+
+      return juror;
+    } catch (error) {
+      console.error("Failed to load juror:", error);
+      dispatchDefiAction({
+        type: "JUROR",
+        juror: undefined,
+      });
+      return null;
+    }
+  };
+
   const defiContext = {
     userWalletTokens: defiState.userWalletTokens,
     allSupportedTokens: defiState.allSupportedTokens,
     recipientDeals: defiState.recipientDeals,
     creatorDeals: defiState.creatorDeals,
+    juror: defiState.juror,
     loadUserWalletTokens: loadUserWalletTokensHandler,
     loadAllSupportedTokens: loadAllSupportedTokensHandler,
     loadRecipientDeals: loadRecipientDealsHandler,
     loadCreatorDeals: loadCreatorDealsHandler,
+    loadJuror: loadJurorHandler,
   };
 
   return (

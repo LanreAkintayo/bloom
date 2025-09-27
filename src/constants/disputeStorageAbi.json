@@ -1,0 +1,2028 @@
+[
+    {
+      "type": "constructor",
+      "inputs": [
+        {
+          "name": "_bloomEscrow",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "_feeController",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "_bloomTokenAddress",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "_wrappedNative",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "MAX_PERCENT",
+      "inputs": [],
+      "outputs": [{ "name": "", "type": "uint256", "internalType": "uint256" }],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "WAD",
+      "inputs": [],
+      "outputs": [{ "name": "", "type": "uint256", "internalType": "uint256" }],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "activeJurorAddresses",
+      "inputs": [{ "name": "", "type": "uint256", "internalType": "uint256" }],
+      "outputs": [{ "name": "", "type": "address", "internalType": "address" }],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "allDisputeVotes",
+      "inputs": [
+        { "name": "disputeId", "type": "uint256", "internalType": "uint256" },
+        { "name": "", "type": "uint256", "internalType": "uint256" }
+      ],
+      "outputs": [
+        {
+          "name": "jurorAddress",
+          "type": "address",
+          "internalType": "address"
+        },
+        { "name": "disputeId", "type": "uint256", "internalType": "uint256" },
+        { "name": "dealId", "type": "uint256", "internalType": "uint256" },
+        { "name": "support", "type": "address", "internalType": "address" }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "allDisputes",
+      "inputs": [{ "name": "", "type": "uint256", "internalType": "uint256" }],
+      "outputs": [{ "name": "", "type": "uint256", "internalType": "uint256" }],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "allJurorAddresses",
+      "inputs": [{ "name": "", "type": "uint256", "internalType": "uint256" }],
+      "outputs": [{ "name": "", "type": "address", "internalType": "address" }],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "appealCounts",
+      "inputs": [
+        { "name": "disputeId", "type": "uint256", "internalType": "uint256" }
+      ],
+      "outputs": [{ "name": "", "type": "uint256", "internalType": "uint256" }],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "appealDuration",
+      "inputs": [],
+      "outputs": [{ "name": "", "type": "uint256", "internalType": "uint256" }],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "appealThreshold",
+      "inputs": [],
+      "outputs": [{ "name": "", "type": "uint256", "internalType": "uint256" }],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "appealToDispute",
+      "inputs": [
+        { "name": "appealId", "type": "uint256", "internalType": "uint256" }
+      ],
+      "outputs": [
+        { "name": "disputeId", "type": "uint256", "internalType": "uint256" }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "balanceMaxScore",
+      "inputs": [
+        {
+          "name": "_jurorAddress",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "basePercentage",
+      "inputs": [],
+      "outputs": [{ "name": "", "type": "uint256", "internalType": "uint256" }],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "bloomEscrow",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "contract IBloomEscrow"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "bloomToken",
+      "inputs": [],
+      "outputs": [
+        { "name": "", "type": "address", "internalType": "contract IERC20" }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "callbackGasLimit",
+      "inputs": [],
+      "outputs": [{ "name": "", "type": "uint32", "internalType": "uint32" }],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "changeCallbackGasLimit",
+      "inputs": [
+        {
+          "name": "_callbackGasLimit",
+          "type": "uint32",
+          "internalType": "uint32"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "computeScore",
+      "inputs": [
+        {
+          "name": "_stakeAmount",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        { "name": "_reputation", "type": "uint256", "internalType": "uint256" }
+      ],
+      "outputs": [{ "name": "", "type": "uint256", "internalType": "uint256" }],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "cooldownDuration",
+      "inputs": [],
+      "outputs": [{ "name": "", "type": "uint256", "internalType": "uint256" }],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "dealEvidences",
+      "inputs": [
+        { "name": "dealId", "type": "uint256", "internalType": "uint256" },
+        { "name": "", "type": "address", "internalType": "address" },
+        { "name": "", "type": "uint256", "internalType": "uint256" }
+      ],
+      "outputs": [
+        { "name": "dealId", "type": "uint256", "internalType": "uint256" },
+        { "name": "uploader", "type": "address", "internalType": "address" },
+        { "name": "uri", "type": "string", "internalType": "string" },
+        { "name": "timestamp", "type": "uint256", "internalType": "uint256" },
+        {
+          "name": "evidenceType",
+          "type": "uint8",
+          "internalType": "enum TypesLib.EvidenceType"
+        },
+        { "name": "description", "type": "string", "internalType": "string" },
+        { "name": "removed", "type": "bool", "internalType": "bool" }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "dealToDispute",
+      "inputs": [
+        { "name": "dealId", "type": "uint256", "internalType": "uint256" }
+      ],
+      "outputs": [
+        { "name": "disputeId", "type": "uint256", "internalType": "uint256" }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "decrementOngoingDisputeCount",
+      "inputs": [
+        {
+          "name": "_jurorAddress",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "disputeAppeals",
+      "inputs": [
+        { "name": "disputeId", "type": "uint256", "internalType": "uint256" },
+        { "name": "", "type": "uint256", "internalType": "uint256" }
+      ],
+      "outputs": [
+        { "name": "appeals", "type": "uint256", "internalType": "uint256" }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "disputeId",
+      "inputs": [],
+      "outputs": [{ "name": "", "type": "uint256", "internalType": "uint256" }],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "disputeJurors",
+      "inputs": [
+        { "name": "disputeId", "type": "uint256", "internalType": "uint256" },
+        { "name": "", "type": "uint256", "internalType": "uint256" }
+      ],
+      "outputs": [
+        {
+          "name": "jurorAddresses",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "disputeTimer",
+      "inputs": [
+        { "name": "disputeId", "type": "uint256", "internalType": "uint256" }
+      ],
+      "outputs": [
+        { "name": "disputeId", "type": "uint256", "internalType": "uint256" },
+        { "name": "startTime", "type": "uint256", "internalType": "uint256" },
+        {
+          "name": "standardVotingDuration",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "extendDuration",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "disputeToJurorPayment",
+      "inputs": [
+        { "name": "disputeId", "type": "uint256", "internalType": "uint256" },
+        { "name": "jurorAddress", "type": "address", "internalType": "address" }
+      ],
+      "outputs": [
+        { "name": "disputeId", "type": "uint256", "internalType": "uint256" },
+        {
+          "name": "tokenAddress",
+          "type": "address",
+          "internalType": "address"
+        },
+        { "name": "amount", "type": "uint256", "internalType": "uint256" }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "disputeVotes",
+      "inputs": [
+        { "name": "disputeId", "type": "uint256", "internalType": "uint256" },
+        { "name": "jurorAddress", "type": "address", "internalType": "address" }
+      ],
+      "outputs": [
+        {
+          "name": "jurorAddress",
+          "type": "address",
+          "internalType": "address"
+        },
+        { "name": "disputeId", "type": "uint256", "internalType": "uint256" },
+        { "name": "dealId", "type": "uint256", "internalType": "uint256" },
+        { "name": "support", "type": "address", "internalType": "address" }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "disputes",
+      "inputs": [
+        { "name": "disputeId", "type": "uint256", "internalType": "uint256" }
+      ],
+      "outputs": [
+        { "name": "initiator", "type": "address", "internalType": "address" },
+        { "name": "sender", "type": "address", "internalType": "address" },
+        { "name": "receiver", "type": "address", "internalType": "address" },
+        { "name": "winner", "type": "address", "internalType": "address" },
+        { "name": "description", "type": "string", "internalType": "string" },
+        { "name": "dealId", "type": "uint256", "internalType": "uint256" },
+        { "name": "disputeFee", "type": "uint256", "internalType": "uint256" },
+        {
+          "name": "feeTokenAddress",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "experiencedPool",
+      "inputs": [{ "name": "", "type": "uint256", "internalType": "uint256" }],
+      "outputs": [{ "name": "", "type": "address", "internalType": "address" }],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "experiencedPoolIndex",
+      "inputs": [
+        { "name": "jurorAddress", "type": "address", "internalType": "address" }
+      ],
+      "outputs": [{ "name": "", "type": "uint256", "internalType": "uint256" }],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "extendStandardVotingDuration",
+      "inputs": [
+        { "name": "_disputeId", "type": "uint256", "internalType": "uint256" },
+        {
+          "name": "_extendDuration",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "extendVotingDuration",
+      "inputs": [
+        { "name": "_disputeId", "type": "uint256", "internalType": "uint256" },
+        { "name": "_duration", "type": "uint256", "internalType": "uint256" }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "extendingDuration",
+      "inputs": [],
+      "outputs": [{ "name": "", "type": "uint256", "internalType": "uint256" }],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "feeController",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "contract IFeeController"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "getActiveJurorAddresses",
+      "inputs": [],
+      "outputs": [
+        { "name": "", "type": "address[]", "internalType": "address[]" }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "getAllDisputeVotes",
+      "inputs": [
+        { "name": "_disputeId", "type": "uint256", "internalType": "uint256" }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "tuple[]",
+          "internalType": "struct TypesLib.Vote[]",
+          "components": [
+            {
+              "name": "jurorAddress",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "disputeId",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            { "name": "dealId", "type": "uint256", "internalType": "uint256" },
+            { "name": "support", "type": "address", "internalType": "address" }
+          ]
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "getAllDisputes",
+      "inputs": [],
+      "outputs": [
+        { "name": "", "type": "uint256[]", "internalType": "uint256[]" }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "getAllJurorAddresses",
+      "inputs": [],
+      "outputs": [
+        { "name": "", "type": "address[]", "internalType": "address[]" }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "getBloomEscrow",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "contract IBloomEscrow"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "getBloomToken",
+      "inputs": [],
+      "outputs": [
+        { "name": "", "type": "address", "internalType": "contract IERC20" }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "getDealEvidence",
+      "inputs": [
+        { "name": "_dealId", "type": "uint256", "internalType": "uint256" },
+        {
+          "name": "_ownerAddress",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "tuple[]",
+          "internalType": "struct TypesLib.Evidence[]",
+          "components": [
+            { "name": "dealId", "type": "uint256", "internalType": "uint256" },
+            {
+              "name": "uploader",
+              "type": "address",
+              "internalType": "address"
+            },
+            { "name": "uri", "type": "string", "internalType": "string" },
+            {
+              "name": "timestamp",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "evidenceType",
+              "type": "uint8",
+              "internalType": "enum TypesLib.EvidenceType"
+            },
+            {
+              "name": "description",
+              "type": "string",
+              "internalType": "string"
+            },
+            { "name": "removed", "type": "bool", "internalType": "bool" }
+          ]
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "getDispute",
+      "inputs": [
+        { "name": "_disputeId", "type": "uint256", "internalType": "uint256" }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "tuple",
+          "internalType": "struct TypesLib.Dispute",
+          "components": [
+            {
+              "name": "initiator",
+              "type": "address",
+              "internalType": "address"
+            },
+            { "name": "sender", "type": "address", "internalType": "address" },
+            {
+              "name": "receiver",
+              "type": "address",
+              "internalType": "address"
+            },
+            { "name": "winner", "type": "address", "internalType": "address" },
+            {
+              "name": "description",
+              "type": "string",
+              "internalType": "string"
+            },
+            { "name": "dealId", "type": "uint256", "internalType": "uint256" },
+            {
+              "name": "disputeFee",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "feeTokenAddress",
+              "type": "address",
+              "internalType": "address"
+            }
+          ]
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "getDisputeAppeals",
+      "inputs": [
+        { "name": "_disputeId", "type": "uint256", "internalType": "uint256" }
+      ],
+      "outputs": [
+        { "name": "", "type": "uint256[]", "internalType": "uint256[]" }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "getDisputeCandidate",
+      "inputs": [
+        { "name": "_disputeId", "type": "uint256", "internalType": "uint256" },
+        {
+          "name": "_jurorAddress",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "tuple",
+          "internalType": "struct TypesLib.Candidate",
+          "components": [
+            {
+              "name": "disputeId",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "jurorAddress",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "stakeAmount",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "reputation",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            { "name": "score", "type": "uint256", "internalType": "uint256" },
+            { "name": "missed", "type": "bool", "internalType": "bool" }
+          ]
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "getDisputeJurors",
+      "inputs": [
+        { "name": "_disputeId", "type": "uint256", "internalType": "uint256" }
+      ],
+      "outputs": [
+        { "name": "", "type": "address[]", "internalType": "address[]" }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "getDisputeTimer",
+      "inputs": [
+        { "name": "_disputeId", "type": "uint256", "internalType": "uint256" }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "tuple",
+          "internalType": "struct TypesLib.Timer",
+          "components": [
+            {
+              "name": "disputeId",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "startTime",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "standardVotingDuration",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "extendDuration",
+              "type": "uint256",
+              "internalType": "uint256"
+            }
+          ]
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "getDisputeVote",
+      "inputs": [
+        { "name": "_disputeId", "type": "uint256", "internalType": "uint256" },
+        {
+          "name": "_jurorAddress",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "tuple",
+          "internalType": "struct TypesLib.Vote",
+          "components": [
+            {
+              "name": "jurorAddress",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "disputeId",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            { "name": "dealId", "type": "uint256", "internalType": "uint256" },
+            { "name": "support", "type": "address", "internalType": "address" }
+          ]
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "getExperiencedPool",
+      "inputs": [],
+      "outputs": [
+        { "name": "", "type": "address[]", "internalType": "address[]" }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "getFeeController",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "contract IFeeController"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "getJuror",
+      "inputs": [
+        {
+          "name": "_jurorAddress",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "tuple",
+          "internalType": "struct TypesLib.Juror",
+          "components": [
+            {
+              "name": "jurorAddress",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "stakeAmount",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "reputation",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            { "name": "score", "type": "uint256", "internalType": "uint256" },
+            {
+              "name": "missedVotesCount",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "lastWithdrawn",
+              "type": "uint256",
+              "internalType": "uint256"
+            }
+          ]
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "getJurorComposition",
+      "inputs": [
+        { "name": "_disputeId", "type": "uint256", "internalType": "uint256" },
+        { "name": "_appealId", "type": "uint256", "internalType": "uint256" }
+      ],
+      "outputs": [
+        { "name": "expNeeded", "type": "uint256", "internalType": "uint256" },
+        { "name": "newbieNeeded", "type": "uint256", "internalType": "uint256" }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "getJurorDisputeHistory",
+      "inputs": [
+        {
+          "name": "_jurorAddress",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        { "name": "", "type": "uint256[]", "internalType": "uint256[]" }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "getJurorTokenPayment",
+      "inputs": [
+        {
+          "name": "_jurorAddress",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "_tokenAddress",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [{ "name": "", "type": "uint256", "internalType": "uint256" }],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "getNewbiePool",
+      "inputs": [],
+      "outputs": [
+        { "name": "", "type": "address[]", "internalType": "address[]" }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "getOngoingDisputeCount",
+      "inputs": [
+        {
+          "name": "_jurorAddress",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [{ "name": "", "type": "uint256", "internalType": "uint256" }],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "getResiduePayment",
+      "inputs": [
+        { "name": "_disputeId", "type": "uint256", "internalType": "uint256" },
+        {
+          "name": "_tokenAddress",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [{ "name": "", "type": "uint256", "internalType": "uint256" }],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "incrementAppealCount",
+      "inputs": [
+        { "name": "_disputeId", "type": "uint256", "internalType": "uint256" }
+      ],
+      "outputs": [{ "name": "", "type": "uint256", "internalType": "uint256" }],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "incrementDisputeId",
+      "inputs": [],
+      "outputs": [{ "name": "", "type": "uint256", "internalType": "uint256" }],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "incrementOngoingDisputeCount",
+      "inputs": [
+        {
+          "name": "_jurorAddress",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "isDisputeCandidate",
+      "inputs": [
+        { "name": "disputeId", "type": "uint256", "internalType": "uint256" },
+        { "name": "jurorAddress", "type": "address", "internalType": "address" }
+      ],
+      "outputs": [
+        { "name": "disputeId", "type": "uint256", "internalType": "uint256" },
+        {
+          "name": "jurorAddress",
+          "type": "address",
+          "internalType": "address"
+        },
+        { "name": "stakeAmount", "type": "uint256", "internalType": "uint256" },
+        { "name": "reputation", "type": "uint256", "internalType": "uint256" },
+        { "name": "score", "type": "uint256", "internalType": "uint256" },
+        { "name": "missed", "type": "bool", "internalType": "bool" }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "isInActiveJurorAddresses",
+      "inputs": [
+        {
+          "name": "_jurorAddress",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [{ "name": "", "type": "bool", "internalType": "bool" }],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "isJurorActive",
+      "inputs": [
+        { "name": "jurorAddress", "type": "address", "internalType": "address" }
+      ],
+      "outputs": [{ "name": "", "type": "bool", "internalType": "bool" }],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "jurorAddressIndex",
+      "inputs": [
+        { "name": "jurorAddress", "type": "address", "internalType": "address" }
+      ],
+      "outputs": [
+        { "name": "index", "type": "uint256", "internalType": "uint256" }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "jurorDisputeHistory",
+      "inputs": [
+        {
+          "name": "jurorAddress",
+          "type": "address",
+          "internalType": "address"
+        },
+        { "name": "", "type": "uint256", "internalType": "uint256" }
+      ],
+      "outputs": [
+        { "name": "disputeIds", "type": "uint256", "internalType": "uint256" }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "jurorTokenPayments",
+      "inputs": [
+        {
+          "name": "jurorAddress",
+          "type": "address",
+          "internalType": "address"
+        },
+        { "name": "tokenAddress", "type": "address", "internalType": "address" }
+      ],
+      "outputs": [{ "name": "", "type": "uint256", "internalType": "uint256" }],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "jurorTokenPaymentsClaimed",
+      "inputs": [
+        {
+          "name": "jurorAddress",
+          "type": "address",
+          "internalType": "address"
+        },
+        { "name": "tokenAddress", "type": "address", "internalType": "address" }
+      ],
+      "outputs": [{ "name": "", "type": "uint256", "internalType": "uint256" }],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "jurors",
+      "inputs": [
+        { "name": "jurorAddress", "type": "address", "internalType": "address" }
+      ],
+      "outputs": [
+        {
+          "name": "jurorAddress",
+          "type": "address",
+          "internalType": "address"
+        },
+        { "name": "stakeAmount", "type": "uint256", "internalType": "uint256" },
+        { "name": "reputation", "type": "uint256", "internalType": "uint256" },
+        { "name": "score", "type": "uint256", "internalType": "uint256" },
+        {
+          "name": "missedVotesCount",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "lastWithdrawn",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "k",
+      "inputs": [],
+      "outputs": [{ "name": "", "type": "uint256", "internalType": "uint256" }],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "lambda",
+      "inputs": [],
+      "outputs": [{ "name": "", "type": "uint256", "internalType": "uint256" }],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "linkAddress",
+      "inputs": [],
+      "outputs": [{ "name": "", "type": "address", "internalType": "address" }],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "lockedPercentage",
+      "inputs": [],
+      "outputs": [{ "name": "", "type": "uint256", "internalType": "uint256" }],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "maxReputation",
+      "inputs": [],
+      "outputs": [{ "name": "", "type": "uint256", "internalType": "uint256" }],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "maxReputationJuror",
+      "inputs": [],
+      "outputs": [{ "name": "", "type": "address", "internalType": "address" }],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "maxScore",
+      "inputs": [],
+      "outputs": [{ "name": "", "type": "uint256", "internalType": "uint256" }],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "maxScoreJuror",
+      "inputs": [],
+      "outputs": [{ "name": "", "type": "address", "internalType": "address" }],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "maxSlashPercentage",
+      "inputs": [],
+      "outputs": [{ "name": "", "type": "uint256", "internalType": "uint256" }],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "maxStake",
+      "inputs": [],
+      "outputs": [{ "name": "", "type": "uint256", "internalType": "uint256" }],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "maxStakeAmount",
+      "inputs": [],
+      "outputs": [{ "name": "", "type": "uint256", "internalType": "uint256" }],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "maxStakeJuror",
+      "inputs": [],
+      "outputs": [{ "name": "", "type": "address", "internalType": "address" }],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "minStakeAmount",
+      "inputs": [],
+      "outputs": [{ "name": "", "type": "uint256", "internalType": "uint256" }],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "missedVoteThreshold",
+      "inputs": [],
+      "outputs": [{ "name": "", "type": "uint256", "internalType": "uint256" }],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "newbiePool",
+      "inputs": [{ "name": "", "type": "uint256", "internalType": "uint256" }],
+      "outputs": [{ "name": "", "type": "address", "internalType": "address" }],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "newbiePoolIndex",
+      "inputs": [
+        { "name": "jurorAddress", "type": "address", "internalType": "address" }
+      ],
+      "outputs": [{ "name": "", "type": "uint256", "internalType": "uint256" }],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "noVoteK",
+      "inputs": [],
+      "outputs": [{ "name": "", "type": "uint256", "internalType": "uint256" }],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "noVoteSlashPercentage",
+      "inputs": [],
+      "outputs": [{ "name": "", "type": "uint256", "internalType": "uint256" }],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "numWords",
+      "inputs": [],
+      "outputs": [{ "name": "", "type": "uint32", "internalType": "uint32" }],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "ongoingDisputeCount",
+      "inputs": [
+        { "name": "jurorAddress", "type": "address", "internalType": "address" }
+      ],
+      "outputs": [{ "name": "", "type": "uint256", "internalType": "uint256" }],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "ongoingDisputeThreshold",
+      "inputs": [],
+      "outputs": [{ "name": "", "type": "uint256", "internalType": "uint256" }],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "ongoingDisputes",
+      "inputs": [{ "name": "", "type": "uint256", "internalType": "uint256" }],
+      "outputs": [{ "name": "", "type": "bool", "internalType": "bool" }],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "popFromActiveJurorAddresses",
+      "inputs": [
+        {
+          "name": "_jurorAddress",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "pushIntoAllDisputeVotes",
+      "inputs": [
+        { "name": "_disputeId", "type": "uint256", "internalType": "uint256" },
+        {
+          "name": "_vote",
+          "type": "tuple",
+          "internalType": "struct TypesLib.Vote",
+          "components": [
+            {
+              "name": "jurorAddress",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "disputeId",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            { "name": "dealId", "type": "uint256", "internalType": "uint256" },
+            { "name": "support", "type": "address", "internalType": "address" }
+          ]
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "pushIntoAllJurorAddresses",
+      "inputs": [
+        {
+          "name": "_jurorAddress",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "pushIntoDealEvidences",
+      "inputs": [
+        { "name": "_dealId", "type": "uint256", "internalType": "uint256" },
+        {
+          "name": "_ownerAddress",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "_evidence",
+          "type": "tuple",
+          "internalType": "struct TypesLib.Evidence",
+          "components": [
+            { "name": "dealId", "type": "uint256", "internalType": "uint256" },
+            {
+              "name": "uploader",
+              "type": "address",
+              "internalType": "address"
+            },
+            { "name": "uri", "type": "string", "internalType": "string" },
+            {
+              "name": "timestamp",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "evidenceType",
+              "type": "uint8",
+              "internalType": "enum TypesLib.EvidenceType"
+            },
+            {
+              "name": "description",
+              "type": "string",
+              "internalType": "string"
+            },
+            { "name": "removed", "type": "bool", "internalType": "bool" }
+          ]
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "pushIntoDisputeAppeals",
+      "inputs": [
+        { "name": "_disputeId", "type": "uint256", "internalType": "uint256" },
+        { "name": "_appealId", "type": "uint256", "internalType": "uint256" }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "pushIntoDisputeJurors",
+      "inputs": [
+        {
+          "name": "_jurorAddress",
+          "type": "address",
+          "internalType": "address"
+        },
+        { "name": "_disputeId", "type": "uint256", "internalType": "uint256" }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "pushIntoJurorDisputeHistory",
+      "inputs": [
+        {
+          "name": "_jurorAddress",
+          "type": "address",
+          "internalType": "address"
+        },
+        { "name": "_disputeId", "type": "uint256", "internalType": "uint256" }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "pushToActiveJurorAddresses",
+      "inputs": [
+        {
+          "name": "_jurorAddress",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "removeEvidence",
+      "inputs": [
+        {
+          "name": "_evidenceIndex",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        { "name": "_dealId", "type": "uint256", "internalType": "uint256" },
+        {
+          "name": "_ownerAddress",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "requestConfirmations",
+      "inputs": [],
+      "outputs": [{ "name": "", "type": "uint16", "internalType": "uint16" }],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "residuePayments",
+      "inputs": [
+        { "name": "disputeId", "type": "uint256", "internalType": "uint256" },
+        { "name": "tokenAddress", "type": "address", "internalType": "address" }
+      ],
+      "outputs": [{ "name": "", "type": "uint256", "internalType": "uint256" }],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "residuePaymentsClaimed",
+      "inputs": [
+        { "name": "disputeId", "type": "uint256", "internalType": "uint256" },
+        { "name": "tokenAddress", "type": "address", "internalType": "address" }
+      ],
+      "outputs": [{ "name": "", "type": "uint256", "internalType": "uint256" }],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "scoreDirty",
+      "inputs": [],
+      "outputs": [{ "name": "", "type": "bool", "internalType": "bool" }],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "setAppealToDispute",
+      "inputs": [
+        { "name": "_appealId", "type": "uint256", "internalType": "uint256" },
+        { "name": "_disputeId", "type": "uint256", "internalType": "uint256" }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "setDealToDispute",
+      "inputs": [
+        { "name": "_dealId", "type": "uint256", "internalType": "uint256" },
+        { "name": "_disputeId", "type": "uint256", "internalType": "uint256" }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "setDisputes",
+      "inputs": [
+        { "name": "_disputeId", "type": "uint256", "internalType": "uint256" },
+        {
+          "name": "_dispute",
+          "type": "tuple",
+          "internalType": "struct TypesLib.Dispute",
+          "components": [
+            {
+              "name": "initiator",
+              "type": "address",
+              "internalType": "address"
+            },
+            { "name": "sender", "type": "address", "internalType": "address" },
+            {
+              "name": "receiver",
+              "type": "address",
+              "internalType": "address"
+            },
+            { "name": "winner", "type": "address", "internalType": "address" },
+            {
+              "name": "description",
+              "type": "string",
+              "internalType": "string"
+            },
+            { "name": "dealId", "type": "uint256", "internalType": "uint256" },
+            {
+              "name": "disputeFee",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "feeTokenAddress",
+              "type": "address",
+              "internalType": "address"
+            }
+          ]
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "setTieBreakJuror",
+      "inputs": [
+        { "name": "_disputeId", "type": "uint256", "internalType": "uint256" },
+        {
+          "name": "_jurorAddress",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "slashPercentage",
+      "inputs": [],
+      "outputs": [{ "name": "", "type": "uint256", "internalType": "uint256" }],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "thresholdPercent",
+      "inputs": [],
+      "outputs": [{ "name": "", "type": "uint256", "internalType": "uint256" }],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "tieBreakerJuror",
+      "inputs": [
+        { "name": "disputeId", "type": "uint256", "internalType": "uint256" }
+      ],
+      "outputs": [{ "name": "", "type": "address", "internalType": "address" }],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "tieBreakingDuration",
+      "inputs": [],
+      "outputs": [{ "name": "", "type": "uint256", "internalType": "uint256" }],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "totalResidue",
+      "inputs": [
+        { "name": "tokenAddress", "type": "address", "internalType": "address" }
+      ],
+      "outputs": [{ "name": "", "type": "uint256", "internalType": "uint256" }],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "updateAllDisputes",
+      "inputs": [
+        { "name": "_disputeId", "type": "uint256", "internalType": "uint256" }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "updateCandidateMissedStatus",
+      "inputs": [
+        { "name": "_disputeId", "type": "uint256", "internalType": "uint256" },
+        {
+          "name": "_jurorAddress",
+          "type": "address",
+          "internalType": "address"
+        },
+        { "name": "_status", "type": "bool", "internalType": "bool" }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "updateDisputeCandidate",
+      "inputs": [
+        { "name": "_disputeId", "type": "uint256", "internalType": "uint256" },
+        {
+          "name": "_jurorAddress",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "_candidate",
+          "type": "tuple",
+          "internalType": "struct TypesLib.Candidate",
+          "components": [
+            {
+              "name": "disputeId",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "jurorAddress",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "stakeAmount",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "reputation",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            { "name": "score", "type": "uint256", "internalType": "uint256" },
+            { "name": "missed", "type": "bool", "internalType": "bool" }
+          ]
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "updateDisputeJurors",
+      "inputs": [
+        { "name": "_disputeId", "type": "uint256", "internalType": "uint256" },
+        { "name": "_jurors", "type": "address[]", "internalType": "address[]" }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "updateDisputeStatus",
+      "inputs": [
+        { "name": "_disputeId", "type": "uint256", "internalType": "uint256" },
+        { "name": "_status", "type": "bool", "internalType": "bool" }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "updateDisputeTimer",
+      "inputs": [
+        { "name": "_disputeId", "type": "uint256", "internalType": "uint256" },
+        {
+          "name": "_timer",
+          "type": "tuple",
+          "internalType": "struct TypesLib.Timer",
+          "components": [
+            {
+              "name": "disputeId",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "startTime",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "standardVotingDuration",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "extendDuration",
+              "type": "uint256",
+              "internalType": "uint256"
+            }
+          ]
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "updateDisputeToJurorPayment",
+      "inputs": [
+        { "name": "_disputeId", "type": "uint256", "internalType": "uint256" },
+        {
+          "name": "_jurorAddress",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "_paymentType",
+          "type": "tuple",
+          "internalType": "struct TypesLib.PaymentType",
+          "components": [
+            {
+              "name": "disputeId",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "tokenAddress",
+              "type": "address",
+              "internalType": "address"
+            },
+            { "name": "amount", "type": "uint256", "internalType": "uint256" }
+          ]
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "updateDisputeVote",
+      "inputs": [
+        { "name": "_disputeId", "type": "uint256", "internalType": "uint256" },
+        {
+          "name": "_jurorAddress",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "_vote",
+          "type": "tuple",
+          "internalType": "struct TypesLib.Vote",
+          "components": [
+            {
+              "name": "jurorAddress",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "disputeId",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            { "name": "dealId", "type": "uint256", "internalType": "uint256" },
+            { "name": "support", "type": "address", "internalType": "address" }
+          ]
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "updateDisputeWinner",
+      "inputs": [
+        { "name": "_disputeId", "type": "uint256", "internalType": "uint256" },
+        { "name": "_winner", "type": "address", "internalType": "address" }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "updateJuror",
+      "inputs": [
+        {
+          "name": "_jurorAddress",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "_juror",
+          "type": "tuple",
+          "internalType": "struct TypesLib.Juror",
+          "components": [
+            {
+              "name": "jurorAddress",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "stakeAmount",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "reputation",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            { "name": "score", "type": "uint256", "internalType": "uint256" },
+            {
+              "name": "missedVotesCount",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "lastWithdrawn",
+              "type": "uint256",
+              "internalType": "uint256"
+            }
+          ]
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "updateJurorLastWithdrawn",
+      "inputs": [
+        {
+          "name": "_jurorAddress",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "_lastWithdrawn",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "updateJurorMissedVotesCount",
+      "inputs": [
+        {
+          "name": "_jurorAddress",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "_missedVotesCount",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "updateJurorReputation",
+      "inputs": [
+        {
+          "name": "_jurorAddress",
+          "type": "address",
+          "internalType": "address"
+        },
+        { "name": "_reputation", "type": "uint256", "internalType": "uint256" }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "updateJurorScore",
+      "inputs": [
+        {
+          "name": "_jurorAddress",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "updateJurorStakeAmount",
+      "inputs": [
+        {
+          "name": "_jurorAddress",
+          "type": "address",
+          "internalType": "address"
+        },
+        { "name": "_stakeAmount", "type": "uint256", "internalType": "uint256" }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "updateJurorTokenPayments",
+      "inputs": [
+        {
+          "name": "_jurorAddress",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "_tokenAddress",
+          "type": "address",
+          "internalType": "address"
+        },
+        { "name": "_amount", "type": "uint256", "internalType": "uint256" }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "updateJurorTokenPaymentsClaimed",
+      "inputs": [
+        {
+          "name": "_jurorAddress",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "_tokenAddress",
+          "type": "address",
+          "internalType": "address"
+        },
+        { "name": "_amount", "type": "uint256", "internalType": "uint256" }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "updateMaxReputation",
+      "inputs": [
+        { "name": "_reputation", "type": "uint256", "internalType": "uint256" }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "updateMaxStake",
+      "inputs": [
+        { "name": "_amount", "type": "uint256", "internalType": "uint256" }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "updateMaxStakeAmount",
+      "inputs": [
+        {
+          "name": "_maxStakeAmount",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "updateMinStakeAmount",
+      "inputs": [
+        {
+          "name": "_minStakeAmount",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "updateOngoingDisputeCount",
+      "inputs": [
+        {
+          "name": "_jurorAddress",
+          "type": "address",
+          "internalType": "address"
+        },
+        { "name": "_count", "type": "uint256", "internalType": "uint256" }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "updateResiduePayments",
+      "inputs": [
+        { "name": "_disputeId", "type": "uint256", "internalType": "uint256" },
+        {
+          "name": "_tokenAddress",
+          "type": "address",
+          "internalType": "address"
+        },
+        { "name": "_amount", "type": "uint256", "internalType": "uint256" }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "updateTotalResidue",
+      "inputs": [
+        {
+          "name": "_tokenAddress",
+          "type": "address",
+          "internalType": "address"
+        },
+        { "name": "_amount", "type": "uint256", "internalType": "uint256" }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "votingPeriod",
+      "inputs": [],
+      "outputs": [{ "name": "", "type": "uint256", "internalType": "uint256" }],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "wrappedNative",
+      "inputs": [],
+      "outputs": [{ "name": "", "type": "address", "internalType": "address" }],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "wrapperAddress",
+      "inputs": [],
+      "outputs": [{ "name": "", "type": "address", "internalType": "address" }],
+      "stateMutability": "view"
+    },
+    {
+      "type": "event",
+      "name": "MaxStakeAmountUpdated",
+      "inputs": [
+        {
+          "name": "maxStakeAmount",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "type": "event",
+      "name": "MinStakeAmountUpdated",
+      "inputs": [
+        {
+          "name": "minStakeAmount",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "type": "event",
+      "name": "StandardVotingDurationExtended",
+      "inputs": [
+        {
+          "name": "disputeId",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        },
+        {
+          "name": "newDuration",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "type": "error",
+      "name": "DisputeStorage__NotInStandardVotingPeriod",
+      "inputs": []
+    },
+    { "type": "error", "name": "DisputeStorage__ZeroAmount", "inputs": [] }
+  ]
