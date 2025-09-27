@@ -668,24 +668,6 @@ export default function EscrowPage() {
               {/* How It Works Section */}
               <HowItWorks />
 
-              {/* Your Deals */}
-              {/* <div>
-                <h2 className="text-xl font-bold text-cyan-400 mt-4 mb-2">
-                  Your Deals
-                </h2>
-                <div className="space-y-4">
-                  {deals.map((deal) => (
-                    <DealCard
-                      currentUser={"sender"}
-                      key={deal.id}
-                      deal={deal}
-                      onCancel={handleCancelDeal}
-                      onRelease={handleReleaseDeal}
-                      onClaim={handleClaimDeal}
-                    />
-                  ))}
-                </div>
-              </div> */}
             </CardContent>
           </Card>
         </div>

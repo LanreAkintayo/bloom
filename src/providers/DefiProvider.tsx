@@ -176,77 +176,68 @@ const DefiProvider = (props: any) => {
     }
   };
 
-  const loadRecipientDealsHandler = async (
-    signerAddress: string
-  ): Promise<any[]> => {
-    bloomLog("Inside load all recipient deals handler");
-    try {
-      const chainId = SUPPORTED_CHAIN_ID as ChainIdType;
-      const bloomEscrowAddress = currentChain.bloomEscrowAddress as Address;
+ const loadRecipientDealsHandler = async (
+  signerAddress: Address
+): Promise<any[]> => {
+  bloomLog("Inside load all creator deals handler");
 
-      const recipientDealsResults = (await readContract(config, {
-        abi: bloomEscrowAbi,
-        address: bloomEscrowAddress,
-        functionName: "getRecipientDeals",
-        args: [signerAddress],
-        chainId,
-      })) as any;
+  try {
+    const chainId = SUPPORTED_CHAIN_ID as ChainIdType;
+    const bloomEscrowAddress = currentChain.bloomEscrowAddress as Address;
 
-      // Execute all reads
-      bloomLog("Recipient Deals:", recipientDealsResults);
+    // Step 1: get all deal IDs for this creator
+    const recipientDealsId = (await readContract(config, {
+      abi: bloomEscrowAbi,
+      address: bloomEscrowAddress,
+      functionName: "getRecipientDeals",
+      args: [signerAddress],
+      chainId,
+    })) as number[];
 
-      // Rebuild into WalletToken[] symbol, icon.
+    bloomLog("Recipient Deal IDs:", recipientDealsId);
 
-      dispatchDefiAction({
-        type: "RECIPIENT_DEALS",
-        recipientDeals: recipientDealsResults,
-      });
-      return recipientDealsResults;
-    } catch (error) {
-      console.error("Failed to load user wallet tokens:", error);
+    if (!recipientDealsId.length) {
       dispatchDefiAction({
         type: "RECIPIENT_DEALS",
         recipientDeals: [],
       });
       return [];
     }
-  };
 
-  const loadDealsHandler = async (signerAddress: string): Promise<any[]> => {
-    bloomLog("Inside load all deals handler");
-    try {
-      const chainId = SUPPORTED_CHAIN_ID as ChainIdType;
-      const bloomEscrowAddress = currentChain.bloomEscrowAddress as Address;
+    // Step 2: fetch all deals concurrently
+    const recipientDeals = await Promise.all(
+      recipientDealsId.map((_dealId) =>
+        readContract(config, {
+          abi: bloomEscrowAbi,
+          address: bloomEscrowAddress,
+          functionName: "getDeal",
+          args: [_dealId],
+          chainId,
+        })
+      )
+    );
 
-      const recipientDealsResults = (await readContract(config, {
-        abi: bloomEscrowAbi,
-        address: bloomEscrowAddress,
-        functionName: "getRecipientDeals",
-        args: [signerAddress],
-        chainId,
-      })) as any;
+    bloomLog("All recipient deals:", recipientDeals);
 
-      // Execute all reads
-      bloomLog("Recipient Deals:", recipientDealsResults);
+    // Step 3: dispatch to state
+    dispatchDefiAction({
+      type: "RECIPIENT_DEALS",
+      recipientDeals,
+    });
 
-      // Rebuild into WalletToken[] symbol, icon.
+    return recipientDeals;
+  } catch (error) {
+    console.error("Failed to load recipient deals:", error);
+    dispatchDefiAction({
+      type: "RECIPIENT_DEALS",
+      recipientDeals: [],
+    });
+    return [];
+  }
+};
 
-      dispatchDefiAction({
-        type: "RECIPIENT_DEALS",
-        recipientDeals: recipientDealsResults,
-      });
-      return recipientDealsResults;
-    } catch (error) {
-      console.error("Failed to load user wallet tokens:", error);
-      dispatchDefiAction({
-        type: "RECIPIENT_DEALS",
-        recipientDeals: [],
-      });
-      return [];
-    }
-  };
 const loadCreatorDealsHandler = async (
-  signerAddress: string
+  signerAddress: Address
 ): Promise<any[]> => {
   bloomLog("Inside load all creator deals handler");
 

@@ -16,7 +16,18 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { bloomEscrowAbi } from "@/constants";
-import {bloomLog} from "@/lib/utils";
+import { bloomLog } from "@/lib/utils";
+import { Status, TypeChainId } from "@/types";
+import ConfirmActionModal from "@/components/deals/ConfirmationActionModal";
+import StatusModal from "@/components/deals/StatusModal";
+import { Address } from "viem";
+import { config } from "@/lib/wagmi";
+import {
+  simulateContract,
+  waitForTransactionReceipt,
+  writeContract,
+} from "@wagmi/core";
+import { getChainConfig } from "@/constants";
 
 interface Deal {
   id: number;
@@ -29,15 +40,39 @@ interface Deal {
 }
 
 export default function MyDealsPage() {
-  const { creatorDeals, recipientDeals, loadCreatorDeals, loadRecipientDeals, loadAllSupportedTokens } =
-    useDefi();
+  const {
+    creatorDeals,
+    recipientDeals,
+    loadCreatorDeals,
+    loadRecipientDeals,
+    loadAllSupportedTokens,
+  } = useDefi();
   const { address: signerAddress } = useAccount();
+  const currentChain = getChainConfig("sepolia");
+  const bloomEscrowAddress = currentChain.bloomEscrowAddress as Address;
+
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [confirmAction, setConfirmAction] = useState<null | {
+    type: "cancel" | "release" | "acknowledge" | "unacknowledge" | null;
+    dealId: number;
+  }>(null);
+
+  const [loadingAction, setLoadingAction] = useState<{
+    dealId: number | null;
+    type: "cancel" | "release" | "acknowledge" | "unacknowledge" | null;
+  }>({ dealId: null, type: null });
+
+  const [statusModal, setStatusModal] = useState<{
+    open: boolean;
+    success: boolean;
+    message: string;
+  }>({ open: false, success: false, message: "" });
 
   useEffect(() => {
     const fetchDeals = async () => {
       if (!signerAddress) return;
       await loadCreatorDeals(signerAddress);
-    //   await loadRecipientDeals(signerAddress);
+      await loadRecipientDeals(signerAddress);
     };
     fetchDeals();
   }, [signerAddress]);
@@ -45,7 +80,6 @@ export default function MyDealsPage() {
   useEffect(() => {
     loadAllSupportedTokens();
   }, []);
-
 
   bloomLog("Creator Deals: ", creatorDeals);
 
@@ -56,55 +90,15 @@ export default function MyDealsPage() {
     "All" | "Pending" | "Acknowledged" | "Completed" | "Disputed" | "Finalized"
   >("All");
 
-  const dummyCreatedDeals: Deal[] = [
-    {
-      id: 1,
-      receiver: "0xA1b2...3c4D",
-      sender: "You",
-      amount: "500 USDC",
-      status: "Pending",
-      description: "Website design",
-      createdAt: "2025-09-15",
-    },
-    {
-      id: 2,
-      receiver: "0xE5f6...7g8H",
-      sender: "You",
-      amount: "300 DAI",
-      status: "Acknowledged",
-      description: "Logo + Branding",
-      createdAt: "2025-09-10",
-    },
-  ];
-
-  const dummyReceivedDeals: Deal[] = [
-    {
-      id: 3,
-      receiver: "You",
-      sender: "0xQ7R8...S9T0",
-      amount: "900 USDC",
-      status: "Completed",
-      description: "Marketing campaign",
-      createdAt: "2025-09-07",
-    },
-    {
-      id: 4,
-      receiver: "You",
-      sender: "0xM1N2...O3P4",
-      amount: "250 ETH",
-      status: "Disputed",
-      description: "Audit & security",
-      createdAt: "2025-09-02",
-    },
-  ];
-
   const dealsToDisplay =
-    activeMainTab === "Created Deals" ? dummyCreatedDeals : dummyReceivedDeals;
+    activeMainTab === "Created Deals" ? creatorDeals : recipientDeals;
 
   const filteredDeals =
     activeStatusFilter === "All"
       ? dealsToDisplay
-      : dealsToDisplay.filter((deal) => deal.status === activeStatusFilter);
+      : dealsToDisplay.filter(
+          (deal) => Status[deal.status] === activeStatusFilter
+        );
 
   const statusOptions = [
     "All",
@@ -114,10 +108,67 @@ export default function MyDealsPage() {
     "Disputed",
     "Finalized",
   ] as const;
+  const sleep = (ms: number) =>
+    new Promise((resolve) => setTimeout(resolve, ms));
 
   const handleCancel = (id: number) => console.log("Cancel deal", id);
   const handleRelease = (id: number) => console.log("Release deal", id);
   const handleClaim = (id: number) => console.log("Claim deal", id);
+  const handleAcknowledge = async (id: number) => {
+    setConfirmAction({ type: "acknowledge", dealId: id });
+    setShowConfirm(true);
+  };
+  const acknowledgeDeal = async (id: number) => {
+    setLoadingAction({ dealId: id, type: "acknowledge" });
+
+    try {
+      const { request: createDealRequest } = await simulateContract(config, {
+        abi: bloomEscrowAbi,
+        address: bloomEscrowAddress as Address,
+        functionName: "acknowledgeDeal",
+        args: [id],
+        chainId: currentChain.chainId as TypeChainId,
+      });
+      const hash = await writeContract(config, createDealRequest);
+
+      const transactionReceipt = await waitForTransactionReceipt(config, {
+        hash,
+      });
+
+      if (transactionReceipt.status === "success") {
+        bloomLog("Deal acknowledged successfully!");
+        setStatusModal({
+          open: true,
+          success: true,
+          message: "Action completed successfully!",
+        });
+        setLoadingAction({ dealId: null, type: null });
+        await loadRecipientDeals(signerAddress!);
+        await loadCreatorDeals(signerAddress!);
+      }
+    } catch (err) {
+      setStatusModal({
+        open: true,
+        success: false,
+        message: "Transaction failed. Try again.",
+      });
+    } finally {
+      setLoadingAction({ dealId: null, type: null });
+    }
+  };
+
+  const handleUnacknowledge = (id: number) => {
+    setConfirmAction({ type: "unacknowledge", dealId: id });
+    setShowConfirm(true);
+  };
+
+  const openConfirm = (
+    type: "cancel" | "release" | "acknowledge" | "unacknowledge" | null,
+    dealId: number
+  ) => {
+    setConfirmAction({ type, dealId });
+    setShowConfirm(true);
+  };
 
   return (
     <>
@@ -153,8 +204,8 @@ export default function MyDealsPage() {
                 >
                   {tab} (
                   {tab === "Created Deals"
-                    ? dummyCreatedDeals.length
-                    : dummyReceivedDeals.length}
+                    ? creatorDeals?.length
+                    : recipientDeals?.length}
                   )
                 </Button>
               ))}
@@ -183,22 +234,65 @@ export default function MyDealsPage() {
             </div>
 
             {/* Deals List */}
-            {filteredDeals.length === 0 && (
-              <p className="text-white/70 text-center mt-10">
-                No deals found in this category
-              </p>
+            {/* Deals List */}
+            {filteredDeals?.length === 0 ? (
+              <div className="text-center text-white/70 mt-10">
+                <Info className="w-6 h-6 mx-auto mb-2" />
+                {activeMainTab === "Created Deals"
+                  ? "No created deals found"
+                  : "No deals created for you"}
+              </div>
+            ) : (
+              filteredDeals?.map((deal, id) => (
+                <DealCard
+                  key={id}
+                  deal={deal}
+                  currentUser={
+                    activeMainTab === "Created Deals" ? "sender" : "receiver"
+                  }
+                  onCancel={() => openConfirm("cancel", deal.id)}
+                  onRelease={() => openConfirm("release", deal.id)}
+                  onClaim={() => openConfirm("release", deal.id)}
+                  onAcknowledge={() => openConfirm("acknowledge", deal.id)}
+                  onUnacknowledge={() => openConfirm("unacknowledge", deal.id)}
+                  loadingAction={loadingAction}
+                />
+              ))
             )}
 
-            {creatorDeals?.length > 0 && creatorDeals.map((deal, id) => (
-              <DealCard
-                key={id}
-                deal={deal}
-                currentUser="sender"
-                onCancel={handleCancel}
-                onRelease={handleRelease}
-                onClaim={handleClaim}
+            {showConfirm && (
+              <ConfirmActionModal
+                open={showConfirm}
+                action={confirmAction?.type ?? null}
+                onCancel={() => setShowConfirm(false)}
+                onConfirm={async () => {
+                  setShowConfirm(false);
+                  const dealId = confirmAction?.dealId;
+                  if (!dealId) return;
+
+                  if (confirmAction?.type === "cancel") {
+                    await handleCancel(dealId);
+                  }
+                  if (confirmAction?.type === "release") {
+                    await handleRelease(dealId);
+                  }
+                  if (confirmAction?.type === "acknowledge") {
+                    await acknowledgeDeal(dealId);
+                  }
+                  if (confirmAction?.type === "unacknowledge") {
+                    await handleUnacknowledge(dealId);
+                  }
+                  // setShowConfirm(false);
+                }}
               />
-            ))}
+            )}
+
+            <StatusModal
+              open={statusModal.open}
+              success={statusModal.success}
+              message={statusModal.message}
+              onClose={() => setStatusModal({ ...statusModal, open: false })}
+            />
           </div>
         </div>
       </div>

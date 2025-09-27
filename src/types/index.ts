@@ -23,3 +23,5 @@ export enum Status {
   Canceled 
 
 }
+
+export type TypeChainId = 11155111;

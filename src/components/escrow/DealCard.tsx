@@ -3,12 +3,13 @@
 import React from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Wallet, Coins, FileText } from "lucide-react";
+import { Wallet, Coins, FileText, Loader2 } from "lucide-react";
 import { bloomLog, formatAddress } from "@/lib/utils";
 import { Token, Status } from "@/types";
 import useDefi from "@/hooks/useDefi";
 import { formatUnits } from "viem";
 import Image from "next/image";
+import { useAccount } from "wagmi";
 
 interface Deal {
   id: number;
@@ -27,6 +28,13 @@ interface DealCardProps {
   onCancel: (id: number) => void;
   onRelease: (id: number) => void;
   onClaim: (id: number) => void;
+  onAcknowledge: (id: number) => void;
+  onUnacknowledge: (id: number) => void;
+  loadingAction: {
+    dealId: number | null;
+    type: "cancel" | "release" | "acknowledge" | "unacknowledge" | null;
+  };
+
 }
 
 export default function DealCard({
@@ -35,8 +43,12 @@ export default function DealCard({
   onCancel,
   onRelease,
   onClaim,
+  onAcknowledge,
+  onUnacknowledge,
+  loadingAction,
 }: DealCardProps) {
   const { allSupportedTokens } = useDefi();
+  const { address: signerAddress } = useAccount();
 
   const token: Token = allSupportedTokens?.find(
     (t: Token) => t.address === deal.tokenAddress
@@ -105,8 +117,7 @@ export default function DealCard({
                 height={20}
               />
               <span>
-                {formatUnits(deal.amount, token.decimal)}{" "}
-                {token.symbol}
+                {formatUnits(deal.amount, token.decimal)} {token.symbol}
               </span>
             </div>
           )}
@@ -151,7 +162,7 @@ export default function DealCard({
 
         {/* Actions based on status and role */}
         <div className="flex space-x-2 mt-4">
-          {currentStatus === "Pending" && deal.sender === "sender" && (
+          {currentStatus === "Pending" && signerAddress === deal.sender && (
             <Button
               onClick={() => onCancel(deal.id)}
               className="bg-red-800 hover:bg-red-700"
@@ -159,23 +170,36 @@ export default function DealCard({
               Cancel Deal
             </Button>
           )}
-          {currentStatus === "Acknowledged" && currentUser === "sender" && (
+          {currentStatus === "Acknowledged" &&
+            signerAddress === deal.sender && (
+              <Button
+                onClick={() => onRelease(deal.id)}
+                className="bg-emerald-600 hover:bg-emerald-700"
+              >
+                Release Now
+              </Button>
+            )}
+          {currentStatus === "Pending" && signerAddress === deal.receiver && (
             <Button
-              onClick={() => onRelease(deal.id)}
-              className="bg-emerald-600 hover:bg-emerald-700"
+              onClick={() => onAcknowledge(deal.id)}
+              className="bg-cyan-600 hover:bg-cyan-700 flex items-center justify-center gap-2"
+              disabled={
+                loadingAction.dealId === deal.id &&
+                loadingAction.type === "acknowledge"
+              }
             >
-              Release Now
+              {loadingAction.dealId === deal.id &&
+              loadingAction.type === "acknowledge" ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Acknowledging...
+                </>
+              ) : (
+                "Acknowledge"
+              )}
             </Button>
           )}
-          {currentStatus === "Completed" && currentUser === "receiver" && (
-            <Button
-              onClick={() => onClaim(deal.id)}
-              className="bg-cyan-600 hover:bg-cyan-700"
-            >
-              Claim
-            </Button>
-          )}
-          {currentStatus === "Disputed" && currentUser === "sender" && (
+          {currentStatus === "Disputed" && signerAddress === deal.receiver && (
             <Button
               onClick={() => onCancel(deal.id)}
               className="bg-red-800 hover:bg-red-700"

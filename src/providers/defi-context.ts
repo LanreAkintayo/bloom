@@ -1,5 +1,6 @@
 import { Token, WalletToken } from "@/types";
 import React from "react";
+import { Address } from "viem";
 
 
 interface IDefiContext {
@@ -9,8 +10,8 @@ interface IDefiContext {
   creatorDeals: any[];
   loadUserWalletTokens: (signerAddress: string) => Promise<WalletToken[]>;
   loadAllSupportedTokens: () => Promise<Token[]>;
-  loadRecipientDeals: (signerAddress: string) => Promise<any[]>;
-  loadCreatorDeals: (signerAddress: string) => Promise<any[]>;
+  loadRecipientDeals: (signerAddress: Address) => Promise<any[]>;
+  loadCreatorDeals: (signerAddress: Address) => Promise<any[]>;
 }
 
 const DefiContext = React.createContext<IDefiContext>({
