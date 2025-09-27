@@ -34,7 +34,6 @@ interface DealCardProps {
     dealId: number | null;
     type: "cancel" | "release" | "acknowledge" | "unacknowledge" | null;
   };
-
 }
 
 export default function DealCard({
@@ -174,9 +173,21 @@ export default function DealCard({
             signerAddress === deal.sender && (
               <Button
                 onClick={() => onRelease(deal.id)}
-                className="bg-emerald-600 hover:bg-emerald-700"
+                className="bg-cyan-600 hover:bg-cyan-700 flex items-center justify-center gap-2"
+                disabled={
+                  loadingAction.dealId === deal.id &&
+                  loadingAction.type === "release"
+                }
               >
-                Release Now
+                {loadingAction.dealId === deal.id &&
+                loadingAction.type === "release" ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Releasing...
+                  </>
+                ) : (
+                  "Release Now"
+                )}
               </Button>
             )}
           {currentStatus === "Pending" && signerAddress === deal.receiver && (

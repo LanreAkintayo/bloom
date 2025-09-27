@@ -25,7 +25,6 @@ const defaultDefiState = {
   creatorDeals: null,
 };
 
-
 const defiReducer = (
   state: any,
   action: {
@@ -76,7 +75,7 @@ const DefiProvider = (props: any) => {
   ): Promise<WalletToken[]> => {
     // bloomLog("Inside loadUserWalletTokensHandler");
     try {
-      const chainId = SUPPORTED_CHAIN_ID as ChainIdType
+      const chainId = SUPPORTED_CHAIN_ID as ChainIdType;
       const supportedTokens = currentChain.supportedTokens;
 
       const tokens = supportedTokens.flatMap((_token) => {
@@ -124,7 +123,7 @@ const DefiProvider = (props: any) => {
   const loadAllSupportedTokensHandler = async (): Promise<Token[]> => {
     bloomLog("Inside loadAllSupportedTokensHandler");
     try {
-      const chainId = SUPPORTED_CHAIN_ID as ChainIdType
+      const chainId = SUPPORTED_CHAIN_ID as ChainIdType;
       const supportedTokens = currentChain.supportedTokens;
       const bloomEscrowAddress = currentChain.bloomEscrowAddress as Address;
 
@@ -176,126 +175,125 @@ const DefiProvider = (props: any) => {
     }
   };
 
- const loadRecipientDealsHandler = async (
-  signerAddress: Address
-): Promise<any[]> => {
-  bloomLog("Inside load all creator deals handler");
+  const loadRecipientDealsHandler = async (
+    signerAddress: Address
+  ): Promise<any[]> => {
+    bloomLog("Inside load all creator deals handler");
 
-  try {
-    const chainId = SUPPORTED_CHAIN_ID as ChainIdType;
-    const bloomEscrowAddress = currentChain.bloomEscrowAddress as Address;
+    try {
+      const chainId = SUPPORTED_CHAIN_ID as ChainIdType;
+      const bloomEscrowAddress = currentChain.bloomEscrowAddress as Address;
 
-    // Step 1: get all deal IDs for this creator
-    const recipientDealsId = (await readContract(config, {
-      abi: bloomEscrowAbi,
-      address: bloomEscrowAddress,
-      functionName: "getRecipientDeals",
-      args: [signerAddress],
-      chainId,
-    })) as number[];
+      // Step 1: get all deal IDs for this creator
+      const recipientDealsId = (await readContract(config, {
+        abi: bloomEscrowAbi,
+        address: bloomEscrowAddress,
+        functionName: "getRecipientDeals",
+        args: [signerAddress],
+        chainId,
+      })) as number[];
 
-    bloomLog("Recipient Deal IDs:", recipientDealsId);
+      bloomLog("Recipient Deal IDs:", recipientDealsId);
 
-    if (!recipientDealsId.length) {
+      if (!recipientDealsId.length) {
+        dispatchDefiAction({
+          type: "RECIPIENT_DEALS",
+          recipientDeals: [],
+        });
+        return [];
+      }
+
+      // Step 2: fetch all deals concurrently
+      const recipientDeals = await Promise.all(
+        recipientDealsId.map((_dealId) =>
+          readContract(config, {
+            abi: bloomEscrowAbi,
+            address: bloomEscrowAddress,
+            functionName: "getDeal",
+            args: [_dealId],
+            chainId,
+          })
+        )
+      );
+
+      bloomLog("All recipient deals:", recipientDeals);
+
+      // Step 3: dispatch to state
+      dispatchDefiAction({
+        type: "RECIPIENT_DEALS",
+        recipientDeals,
+      });
+
+      return recipientDeals;
+    } catch (error) {
+      console.error("Failed to load recipient deals:", error);
       dispatchDefiAction({
         type: "RECIPIENT_DEALS",
         recipientDeals: [],
       });
       return [];
     }
+  };
 
-    // Step 2: fetch all deals concurrently
-    const recipientDeals = await Promise.all(
-      recipientDealsId.map((_dealId) =>
-        readContract(config, {
-          abi: bloomEscrowAbi,
-          address: bloomEscrowAddress,
-          functionName: "getDeal",
-          args: [_dealId],
-          chainId,
-        })
-      )
-    );
+  const loadCreatorDealsHandler = async (
+    signerAddress: Address
+  ): Promise<any[]> => {
+    bloomLog("Inside load all creator deals handler");
 
-    bloomLog("All recipient deals:", recipientDeals);
+    try {
+      const chainId = SUPPORTED_CHAIN_ID as ChainIdType;
+      const bloomEscrowAddress = currentChain.bloomEscrowAddress as Address;
 
-    // Step 3: dispatch to state
-    dispatchDefiAction({
-      type: "RECIPIENT_DEALS",
-      recipientDeals,
-    });
+      // Step 1: get all deal IDs for this creator
+      const creatorDealIds = (await readContract(config, {
+        abi: bloomEscrowAbi,
+        address: bloomEscrowAddress,
+        functionName: "getCreatorDeals",
+        args: [signerAddress],
+        chainId,
+      })) as number[];
 
-    return recipientDeals;
-  } catch (error) {
-    console.error("Failed to load recipient deals:", error);
-    dispatchDefiAction({
-      type: "RECIPIENT_DEALS",
-      recipientDeals: [],
-    });
-    return [];
-  }
-};
+      bloomLog("Creator Deal IDs:", creatorDealIds);
 
-const loadCreatorDealsHandler = async (
-  signerAddress: Address
-): Promise<any[]> => {
-  bloomLog("Inside load all creator deals handler");
+      if (!creatorDealIds.length) {
+        dispatchDefiAction({
+          type: "CREATOR_DEALS",
+          creatorDeals: [],
+        });
+        return [];
+      }
 
-  try {
-    const chainId = SUPPORTED_CHAIN_ID as ChainIdType;
-    const bloomEscrowAddress = currentChain.bloomEscrowAddress as Address;
+      // Step 2: fetch all deals concurrently
+      const creatorDeals = await Promise.all(
+        creatorDealIds.map((_dealId) =>
+          readContract(config, {
+            abi: bloomEscrowAbi,
+            address: bloomEscrowAddress,
+            functionName: "getDeal",
+            args: [_dealId],
+            chainId,
+          })
+        )
+      );
 
-    // Step 1: get all deal IDs for this creator
-    const creatorDealIds = (await readContract(config, {
-      abi: bloomEscrowAbi,
-      address: bloomEscrowAddress,
-      functionName: "getCreatorDeals",
-      args: [signerAddress],
-      chainId,
-    })) as number[];
+      bloomLog("All creator deals:", creatorDeals);
 
-    bloomLog("Creator Deal IDs:", creatorDealIds);
+      // Step 3: dispatch to state
+      dispatchDefiAction({
+        type: "CREATOR_DEALS",
+        creatorDeals,
+      });
 
-    if (!creatorDealIds.length) {
+      return creatorDeals;
+    } catch (error) {
+      console.error("Failed to load creator deals:", error);
       dispatchDefiAction({
         type: "CREATOR_DEALS",
         creatorDeals: [],
       });
       return [];
     }
-
-    // Step 2: fetch all deals concurrently
-    const creatorDeals = await Promise.all(
-      creatorDealIds.map((_dealId) =>
-        readContract(config, {
-          abi: bloomEscrowAbi,
-          address: bloomEscrowAddress,
-          functionName: "getDeal",
-          args: [_dealId],
-          chainId,
-        })
-      )
-    );
-
-    bloomLog("All creator deals:", creatorDeals);
-
-    // Step 3: dispatch to state
-    dispatchDefiAction({
-      type: "CREATOR_DEALS",
-      creatorDeals,
-    });
-
-    return creatorDeals;
-  } catch (error) {
-    console.error("Failed to load creator deals:", error);
-    dispatchDefiAction({
-      type: "CREATOR_DEALS",
-      creatorDeals: [],
-    });
-    return [];
-  }
-};
-
+  };
 
   const defiContext = {
     userWalletTokens: defiState.userWalletTokens,

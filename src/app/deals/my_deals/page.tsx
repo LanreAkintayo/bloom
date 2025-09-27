@@ -157,6 +157,44 @@ export default function MyDealsPage() {
     }
   };
 
+  const release = async (id: number) => {
+    setLoadingAction({ dealId: id, type: "release" });
+
+    try {
+      const { request: releaseRequest } = await simulateContract(config, {
+        abi: bloomEscrowAbi,
+        address: bloomEscrowAddress as Address,
+        functionName: "finalizeDeal",
+        args: [id],
+        chainId: currentChain.chainId as TypeChainId,
+      });
+      const hash = await writeContract(config, releaseRequest);
+
+      const transactionReceipt = await waitForTransactionReceipt(config, {
+        hash,
+      });
+
+      if (transactionReceipt.status === "success") {
+        bloomLog("Funds have been released successfully!");
+        setStatusModal({
+          open: true,
+          success: true,
+          message: "Funds have been released successfully!",
+        });
+        setLoadingAction({ dealId: null, type: null });
+        await loadRecipientDeals(signerAddress!);
+        await loadCreatorDeals(signerAddress!);
+      }
+    } catch (err) {
+      setStatusModal({
+        open: true,
+        success: false,
+        message: "Transaction failed. Try again.",
+      });
+    } finally {
+      setLoadingAction({ dealId: null, type: null });
+    }
+  };
   const handleUnacknowledge = (id: number) => {
     setConfirmAction({ type: "unacknowledge", dealId: id });
     setShowConfirm(true);
@@ -274,7 +312,7 @@ export default function MyDealsPage() {
                     await handleCancel(dealId);
                   }
                   if (confirmAction?.type === "release") {
-                    await handleRelease(dealId);
+                    await release(dealId);
                   }
                   if (confirmAction?.type === "acknowledge") {
                     await acknowledgeDeal(dealId);
