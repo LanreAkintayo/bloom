@@ -23,7 +23,7 @@ export const IMAGES: Record<string, string> = {
   WMATIC: "https://app.aave.com/icons/tokens/wmatic.svg",
   MATIC: "https://app.aave.com/icons/tokens/matic.svg",
   BLM: "/bloom.svg",
-  USDC: "/usdc.svg"
+  USDC: "/usdc.svg",
 };
 
 export interface ChainConfig {
@@ -49,7 +49,7 @@ export const CHAINS: Record<string, ChainConfig> = {
       USDC: "0x94a9D9AC8a22534E3FaCa9F4e7F2E2cf85d5E4C8",
       DAI: "0xFF34B3d4Aee8ddCd6F9AFFFB6Fe49bD371b8a357",
       LINK: "0x779877A7B0D9E8603169DdbD7836e478b4624789",
-      BLM: "0xc4E523B7d26186eC7f1dCBed8a64DaBDE795C98E"
+      BLM: "0xc4E523B7d26186eC7f1dCBed8a64DaBDE795C98E",
     },
     priceFeeds: {
       ethUsd: "0x694AA1769357215DE4FAC081bf1f309aDC325306",
@@ -60,20 +60,23 @@ export const CHAINS: Record<string, ChainConfig> = {
     jurorManagerAddress: "0xEd665981988b6Ad8Dfb05Dd380EEcD44C933e415",
     wrappedNativeTokenAddress: "0xC558DBdd856501FCd9aaF1E62eae57A9F0629a3c",
     bloomEscrowAddress: "0x4e3074E3c1eDC632eD0755658FBdD46F29830D01",
-    disputeStorageAddress: "0x7a889E02F4831D29E076B31Ac180219c12B3c2D9"
+    disputeStorageAddress: "0x7a889E02F4831D29E076B31Ac180219c12B3c2D9",
   },
 };
 
-
-
-export const TOKEN_META: Record<number, Record<string, { name: string; symbol: string; decimal: number }>> = {
-  1: { // Ethereum mainnet
+export const TOKEN_META: Record<
+  number,
+  Record<string, { name: string; symbol: string; decimal: number }>
+> = {
+  1: {
+    // Ethereum mainnet
     DAI: { name: "Dai Stablecoin", symbol: "DAI", decimal: 18 },
     USDC: { name: "USD Coin", symbol: "USDC", decimal: 6 },
     WETH: { name: "Wrapped Ether", symbol: "WETH", decimal: 18 },
     BLM: { name: "Bloom", symbol: "BLM", decimal: 18 },
   },
-  11155111: { // Sepolia
+  11155111: {
+    // Sepolia
     DAI: { name: "DAI", symbol: "DAI", decimal: 18 },
     USDC: { name: "USDC", symbol: "USDC", decimal: 6 },
     WETH: { name: "WETH", symbol: "WETH", decimal: 18 },
@@ -82,6 +85,40 @@ export const TOKEN_META: Record<number, Record<string, { name: string; symbol: s
   },
 };
 
+
+// Build address → token symbol dynamically from CHAINS
+export const buildAddressToToken = (
+  chains: Record<string, ChainConfig>
+): Record<number, Record<string, string>> => {
+  const result: Record<number, Record<string, string>> = {};
+  for (const key in chains) {
+    const chain = chains[key];
+    result[chain.chainId] = {};
+    for (const [symbol, address] of Object.entries(chain.tokenAddresses)) {
+      result[chain.chainId][address.toLowerCase()] = symbol;
+    }
+  }
+  return result;
+};
+
+export const addressToToken = buildAddressToToken(CHAINS);
+
+// export const addressToToken: Record<number, Record<string, string>> = {
+//   1: {
+//     "0xC558DBdd856501FCd9aaF1E62eae57A9F0629a3c": "WETH",
+//     "0x94a9D9AC8a22534E3FaCa9F4e7F2E2cf85d5E4C8": "USDC",
+//     "0xFF34B3d4Aee8ddCd6F9AFFFB6Fe49bD371b8a357": "DAI",
+//     "0x779877A7B0D9E8603169DdbD7836e478b4624789": "LINK",
+//     "0xc4E523B7d26186eC7f1dCBed8a64DaBDE795C98E": "BLM",
+//   },
+//   11155111: {
+//     "0xC558DBdd856501FCd9aaF1E62eae57A9F0629a3c": "WETH",
+//     "0x94a9D9AC8a22534E3FaCa9F4e7F2E2cf85d5E4C8": "USDC",
+//     "0xFF34B3d4Aee8ddCd6F9AFFFB6Fe49bD371b8a357": "DAI",
+//     "0x779877A7B0D9E8603169DdbD7836e478b4624789": "LINK",
+//     "0xc4E523B7d26186eC7f1dCBed8a64DaBDE795C98E": "BLM",
+//   },
+// };
 
 // Pick the chain dynamically
 export const getChainConfig = (chainName: string) => {

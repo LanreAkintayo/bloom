@@ -40,3 +40,13 @@ export type Juror = {
   missedVotesCount: bigint;
   lastWithdrawn: bigint;
 };
+
+export type Deal = {
+  sender: string;
+  receiver: string;
+  amount: bigint;
+  description: string;
+  tokenAddress: string; // Address(0) for native currency
+  status: Status;
+  id: bigint;
+};

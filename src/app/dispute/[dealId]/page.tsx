@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState, use } from "react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -8,80 +8,47 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Clock, FileText, Scale, BookOpen } from "lucide-react";
 import Header from "@/components/Header";
-import { bloomLog, formatAddress, inCurrencyFormat } from "@/lib/utils";
-import {
-  SUPPORTED_CHAIN_ID,
-  TOKEN_META,
-  addressToToken,
-  bloomEscrowAbi,
-  getChainConfig,
-} from "@/constants";
-import { readContract } from "@wagmi/core";
-import { Address, formatUnits } from "viem";
-import { config } from "@/lib/wagmi";
-import { Deal, Token, TypeChainId } from "@/types";
+import { bloomLog } from "@/lib/utils";
 
+// Dummy deal data
+const dummyDeals: Record<string, any> = {
+  "123": {
+    sender: "0xA1B2...C3D4",
+    recipient: "0xE5F6...G7H8",
+    token: "USDC",
+    amount: 500,
+    arbitrationFee: 20,
+  },
+  "456": {
+    sender: "0xI9J0...K1L2",
+    recipient: "0xM3N4...O5P6",
+    token: "ETH",
+    amount: 1.2,
+    arbitrationFee: 0.05,
+  },
+};
+interface Props {
+  params: Promise<{ dealId: string }>
+}
 
-export default function DisputePage() {
-  const currentChain = getChainConfig("sepolia");
-
-  const chainId = SUPPORTED_CHAIN_ID as TypeChainId;
-
+export default function DisputePage({ params }: Props) {
   const [dealId, setDealId] = useState("");
   const [dealData, setDealData] = useState<any>(null);
   const [description, setDescription] = useState("");
   const [approved, setApproved] = useState(false);
   const [approving, setApproving] = useState(false);
   const [submitted, setSubmitted] = useState(false);
-  const [deal, setDeal] = useState<Deal | null>(null);
-  const [token, setToken] = useState<any>(null);
+  const { dealId:newOne } = use(params);
 
-  const getDeal = async (dealId: string) => {
-    try {
-      const bloomEscrowAddress = currentChain.bloomEscrowAddress as Address;
+  bloomLog("New one: ", newOne)
 
-      const deal = (await readContract(config, {
-        abi: bloomEscrowAbi,
-        address: bloomEscrowAddress,
-        functionName: "getDeal",
-        args: [dealId],
-        chainId,
-      })) as Deal;
-
-      return deal;
-    } catch (error) {
-      console.error("Failed to load deal :", error);
-
-      return null;
-    }
-  };
-
-  useEffect(() => {
-    if (!dealId) return;
-
-    const fetchDealAndToken = async () => {
-      bloomLog("Getting deal");
-      const deal = await getDeal(dealId);
-      bloomLog("Deal: ", deal);
-      setDeal(deal);
-
-      if (deal) {
-        const tokenSymbol =
-          addressToToken[chainId]?.[deal.tokenAddress.toLowerCase()];
-        if (tokenSymbol) {
-          const token = TOKEN_META[chainId][tokenSymbol];
-          bloomLog("Token: ", token);
-          setToken(token);
-        } else {
-          bloomLog("Token not found for address: ", deal.tokenAddress);
-        }
-      }
-    };
-
-    fetchDealAndToken();
-  }, [dealId, chainId]);
   const handleDealChange = (id: string) => {
     setDealId(id);
+    if (dummyDeals[id]) {
+      setDealData(dummyDeals[id]);
+    } else {
+      setDealData(null);
+    }
   };
 
   const handleApprove = async () => {
@@ -97,8 +64,6 @@ export default function DisputePage() {
     setSubmitted(true);
     setTimeout(() => setSubmitted(false), 2000);
   };
-
-  bloomLog("Description: ",  description);
 
   return (
     <>
@@ -157,46 +122,30 @@ export default function DisputePage() {
                   <h3 className="text-white text-lg font-semibold mb-4">
                     Deal Details
                   </h3>
-
-                  {deal && token && (
-                    <div className="space-y-3">
-                      <div className="flex justify-between items-center">
-                        <span className="text-slate-400 text-sm">Deal ID</span>
-                        <span className="text-white font-medium">
-                          {deal.id}
-                        </span>
-                      </div>
-                      <div className="flex justify-between items-center">
-                        <span className="text-slate-400 text-sm">Sender</span>
-                        <span className="text-white font-medium">
-                          {formatAddress(deal.sender)}
-                        </span>
-                      </div>
-                      <div className="flex justify-between items-center">
-                        <span className="text-slate-400 text-sm">Receiver</span>
-                        <span className="text-white font-medium">
-                          {formatAddress(deal.receiver)}
-                        </span>
-                      </div>
-                      <div className="flex justify-between items-center">
-                        <span className="text-slate-400 text-sm">Amount</span>
-                        <span className="text-white font-medium">
-                          {inCurrencyFormat(
-                            formatUnits(deal.amount, token.decimal)
-                          )}{" "}
-                          {token.symbol}
-                        </span>
-                      </div>
-                      <div className="flex justify-between items-center">
+                  <div className="space-y-3">
+                    {[
+                      { label: "Sender", value: dealData?.sender },
+                      { label: "Recipient", value: dealData?.recipient },
+                      { label: "Token", value: dealData?.token },
+                      { label: "Amount", value: dealData?.amount },
+                      {
+                        label: "Arbitration Fee",
+                        value: dealData?.arbitrationFee,
+                      },
+                    ].map((item, i) => (
+                      <div
+                        key={i}
+                        className="flex justify-between items-center"
+                      >
                         <span className="text-slate-400 text-sm">
-                          Arbitration Fee
+                          {item.label}
                         </span>
                         <span className="text-white font-medium">
-                          {"10 USDC"}
+                          {item.value ?? <div className=""> --</div>}
                         </span>
                       </div>
-                    </div>
-                  )}
+                    ))}
+                  </div>
                 </div>
 
                 {/* Dispute Description */}
