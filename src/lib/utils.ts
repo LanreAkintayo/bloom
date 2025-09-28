@@ -14,7 +14,7 @@ export const formatAddress = (address: string) => {
 export const inCurrencyFormat = (amount: string) => {
   const pretty = new Intl.NumberFormat("en-US", {
     minimumFractionDigits: 0,
-    maximumFractionDigits: 2,
+    maximumFractionDigits: 5,
   }).format(Number(amount));
 
   return pretty;

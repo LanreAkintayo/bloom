@@ -11,7 +11,7 @@ import { useAccount } from "wagmi";
 import useDefi from "@/hooks/useDefi";
 import { Token, TypeChainId, WalletToken } from "@/types";
 import { Address, erc20Abi, formatUnits, parseUnits } from "viem";
-import { useModal } from "@/providers/ModalProvider"; // make sure path correct
+import { useModal } from "@/providers/ModalProvider";
 import { bloomLog, inCurrencyFormat } from "@/lib/utils";
 import {
   simulateContract,
@@ -20,21 +20,26 @@ import {
 } from "@wagmi/core";
 import { config } from "@/lib/wagmi";
 import { getChainConfig, jurorManagerAbi } from "@/constants";
+import dynamic from "next/dynamic";
 
-export default function RegisterJuror() {
-  const { juror, loadJuror } = useDefi();
+const RegisterJuror = () => {
+  const { juror, loadJuror, userWalletTokens, loadUserWalletTokens } = useDefi();
   const { address: signerAddress } = useAccount();
   const [stakeAmount, setStakeAmount] = useState("");
   const [loading, setLoading] = useState(false);
   const [showRules, setShowRules] = useState(true);
-  const { userWalletTokens } = useDefi();
   const { openModal, closeModal } = useModal();
   const [registerText, setRegisterText] = useState("Register as Juror");
+  const [mounted, setMounted] = useState(false); // 🔑
 
   const currentChain = getChainConfig("sepolia");
   const jurorManagerAddress = currentChain.jurorManagerAddress as Address;
 
-  // bloomLog("Juror: ", juror);
+  useEffect(() => {
+    if (signerAddress && userWalletTokens) {
+      setMounted(true);
+    }
+  }, [signerAddress, userWalletTokens]);
 
   useEffect(() => {
     const getJuror = async () => {
@@ -53,7 +58,6 @@ export default function RegisterJuror() {
     ? parseFloat(formatUnits(bloomToken.balance, 18))
     : 0;
 
-  // Check if stake is valid
   const isStakeValid = () => {
     const amount = Number(stakeAmount);
     if (isNaN(amount)) return false;
@@ -64,28 +68,18 @@ export default function RegisterJuror() {
 
   const isFormValid = signerAddress?.trim() !== "" && isStakeValid();
 
-  // Handle input change with max auto-populate
   const handleStakeAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     let value = e.target.value;
-
-    // Allow only numbers with optional decimal
     if (!/^\d*\.?\d*$/.test(value)) return;
-
-    // Prevent leading zeros like "00" but allow "0."
     if (value.startsWith("00")) return;
-
     const numericValue = parseFloat(value);
-
-    // If value >= balance, auto-set max
     if (!isNaN(numericValue) && numericValue >= bloomBalance) {
       setStakeAmount(String(bloomBalance));
       return;
     }
-
     setStakeAmount(value);
   };
 
-  // Approve BLM tokens for staking
   const approveByTransaction = async (
     amountToApprove: bigint,
     token: Token
@@ -104,11 +98,9 @@ export default function RegisterJuror() {
       const receipt = await waitForTransactionReceipt(config, { hash });
 
       if (receipt.status === "success") {
-        bloomLog("Approval successful");
         setRegisterText("Registering as Juror...");
         return true;
       }
-
       return false;
     } catch (error) {
       bloomLog("Approval Error: ", error);
@@ -118,7 +110,6 @@ export default function RegisterJuror() {
     }
   };
 
-  // Register juror on-chain
   const registerJurorTransaction = async (validatedAmount: bigint) => {
     const { request: registerRequest } = await simulateContract(config, {
       abi: jurorManagerAbi,
@@ -130,11 +121,9 @@ export default function RegisterJuror() {
 
     const hash = await writeContract(config, registerRequest);
     const receipt = await waitForTransactionReceipt(config, { hash });
-
     return receipt.status === "success";
   };
 
-  // Open confirmation modal before registering
   const handleRegisterClick = () => {
     openModal({
       type: "confirm",
@@ -143,56 +132,30 @@ export default function RegisterJuror() {
         <div className="space-y-2 text-[13px]">
           <p>
             You are about to stake{" "}
-            <span className="font-bold">{stakeAmount} BLM</span>. Once staked,
-            tokens will be locked for a cooldown period.
+            <span className="font-bold">
+              {inCurrencyFormat(stakeAmount)} BLM
+            </span>
+            .
           </p>
         </div>
       ),
       confirmText: "Yes, Register",
       cancelText: "Cancel",
       onConfirm: async () => {
-        closeModal(); // Close confirmation modal immediately
+        closeModal();
         setLoading(true);
-
         try {
           const validatedAmount = parseUnits(stakeAmount, 18);
-
-          // Step 1: Approve token
           const approvalSuccess = await approveByTransaction(
             validatedAmount,
             bloomToken!
           );
-          if (!approvalSuccess) {
-            return openModal({
-              type: "error",
-              title: "Registration Failed",
-              description: (
-                <div className="space-y-2 text-[13px]">
-                  <p>Token approval failed, please try again.</p>
-                </div>
-              ),
-              confirmText: "Close",
-            });
-          }
-
-          // Step 2: Register juror
+          if (!approvalSuccess) return;
           const registrationSuccess = await registerJurorTransaction(
             validatedAmount
           );
-          if (!registrationSuccess) {
-            return openModal({
-              type: "error",
-              title: "Registration Failed",
-              description: (
-                <div className="space-y-2 text-[13px]">
-                  <p>Registration failed, please try again.</p>
-                </div>
-              ),
-              confirmText: "Close",
-            });
-          }
+          if (!registrationSuccess) return;
 
-          // Step 3: Success modal
           openModal({
             type: "success",
             title: "Registration Successful",
@@ -200,34 +163,19 @@ export default function RegisterJuror() {
               <div className="space-y-2 text-[13px]">
                 <p>
                   You successfully registered as a juror with{" "}
-                  <span className="font-bold">{stakeAmount} BLM</span>.
+                  <span className="font-bold">
+                    {inCurrencyFormat(stakeAmount)} BLM
+                  </span>
+                  .
                 </p>
               </div>
             ),
             confirmText: "Close",
           });
-
-          setStakeAmount("");
+          await loadJuror(signerAddress!);
+          await loadUserWalletTokens(signerAddress!);
         } catch (err: any) {
           bloomLog("Unexpected Error: ", err);
-
-          // Display error nicely
-          const errorMessage =
-            err?.message || "Something went wrong, please try again.";
-
-          openModal({
-            type: "error",
-            title: "Registration Failed",
-            description: (
-              <div className="space-y-2 text-[13px]">
-                <p>{errorMessage}</p>
-                <p className="text-white/60 text-sm">
-                  If the problem persists, try refreshing or contacting support.
-                </p>
-              </div>
-            ),
-            confirmText: "Close",
-          });
         } finally {
           setLoading(false);
           setRegisterText("Register as Juror");
@@ -235,6 +183,8 @@ export default function RegisterJuror() {
       },
     });
   };
+
+  bloomLog("Juror: ", juror);
 
   return (
     <>
@@ -245,6 +195,7 @@ export default function RegisterJuror() {
           <WalletCard />
 
           {/* Staked Info Card */}
+
           <Card className="bg-gradient-to-br from-slate-900/95 via-slate-800/80 to-slate-900 border border-emerald-500/30 shadow-lg hover:shadow-emerald-500/50 transition-transform transform hover:-translate-y-1 p-4">
             <CardContent className="space-y-4">
               <div className="flex items-center justify-between">
@@ -252,16 +203,17 @@ export default function RegisterJuror() {
                   <Coins className="w-5 h-5 text-cyan-400" />
                   Your Staked BLM
                 </h3>
-                
               </div>
 
-              {juror?.stakeAmount && (
+              {juror?.stakeAmount ? (
                 <div className="text-white text-2xl font-bold">
                   {inCurrencyFormat(
                     formatUnits(juror.stakeAmount, 18).toString()
                   )}{" "}
                   BLM
                 </div>
+              ) : (
+                <div className="text-white text-2xl font-bold">0 BLM</div>
               )}
             </CardContent>
           </Card>
@@ -275,7 +227,7 @@ export default function RegisterJuror() {
                 Register as a Juror
               </h2>
 
-              {juror?.jurorAddress ? (
+              {juror?.stakeAmount ? (
                 <div className="bg-slate-800/70 border border-emerald-500/30 rounded-xl p-6 flex flex-col lg:flex-row items-center justify-between gap-6">
                   {/* Left side: Info */}
                   <div className="flex-1 space-y-2">
@@ -408,4 +360,6 @@ export default function RegisterJuror() {
       </div>
     </>
   );
-}
+};
+
+export default RegisterJuror;
