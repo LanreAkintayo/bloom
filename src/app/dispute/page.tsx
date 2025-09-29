@@ -160,7 +160,7 @@ export default function DisputePage() {
 
     try {
       // Now, we approve to spend the arbitration fee;
-      const validatedArbitrationFee = 4e6;
+      const validatedArbitrationFee = 50e18;
       const error = await approveTransaction(BigInt(validatedArbitrationFee));
       if (error) {
         const message = (error as Error).message;
@@ -176,6 +176,9 @@ export default function DisputePage() {
       }
 
       // Now, we call openDispute.
+
+      bloomLog("Deal ID is ", dealId);
+      bloomLog("Description is ", description);
 
       const { request: openRequest } = await simulateContract(config, {
         abi: disputeManagerAbi,
@@ -195,14 +198,14 @@ export default function DisputePage() {
         return null;
       }
     } catch (error) {
-
-      bloomLog("There is an Error: ", error)
+      bloomLog("There is an Error: ", error);
       const errorMessage = (error as Error).message;
       setErrorModal({
         open: true,
         title: "Error Occured",
         message: errorMessage || "Something went wrong during operation.",
       });
+      setIsModalOpen(false);
     } finally {
     }
 

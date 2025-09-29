@@ -42,56 +42,56 @@ export default function DisputeModal({
     if (!isOpen) setStep(0);
   }, [isOpen]);
 
-  // Step 1: Approval
-  useWatchContractEvent({
-    address: token?.address,
-    abi: erc20Abi,
-    args: { owner: signerAddress, spender: currentChain.disputeManagerAddress },
-    eventName: "Approval",
-    onLogs(logs) {
-      if (!isOpen) return; // only react when modal is open
-      bloomLog("Approval event detected", logs);
-      setStep(1);
-    },
-  });
+  //   // Step 1: Approval
+  //   useWatchContractEvent({
+  //     address: token?.address,
+  //     abi: erc20Abi,
+  //     args: { owner: signerAddress, spender: currentChain.disputeManagerAddress },
+  //     eventName: "Approval",
+  //     onLogs(logs) {
+  //       if (!isOpen) return; // only react when modal is open
+  //       bloomLog("Approval event detected", logs);
+  //       setStep(1);
+  //     },
+  //   });
 
-  // Step 2: Dispute submission
-  useWatchContractEvent({
-    address: currentChain.disputeManagerAddress as Address,
-    abi: disputeManagerAbi,
-    args: { initiator: signerAddress },
-    eventName: "DisputeOpened",
-    onLogs(logs) {
-      if (!isOpen) return;
-      bloomLog("DisputeOpened event detected", logs);
-      setStep(2);
-    },
-  });
+  //   // Step 2: Dispute submission
+  //   useWatchContractEvent({
+  //     address: currentChain.disputeManagerAddress as Address,
+  //     abi: disputeManagerAbi,
+  //     args: { initiator: signerAddress },
+  //     eventName: "DisputeOpened",
+  //     onLogs(logs) {
+  //       if (!isOpen) return;
+  //       bloomLog("DisputeOpened event detected", logs);
+  //       setStep(2);
+  //     },
+  //   });
 
-  // Step 3: Random number request
-  useWatchContractEvent({
-    address: currentChain.jurorManagerAddress as Address,
-    abi: jurorManagerAbi,
-    eventName: "RequestSent",
-    onLogs(logs) {
-      if (!isOpen) return;
-      bloomLog("Random number request event detected", logs);
-      setStep(3);
-    },
-  });
+  //   // Step 3: Random number request
+  //   useWatchContractEvent({
+  //     address: currentChain.jurorManagerAddress as Address,
+  //     abi: jurorManagerAbi,
+  //     eventName: "RequestSent",
+  //     onLogs(logs) {
+  //       if (!isOpen) return;
+  //       bloomLog("Random number request event detected", logs);
+  //       setStep(3);
+  //     },
+  //   });
 
-  // Step 4: Juror selection
-  useWatchContractEvent({
-    address: currentChain.jurorManagerAddress as Address,
-    abi: jurorManagerAbi,
-    eventName: "JurorsSelected",
-    onLogs(logs) {
-      if (!isOpen) return;
-      bloomLog("JurorsSelected event detected", logs);
-      setStep(4);
-      setStep(5);
-    },
-  });
+  //   // Step 4: Juror selection
+  //   useWatchContractEvent({
+  //     address: currentChain.jurorManagerAddress as Address,
+  //     abi: jurorManagerAbi,
+  //     eventName: "JurorsSelected",
+  //     onLogs(logs) {
+  //       if (!isOpen) return;
+  //       bloomLog("JurorsSelected event detected", logs);
+  //       setStep(4);
+  //       setStep(5);
+  //     },
+  //   });
 
   //   useEffect(() => {
   //     if (!isOpen) {
@@ -178,7 +178,7 @@ export default function DisputeModal({
       title: "Requesting Random Numbers",
       descOngoing: "Generating randomness for juror selection...",
       descDone: "Random numbers received",
-    },  
+    },
     {
       title: "Selecting Jurors",
       descOngoing: "Selecting jurors...",
@@ -198,9 +198,7 @@ export default function DisputeModal({
             Open Dispute
           </DialogTitle>
           <DialogDescription className="text-xs">
-            <p className="text-center text-sm">
-              Please waith for few seconds for your transaction to be processed
-            </p>
+            Please waith for few seconds for your transaction to be processed
           </DialogDescription>
         </DialogHeader>
 

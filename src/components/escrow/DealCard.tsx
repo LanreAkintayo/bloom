@@ -97,13 +97,30 @@ export default function DealCard({
 
   return (
     <Card className="bg-slate-900 border border-slate-800 hover:border-emerald-500/40 transition py-0">
-      <CardContent className="p-4 space-y-4">
+      <CardContent className="p-4 space-y-4 text-xs">
         {/* Recipient + Status */}
         <div className="flex justify-between items-start bg-slate-800/50 py-4 px-2 rounded-xl ">
+          {/* Sender & Recipient */}
+          <p className="text-white/70"> #{deal.id.toString()}</p>
+
+          {/* Status Badge */}
+          <div>
+            <span
+              className={`${getStatusColor(
+                currentStatus
+              )} px-3 py-1 rounded-full text-xs font-medium`}
+            >
+              {currentStatus}
+            </span>
+          </div>
+        </div>
+        {/* Recipient + Status */}
+        <div className="flex justify-between items-start py-1 rounded-xl ">
           {/* Sender & Recipient */}
           <div className="space-y-2">
             <div className="flex items-center gap-2 text-xs">
               <Wallet className="w-4 h-4 text-cyan-400" />
+
               <span className="text-xs text-white/70">Sender</span>
               <span className="font-semibold text-white">
                 {formatAddress(deal.sender)}
@@ -116,17 +133,6 @@ export default function DealCard({
                 {formatAddress(deal.receiver)}
               </span>
             </div>
-          </div>
-
-          {/* Status Badge */}
-          <div>
-            <span
-              className={`${getStatusColor(
-                currentStatus
-              )} px-3 py-1 rounded-full text-xs font-medium`}
-            >
-              {currentStatus}
-            </span>
           </div>
         </div>
 

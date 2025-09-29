@@ -146,25 +146,25 @@ export default function EscrowPage() {
     };
   }, []);
 
-  // Watching events;
-  useWatchContractEvent({
-    address: bloomEscrowAddress,
-    abi: bloomEscrowAbi,
-    eventName: "DealCreated",
-    onLogs(logs) {
-      bloomLog("New logs! A deal has been created.", logs);
-    },
-  });
+  // // Watching events;
+  // useWatchContractEvent({
+  //   address: bloomEscrowAddress,
+  //   abi: bloomEscrowAbi,
+  //   eventName: "DealCreated",
+  //   onLogs(logs) {
+  //     bloomLog("New logs! A deal has been created.", logs);
+  //   },
+  // });
 
-  // Let me be using usdc for everything;
-  useWatchContractEvent({
-    address: "0x94a9D9AC8a22534E3FaCa9F4e7F2E2cf85d5E4C8",
-    abi: erc20Abi,
-    eventName: "Approval",
-    onLogs(logs) {
-      bloomLog("New logs! USDC has been approved.", logs);
-    },
-  });
+  // // Let me be using usdc for everything;
+  // useWatchContractEvent({
+  //   address: "0x94a9D9AC8a22534E3FaCa9F4e7F2E2cf85d5E4C8",
+  //   abi: erc20Abi,
+  //   eventName: "Approval",
+  //   onLogs(logs) {
+  //     bloomLog("New logs! USDC has been approved.", logs);
+  //   },
+  // });
 
 
   // --- Memos ---
