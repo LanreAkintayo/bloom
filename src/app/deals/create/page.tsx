@@ -38,6 +38,7 @@ import { Listbox, Transition } from "@headlessui/react";
 import Image from "next/image";
 import {
   bloomEscrowAbi,
+  CHAINS,
   erc20Abi,
   getChainConfig,
   IMAGES,
@@ -54,6 +55,7 @@ import StatusModal from "@/components/escrow/StatusModal";
 import { parseUnits } from "viem";
 import { MAX_PERCENT } from "@/constants";
 import Link from "next/link";
+import { useWatchContractEvent } from "wagmi";
 
 function formatWithCommas(value: string) {
   if (!value) return "";
@@ -144,16 +146,28 @@ export default function EscrowPage() {
     };
   }, []);
 
-  // --- Memos ---
-  // const tokenOptions = useMemo(() => {
-  //   if (!allSupportedTokens) return [];
-  //   return allSupportedTokens.map((token: Token) => ({
-  //     value:  token.name,
-  //     image: token.name === "WETH" ? IMAGES.ETH : token.image,
-  //     name: token.name === "WETH" ? "ETH" : token.name,
-  //   }));
-  // }, [allSupportedTokens]);
+  // Watching events;
+  useWatchContractEvent({
+    address: bloomEscrowAddress,
+    abi: bloomEscrowAbi,
+    eventName: "DealCreated",
+    onLogs(logs) {
+      bloomLog("New logs! A deal has been created.", logs);
+    },
+  });
 
+  // Let me be using usdc for everything;
+  useWatchContractEvent({
+    address: "0x94a9D9AC8a22534E3FaCa9F4e7F2E2cf85d5E4C8",
+    abi: erc20Abi,
+    eventName: "Approval",
+    onLogs(logs) {
+      bloomLog("New logs! USDC has been approved.", logs);
+    },
+  });
+
+
+  // --- Memos ---
   const TokenOptionsList = useMemo(
     () => (
       <Listbox.Options className="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded bg-slate-800 border border-slate-700 text-white shadow-lg">
@@ -586,7 +600,7 @@ export default function EscrowPage() {
                         </Listbox.Button>
                         <Transition
                           as={Fragment}
-                          leave="transition ease-in duration-100" 
+                          leave="transition ease-in duration-100"
                           leaveFrom="opacity-100"
                           leaveTo="opacity-0"
                         >

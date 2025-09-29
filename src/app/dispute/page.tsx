@@ -16,14 +16,27 @@ import {
   bloomEscrowAbi,
   getChainConfig,
 } from "@/constants";
-import { readContract } from "@wagmi/core";
-import { Address, formatUnits } from "viem";
+import {
+  readContract,
+  simulateContract,
+  waitForTransactionReceipt,
+  writeContract,
+} from "@wagmi/core";
+import { Address, erc20Abi, formatUnits } from "viem";
 import { config } from "@/lib/wagmi";
 import { Deal, Token, TypeChainId } from "@/types";
-
+import DisputeModal from "@/components/disputes/DisputeModal";
+import ConfirmDisputeModal from "@/components/disputes/ConfirmDisputeModal";
+import ErrorModal from "@/components/disputes/ErrorModal";
+import { useAccount } from "wagmi";
 
 export default function DisputePage() {
+  const { address: signerAddress } = useAccount();
   const currentChain = getChainConfig("sepolia");
+  const disputeManagerAddress = currentChain.disputeManagerAddress as Address;
+
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isConfirmOpen, setIsConfirmOpen] = useState(false);
 
   const chainId = SUPPORTED_CHAIN_ID as TypeChainId;
 
@@ -35,6 +48,14 @@ export default function DisputePage() {
   const [submitted, setSubmitted] = useState(false);
   const [deal, setDeal] = useState<Deal | null>(null);
   const [token, setToken] = useState<any>(null);
+
+  const [errorModal, setErrorModal] = useState<{
+    open: boolean;
+    title?: string;
+    message?: string;
+  }>({
+    open: false,
+  });
 
   const getDeal = async (dealId: string) => {
     try {
@@ -71,7 +92,11 @@ export default function DisputePage() {
         if (tokenSymbol) {
           const token = TOKEN_META[chainId][tokenSymbol];
           bloomLog("Token: ", token);
-          setToken(token);
+          const newToken = {
+            ...token,
+            address: deal.tokenAddress.toLowerCase(),
+          };
+          setToken(newToken);
         } else {
           bloomLog("Token not found for address: ", deal.tokenAddress);
         }
@@ -93,16 +118,113 @@ export default function DisputePage() {
     }, 1500);
   };
 
-  const handleSubmit = () => {
-    setSubmitted(true);
-    setTimeout(() => setSubmitted(false), 2000);
+  const approveTransaction = async (amountToApprove: bigint) => {
+    bloomLog("Token address: ", token.address);
+    try {
+      const { request: approveRequest } = await simulateContract(config, {
+        abi: erc20Abi,
+        address: token.address as Address,
+        functionName: "approve",
+        args: [disputeManagerAddress, amountToApprove],
+        chainId: currentChain.chainId as TypeChainId,
+      });
+      const hash = await writeContract(config, approveRequest);
+
+      const approveReceipt = await waitForTransactionReceipt(config, {
+        hash,
+      });
+      if (approveReceipt.status == "success") {
+        bloomLog("Approve Transaction is successful");
+        return null;
+      }
+    } catch (error) {
+      return error;
+    } finally {
+      // return isSuccessful;
+    }
   };
 
-  bloomLog("Description: ",  description);
+  // handle submit button
+  const handleSubmit = () => {
+    if (!dealId || !description) return;
+
+    // Open confirmation modal first
+    setIsConfirmOpen(true);
+  };
+
+  // callback when user confirms
+  const handleConfirmDispute = async () => {
+    setIsConfirmOpen(false);
+    setIsModalOpen(true);
+
+    try {
+      // Now, we approve to spend the arbitration fee;
+      const validatedArbitrationFee = 4e6;
+      const error = await approveTransaction(BigInt(validatedArbitrationFee));
+      if (error) {
+        const message = (error as Error).message;
+        setErrorModal({
+          open: true,
+          title: "Approval Failed",
+          message:
+            message ||
+            "Your transaction could not be confirmed on-chain. Please try again.",
+        });
+        setIsModalOpen(false);
+        return;
+      }
+    } catch (error) {
+      const errorMessage = (error as Error).message;
+      setErrorModal({
+        open: true,
+        title: "Approval Error",
+        message: errorMessage || "Something went wrong during approval.",
+      });
+    } finally {
+    }
+
+    // optionally set submitted state
+    setSubmitted(true);
+
+    // here you can also call openDispute() to trigger blockchain interaction
+  };
+  const openDispute = async () => {
+    // Here I don't know, you try to track all the events and if any of the event comes up, It shows here or something.
+  };
+
+  // bloomLog("Description: ", description);
 
   return (
     <>
       <Header />
+
+      <ErrorModal
+        isOpen={errorModal.open}
+        onClose={() => setErrorModal({ ...errorModal, open: false })}
+        title={errorModal.title}
+        message={errorModal.message}
+      />
+
+      <ConfirmDisputeModal
+        isOpen={isConfirmOpen}
+        onClose={() => setIsConfirmOpen(false)}
+        onConfirm={handleConfirmDispute}
+        dealId={dealId}
+        description={description}
+      />
+
+      {signerAddress && token && (
+        <DisputeModal
+          isOpen={isModalOpen}
+          onClose={() => {
+            setIsModalOpen(false);
+            setSubmitted(false); // reset submit state if needed
+          }}
+          token={token}
+          currentChain={currentChain}
+        />
+      )}
+
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-950 to-black text-white p-6">
         <div className="mb-10 text-center">
           <h1 className="text-3xl font-bold text-white">Dispute</h1>
@@ -215,23 +337,13 @@ export default function DisputePage() {
 
                 {/* Approve + Submit Flow */}
                 <div className="space-y-3">
-                  {!approved ? (
-                    <Button
-                      className="mx-auto flex justify-center bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-3 rounded-xl shadow-md"
-                      disabled={!dealData || !description || approving}
-                      onClick={handleApprove}
-                    >
-                      {approving ? "Approving..." : "Approve Arbitration Fee"}
-                    </Button>
-                  ) : (
-                    <Button
-                      className="mx-auto flex justify-center  bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-3 rounded-xl shadow-md"
-                      disabled={!dealData || !description || submitted}
-                      onClick={handleSubmit}
-                    >
-                      {submitted ? "Submitting..." : "Submit Dispute"}
-                    </Button>
-                  )}
+                  <Button
+                    className="mx-auto flex justify-center  bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-3 rounded-xl shadow-md"
+                    disabled={!deal || !description || submitted}
+                    onClick={handleSubmit}
+                  >
+                    {submitted ? "Submitting..." : "Submit Dispute"}
+                  </Button>
                 </div>
               </CardContent>
             </Card>

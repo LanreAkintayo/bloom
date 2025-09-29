@@ -3,13 +3,15 @@ import _erc20Abi from "./erc20Abi.json";
 import _bloomEscrowAbi from "./bloomEscrowAbi.json";
 import _jurorManagerAbi from "./jurorManagerAbi.json";
 import _disputeStorageAbi from "./disputeStorageAbi.json";
+import _disputeManagerAbi from "./disputeManagerAbi.json";
 
 const erc20Abi = _erc20Abi as Abi;
 const bloomEscrowAbi = _bloomEscrowAbi as Abi;
 const jurorManagerAbi = _jurorManagerAbi as Abi;
 const disputeStorageAbi = _disputeStorageAbi as Abi;
+const disputeManagerAbi = _disputeManagerAbi as Abi;
 
-export { erc20Abi, bloomEscrowAbi, jurorManagerAbi, disputeStorageAbi };
+export { erc20Abi, bloomEscrowAbi, jurorManagerAbi, disputeStorageAbi, disputeManagerAbi };
 
 export const MAX_PERCENT = 10000; // 100.00%
 
@@ -37,6 +39,7 @@ export interface ChainConfig {
   bloomEscrowAddress: string;
   jurorManagerAddress: string;
   disputeStorageAddress: string;
+  disputeManagerAddress: string;
 }
 
 export const CHAINS: Record<string, ChainConfig> = {
@@ -61,6 +64,7 @@ export const CHAINS: Record<string, ChainConfig> = {
     wrappedNativeTokenAddress: "0xC558DBdd856501FCd9aaF1E62eae57A9F0629a3c",
     bloomEscrowAddress: "0x4e3074E3c1eDC632eD0755658FBdD46F29830D01",
     disputeStorageAddress: "0x7a889E02F4831D29E076B31Ac180219c12B3c2D9",
+    disputeManagerAddress: "0x167883e884087b7eC704C07CD5e0d593ABDafA9C"
   },
 };
 

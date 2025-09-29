@@ -202,3 +202,13 @@ body {
   pointer-events: none; /* optional: prevent interaction with page */
   user-select: none;    /* optional */
 }
+
+
+.scrollbar-none::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Edge */
+}
+
+.scrollbar-none {
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none; /* Firefox */
+}

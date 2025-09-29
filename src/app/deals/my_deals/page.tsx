@@ -28,6 +28,7 @@ import {
   writeContract,
 } from "@wagmi/core";
 import { getChainConfig } from "@/constants";
+import { useWatchContractEvent } from "wagmi";
 
 type StatusOptions =
   | "All"
@@ -37,7 +38,6 @@ type StatusOptions =
   | "Disputed"
   | "Finalized"
   | "Canceled";
-
 
 interface Deal {
   id: number;
@@ -96,6 +96,7 @@ export default function MyDealsPage() {
   useEffect(() => {
     loadAllSupportedTokens();
   }, []);
+
 
   //   bloomLog("Creator Deals: ", creatorDeals);
 
@@ -299,10 +300,7 @@ export default function MyDealsPage() {
     setShowConfirm(true);
   };
 
-  const openConfirm = (
-    type: DealAction,
-    dealId: number
-  ) => {
+  const openConfirm = (type: DealAction, dealId: number) => {
     setConfirmAction({ type, dealId });
     setShowConfirm(true);
   };
