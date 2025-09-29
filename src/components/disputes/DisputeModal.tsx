@@ -178,7 +178,7 @@ export default function DisputeModal({
       title: "Requesting Random Numbers",
       descOngoing: "Generating randomness for juror selection...",
       descDone: "Random numbers received",
-    },
+    },  
     {
       title: "Selecting Jurors",
       descOngoing: "Selecting jurors...",

@@ -14,6 +14,7 @@ import {
   TOKEN_META,
   addressToToken,
   bloomEscrowAbi,
+  disputeManagerAbi,
   getChainConfig,
 } from "@/constants";
 import {
@@ -173,12 +174,34 @@ export default function DisputePage() {
         setIsModalOpen(false);
         return;
       }
+
+      // Now, we call openDispute.
+
+      const { request: openRequest } = await simulateContract(config, {
+        abi: disputeManagerAbi,
+        address: disputeManagerAddress as Address,
+        functionName: "openDispute",
+        args: [dealId, description],
+        chainId: currentChain.chainId as TypeChainId,
+      });
+      const hash = await writeContract(config, openRequest);
+
+      const openReceipt = await waitForTransactionReceipt(config, {
+        hash,
+      });
+
+      if (openReceipt.status == "success") {
+        bloomLog("Open Transaction is successful");
+        return null;
+      }
     } catch (error) {
+
+      bloomLog("There is an Error: ", error)
       const errorMessage = (error as Error).message;
       setErrorModal({
         open: true,
-        title: "Approval Error",
-        message: errorMessage || "Something went wrong during approval.",
+        title: "Error Occured",
+        message: errorMessage || "Something went wrong during operation.",
       });
     } finally {
     }
