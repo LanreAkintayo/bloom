@@ -15,6 +15,7 @@ import {
   addressToToken,
   bloomEscrowAbi,
   disputeManagerAbi,
+  feeControllerAbi,
   getChainConfig,
 } from "@/constants";
 import {
@@ -49,6 +50,7 @@ export default function DisputePage() {
   const [submitted, setSubmitted] = useState(false);
   const [deal, setDeal] = useState<Deal | null>(null);
   const [token, setToken] = useState<any>(null);
+  const [disputeFee, setDisputeFee] = useState<bigint | null>(null);
 
   const [errorModal, setErrorModal] = useState<{
     open: boolean;
@@ -57,6 +59,26 @@ export default function DisputePage() {
   }>({
     open: false,
   });
+
+  const getDisputeFee = async (amount: bigint) => {
+    try {
+      const feeControllerAddress = currentChain.feeControllerAddress as Address;
+
+      const disputeFee = (await readContract(config, {
+        abi: feeControllerAbi,
+        address: feeControllerAddress,
+        functionName: "calculateDisputeFee",
+        args: [amount],
+        chainId,
+      })) as bigint;
+
+      return disputeFee;
+    } catch (error) {
+      console.error("Failed to calculate dispute :", error);
+
+      return null;
+    }
+  };
 
   const getDeal = async (dealId: string) => {
     try {
@@ -101,11 +123,19 @@ export default function DisputePage() {
         } else {
           bloomLog("Token not found for address: ", deal.tokenAddress);
         }
+
+        const validatedDisputeFee = await getDisputeFee(deal.amount);
+
+        if (validatedDisputeFee) {
+          bloomLog("dispute fee: ", validatedDisputeFee);
+          setDisputeFee(validatedDisputeFee);
+        }
       }
     };
 
     fetchDealAndToken();
   }, [dealId, chainId]);
+
   const handleDealChange = (id: string) => {
     setDealId(id);
   };
@@ -157,11 +187,13 @@ export default function DisputePage() {
   const handleConfirmDispute = async () => {
     setIsConfirmOpen(false);
     setIsModalOpen(true);
+    // optionally set submitted state
+    setSubmitted(true);
 
     try {
       // Now, we approve to spend the arbitration fee;
-      const validatedArbitrationFee = 50e18;
-      const error = await approveTransaction(BigInt(validatedArbitrationFee));
+      // const validatedArbitrationFee = 50e18;
+      const error = await approveTransaction(disputeFee!);
       if (error) {
         const message = (error as Error).message;
         setErrorModal({
@@ -207,10 +239,8 @@ export default function DisputePage() {
       });
       setIsModalOpen(false);
     } finally {
+      setSubmitted(false);
     }
-
-    // optionally set submitted state
-    setSubmitted(true);
 
     // here you can also call openDispute() to trigger blockchain interaction
   };
@@ -306,7 +336,7 @@ export default function DisputePage() {
                     Deal Details
                   </h3>
 
-                  {deal && token && (
+                  {deal && token && disputeFee && (
                     <div className="space-y-3">
                       <div className="flex justify-between items-center">
                         <span className="text-slate-400 text-sm">Deal ID</span>
@@ -340,7 +370,10 @@ export default function DisputePage() {
                           Arbitration Fee
                         </span>
                         <span className="text-white font-medium">
-                          {"10 USDC"}
+                          {inCurrencyFormat(
+                            formatUnits(disputeFee, token.decimal)
+                          )}{" "}
+                          {token.symbol}
                         </span>
                       </div>
                     </div>
