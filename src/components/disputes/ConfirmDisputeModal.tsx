@@ -28,13 +28,18 @@ export default function ConfirmDisputeModal({
 }: ConfirmDisputeModalProps) {
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="bg-slate-900 text-white border border-slate-800 rounded-2xl shadow-xl max-w-md">
+      <DialogContent
+        className="bg-slate-900 text-white border border-slate-800 rounded-2xl shadow-xl max-w-md"
+        onInteractOutside={(e) => e.preventDefault()}
+        // 👇 this prevents closing when pressing Escape
+        onEscapeKeyDown={(e) => e.preventDefault()}
+      >
         <DialogHeader>
           <DialogTitle className="text-xl font-bold text-emerald-400 text-center">
             Confirm Dispute
           </DialogTitle>
           <DialogDescription className="text-white/70 text-center mt-2">
-            Are you sure you want to open this dispute? 
+            Are you sure you want to open this dispute?
           </DialogDescription>
         </DialogHeader>
 
