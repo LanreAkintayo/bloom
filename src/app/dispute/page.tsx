@@ -24,7 +24,7 @@ import {
   waitForTransactionReceipt,
   writeContract,
 } from "@wagmi/core";
-import { Address, erc20Abi, formatUnits } from "viem";
+import { Address, erc20Abi, formatUnits, parseGwei } from "viem";
 import { config } from "@/lib/wagmi";
 import { Deal, Token, TypeChainId } from "@/types";
 import DisputeModal from "@/components/disputes/DisputeModal";
@@ -59,6 +59,10 @@ export default function DisputePage() {
   }>({
     open: false,
   });
+
+  const [step, setStep] = useState(0);
+
+  const disputeState = { step, setStep };
 
   const getDisputeFee = async (amount: bigint) => {
     try {
@@ -193,18 +197,32 @@ export default function DisputePage() {
     try {
       // Now, we approve to spend the arbitration fee;
       // const validatedArbitrationFee = 50e18;
-      const error = await approveTransaction(disputeFee!);
-      if (error) {
-        const message = (error as Error).message;
-        setErrorModal({
-          open: true,
-          title: "Approval Failed",
-          message:
-            message ||
-            "Your transaction could not be confirmed on-chain. Please try again.",
-        });
-        setIsModalOpen(false);
-        return;
+
+      // Approve transaction if only there is no allowance;
+      const allowance = await readContract(config, {
+        abi: erc20Abi,
+        address: token.address as Address,
+        args: [signerAddress as Address, disputeManagerAddress as Address],
+        functionName: "allowance",
+        chainId: currentChain.chainId as TypeChainId,
+      });
+
+      if (allowance < disputeFee!) {
+        const error = await approveTransaction(disputeFee!);
+        if (error) {
+          const message = (error as Error).message;
+          setErrorModal({
+            open: true,
+            title: "Approval Failed",
+            message:
+              message ||
+              "Your transaction could not be confirmed on-chain. Please try again.",
+          });
+          setIsModalOpen(false);
+          return;
+        }
+      } else {
+        setStep(1);
       }
 
       // Now, we call openDispute.
@@ -217,6 +235,9 @@ export default function DisputePage() {
         address: disputeManagerAddress as Address,
         functionName: "openDispute",
         args: [dealId, description],
+        maxFeePerGas: parseGwei("2"), // slightly above average network fee
+        maxPriorityFeePerGas: parseGwei("2"),
+        gas: BigInt(1100000),
         chainId: currentChain.chainId as TypeChainId,
       });
       const hash = await writeContract(config, openRequest);
@@ -278,6 +299,7 @@ export default function DisputePage() {
           }}
           token={token}
           currentChain={currentChain}
+          disputeState={disputeState}
         />
       )}
 

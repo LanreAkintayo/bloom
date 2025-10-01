@@ -27,6 +27,7 @@ interface DisputeModalProps {
   onClose: () => void;
   token: any;
   currentChain: ChainConfig;
+  disputeState: any
 }
 
 export default function DisputeModal({
@@ -34,8 +35,9 @@ export default function DisputeModal({
   onClose,
   token,
   currentChain,
+  disputeState
 }: DisputeModalProps) {
-  const [step, setStep] = useState(0);
+  const {step, setStep} = disputeState;
   const { address: signerAddress } = useAccount();
 
   useEffect(() => {
