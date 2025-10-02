@@ -43,7 +43,7 @@ export default function DisputePage() {
   const chainId = SUPPORTED_CHAIN_ID as TypeChainId;
 
   const [dealId, setDealId] = useState("");
-  const [dealData, setDealData] = useState<any>(null);
+
   const [description, setDescription] = useState("");
   const [approved, setApproved] = useState(false);
   const [approving, setApproving] = useState(false);

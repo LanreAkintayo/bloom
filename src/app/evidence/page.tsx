@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import {
   FileText,
   Image as LucideImage,
@@ -20,6 +20,26 @@ import EvidenceCard from "@/components/evidence/EvidenceCard";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import Header from "@/components/Header";
+import { useAccount } from "wagmi";
+import { Address, erc20Abi, formatUnits, parseGwei } from "viem";
+import {
+  SUPPORTED_CHAIN_ID,
+  TOKEN_META,
+  addressToToken,
+  bloomEscrowAbi,
+  disputeManagerAbi,
+  feeControllerAbi,
+  getChainConfig,
+} from "@/constants";
+import {
+  readContract,
+  simulateContract,
+  waitForTransactionReceipt,
+  writeContract,
+} from "@wagmi/core";
+import { config } from "@/lib/wagmi";
+import { bloomLog, formatAddress, inCurrencyFormat } from "@/lib/utils";
+import { Deal, Token, TypeChainId } from "@/types";
 
 interface Evidence {
   id: number;
@@ -51,8 +71,16 @@ const dummyDeals: Record<string, any> = {
 };
 
 const EvidencePage = () => {
+  const { address: signerAddress } = useAccount();
+  const currentChain = getChainConfig("sepolia");
+  const disputeManagerAddress = currentChain.disputeManagerAddress as Address;
+  const chainId = SUPPORTED_CHAIN_ID as TypeChainId;
+
   const [dealId, setDealId] = useState("");
   const [dealData, setDealData] = useState<any>(null);
+
+  const [deal, setDeal] = useState<Deal | null>(null);
+  const [token, setToken] = useState<any>(null);
 
   const [evidenceList, setEvidenceList] = useState<Evidence[]>([
     {
@@ -80,13 +108,61 @@ const EvidencePage = () => {
   const evidenceRef = useRef<HTMLDivElement>(null);
   const [showRules, setShowRules] = useState(true);
 
+  // bloomLog("Deals: ", deal);
+  bloomLog("Selected file: ", selectedFile);
+  bloomLog("Description: ", description)
+
+  const getDeal = async (dealId: string) => {
+    try {
+      const bloomEscrowAddress = currentChain.bloomEscrowAddress as Address;
+
+      const deal = (await readContract(config, {
+        abi: bloomEscrowAbi,
+        address: bloomEscrowAddress,
+        functionName: "getDeal",
+        args: [dealId],
+        chainId,
+      })) as Deal;
+
+      return deal;
+    } catch (error) {
+      console.error("Failed to load deal :", error);
+
+      return null;
+    }
+  };
+
+  useEffect(() => {
+    if (!dealId) return;
+
+    const fetchDealAndToken = async () => {
+      bloomLog("Getting deal");
+      const deal = await getDeal(dealId);
+      bloomLog("Deal: ", deal);
+      setDeal(deal);
+
+      if (deal) {
+        const tokenSymbol =
+          addressToToken[chainId]?.[deal.tokenAddress.toLowerCase()];
+        if (tokenSymbol) {
+          const token = TOKEN_META[chainId][tokenSymbol];
+          bloomLog("Token: ", token);
+          const newToken = {
+            ...token,
+            address: deal.tokenAddress.toLowerCase(),
+          };
+          setToken(newToken);
+        } else {
+          bloomLog("Token not found for address: ", deal.tokenAddress);
+        }
+      }
+    };
+
+    fetchDealAndToken();
+  }, [dealId, chainId]);
+
   const handleDealChange = (id: string) => {
     setDealId(id);
-    if (dummyDeals[id]) {
-      setDealData(dummyDeals[id]);
-    } else {
-      setDealData(null);
-    }
   };
 
   const handleUpload = () => {
@@ -122,6 +198,26 @@ const EvidencePage = () => {
       evidenceRef.current.scrollIntoView({ behavior: "smooth" });
     }
   };
+
+  const handleFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const formData = new FormData();
+    formData.append("file", file);         // required
+    formData.append("network", "public");  // or "private"
+
+    const res = await fetch("https://uploads.pinata.cloud/v3/files", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${process.env.NEXT_PUBLIC_PINATA_JWT}`, 
+      },
+      body: formData,
+    });
+
+    const data = await res.json();
+    setCid(data?.data?.cid);
+  }
 
   return (
     <>
@@ -175,7 +271,7 @@ const EvidencePage = () => {
                 {/* Deal ID */}
                 <div className="flex flex-wrap gap-2 mb-3">
                   <span className="bg-slate-700/50 text-gray-200 text-xs px-3 py-1 rounded-full">
-                    Deal ID: {dealData?.id ?? "—"}
+                    Deal ID: {deal?.id ?? "—"}
                   </span>
                 </div>
 
@@ -183,15 +279,20 @@ const EvidencePage = () => {
                 <div className="flex flex-wrap gap-3 mb-4">
                   <span className="bg-slate-700/50 text-gray-200 text-xs px-3 py-1 rounded-full flex items-center gap-1">
                     <User className="w-3 h-3" /> Sender:{" "}
-                    {dealData?.sender ?? "—"}
+                    {deal?.sender ? formatAddress(deal.sender) : "-"}
                   </span>
                   <span className="bg-slate-700/50 text-gray-200 text-xs px-3 py-1 rounded-full flex items-center gap-1">
                     <User className="w-3 h-3" /> Recipient:{" "}
-                    {dealData?.recipient ?? "—"}
+                    {deal?.sender ? formatAddress(deal.sender) : "-"}
                   </span>
                   <span className="bg-emerald-500/20 text-emerald-400 text-xs px-3 py-1 rounded-full flex items-center gap-1 font-semibold">
-                    <DollarSign className="w-3 h-3" /> {dealData?.amount ?? 0}{" "}
-                    {dealData?.token ?? ""}
+                    <DollarSign className="w-3 h-3" /> 
+                    {deal?.amount
+                      ? inCurrencyFormat(
+                          formatUnits(deal.amount, token.decimal)
+                        )
+                      : "-"}{" "}
+                    {token.symbol}
                   </span>
                 </div>
 
