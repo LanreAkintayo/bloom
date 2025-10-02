@@ -84,7 +84,7 @@ export default function DealCard({
       case "Finalized":
         return "bg-emerald-600";
       case "Disputed":
-        return "bg-red-600";
+        return "bg-red-300";
       default:
         return "bg-slate-600";
     }
@@ -297,9 +297,9 @@ export default function DealCard({
           {currentStatus === "Disputed" && signerAddress === deal.receiver && (
             <Button
               onClick={() => onCancel(deal.id)}
-              className="bg-red-800 hover:bg-red-700"
+              className="bg-green-800 hover:bg-green-800/70 flex items-center justify-center gap-2 text-[13px] py-0 px-2"
             >
-              Cancel / Respond
+              View Updates
             </Button>
           )}
         </div>

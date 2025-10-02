@@ -1,4 +1,4 @@
- [
+[
     {
       "type": "constructor",
       "inputs": [
@@ -158,8 +158,8 @@
         { "name": "description", "type": "string", "internalType": "string" }
       ],
       "outputs": [
-        { "name": "", "type": "uint256", "internalType": "uint256" },
-        { "name": "", "type": "uint256", "internalType": "uint256" }
+        { "name": "requestId", "type": "uint256", "internalType": "uint256" },
+        { "name": "newDisputeId", "type": "uint256", "internalType": "uint256" }
       ],
       "stateMutability": "nonpayable"
     },
@@ -308,6 +308,12 @@
       "inputs": [
         {
           "name": "dealId",
+          "type": "uint256",
+          "indexed": true,
+          "internalType": "uint256"
+        },
+        {
+          "name": "disputeId",
           "type": "uint256",
           "indexed": true,
           "internalType": "uint256"

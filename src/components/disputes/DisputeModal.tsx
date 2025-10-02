@@ -66,7 +66,9 @@ export default function DisputeModal({
     onLogs(logs) {
       if (!isOpen) return;
       bloomLog("DisputeOpened event detected", logs);
-      setStep(2);
+      if (step < 2) {
+        setStep(2);
+      }
     },
   });
 
@@ -78,7 +80,9 @@ export default function DisputeModal({
     onLogs(logs) {
       if (!isOpen) return;
       bloomLog("Random number request event detected", logs);
-      setStep(3);
+      if (step < 3) {
+        setStep(3);
+      }
     },
   });
 
@@ -90,8 +94,10 @@ export default function DisputeModal({
     onLogs(logs) {
       if (!isOpen) return;
       bloomLog("JurorsSelected event detected", logs);
-      setStep(4);
-      setStep(5);
+      if (step < 4) {
+        setStep(4);
+        setStep(5);
+      }
     },
   });
 
