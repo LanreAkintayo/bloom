@@ -42,6 +42,7 @@ import {
 import { config } from "@/lib/wagmi";
 import { bloomLog, formatAddress, inCurrencyFormat } from "@/lib/utils";
 import { Deal, Token, TypeChainId } from "@/types";
+import { useModal } from "@/providers/ModalProvider";
 
 interface Evidence {
   id: number;
@@ -77,6 +78,7 @@ const EvidencePage = () => {
   const currentChain = getChainConfig("sepolia");
   const disputeManagerAddress = currentChain.disputeManagerAddress as Address;
   const chainId = SUPPORTED_CHAIN_ID as TypeChainId;
+  const { openModal, closeModal } = useModal();
 
   const [dealId, setDealId] = useState("");
   const [dealData, setDealData] = useState<any>(null);
@@ -89,6 +91,11 @@ const EvidencePage = () => {
     data: any;
     progress: number | null;
   }>({ loading: false, error: "", data: null, progress: null });
+  const [submit, setSubmit] = useState<{
+    loading: boolean;
+    error: any;
+    text: string;
+  }>({ loading: false, error: "", text: "Submit Evidence" });
 
   const [evidenceList, setEvidenceList] = useState<Evidence[]>([
     {
@@ -306,6 +313,85 @@ const EvidencePage = () => {
     }
   };
 
+  const addEvidenceTransaction = async (
+  dealId: bigint,
+  uri: string,
+  evidenceType: any,
+  description: string
+) => {
+  try {
+    const { request: addRequest } = await simulateContract(config, {
+      abi: disputeManagerAbi,
+      address: disputeManagerAddress as Address,
+      functionName: "addEvidence",
+      args: [dealId, uri, evidenceType, description],
+      chainId: currentChain.chainId as TypeChainId,
+    });
+
+    const hash = await writeContract(config, addRequest);
+    const receipt = await waitForTransactionReceipt(config, { hash });
+
+    // return something meaningful
+    return receipt;
+  } catch (err) {
+    // rethrow so handleAddEvidence can catch it
+    throw err;
+  }
+};
+
+
+  const handleAddEvidence = () => {
+    openModal({
+      type: "confirm",
+      title: "Submit Evidence",
+      description: (
+        <div className="space-y-2 text-[13px]">
+          <p>You are about to submit an evidence.</p>
+        </div>
+      ),
+      confirmText: "Yes, Submit",
+      cancelText: "Cancel",
+      onConfirm: async () => {
+        closeModal();
+        setSubmit({ loading: true, error: false, text: "Submitting..." });
+        try {
+          const validatedDealId = ""
+          const validatedUri = ""
+          const validatedEvidenceType = ""
+          const validatedDescription = ""
+          const receipt = await addEvidenceTransaction(
+            validatedDealId, validatedUri, validatedEvidenceType, validatedDescription
+          );
+          // if (!receipt.status ) return;
+
+          openModal({
+            type: "success",
+            title: "Registration Successful",
+            description: (
+              <div className="space-y-2 text-[13px]">
+                <p>
+                  You successfully registered as a juror with{" "}
+                  <span className="font-bold">
+                    {inCurrencyFormat(stakeAmount)} BLM
+                  </span>
+                  .
+                </p>
+              </div>
+            ),
+            confirmText: "Close",
+          });
+          await loadJuror(signerAddress!);
+          await loadUserWalletTokens(signerAddress!);
+        } catch (err: any) {
+          bloomLog("Unexpected Error: ", err);
+        } finally {
+          setLoading(false);
+          setRegisterText("Register as Juror");
+        }
+      },
+    });
+  };
+
   return (
     <>
       <Header />
@@ -424,7 +510,7 @@ const EvidencePage = () => {
                 className="mx-auto flex bg-emerald-500 text-white px-4 py-2 rounded hover:bg-emerald-600 transition w-full"
                 disabled={!selectedFile}
               >
-                Submit Evidence
+                {submit.text}
               </Button>
 
               {/* Learn More / Tips & Guidelines Section */}

@@ -66,6 +66,8 @@ const EvidencePicker: React.FC<EvidencePickerProps> = ({
     `https://amethyst-intimate-swallow-509.mypinata.cloud/ipfs/${upload.data?.cid}`
   );
 
+  
+
   return (
     <div className="flex flex-col gap-4">
       <label className="relative border-2 border-dashed border-gray-600 rounded-xl p-6 flex flex-col items-center justify-center gap-4 cursor-pointer w-full h-48 overflow-hidden">
