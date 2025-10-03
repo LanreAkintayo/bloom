@@ -22,6 +22,14 @@ export enum Status {
   Canceled,
 }
 
+export enum EvidenceType {
+  TEXT,
+  IMAGE,
+  VIDEO,
+  AUDIO,
+  DOCUMENT,
+}
+
 export type DealAction =
   | "cancel"
   | "release"
