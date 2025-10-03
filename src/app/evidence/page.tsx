@@ -14,6 +14,7 @@ import {
   ChevronUp,
   User,
   DollarSign,
+  Loader2,
 } from "lucide-react";
 import EvidencePicker from "@/components/evidence/EvidencePicker";
 import { Button } from "@/components/ui/button";
@@ -41,7 +42,7 @@ import {
 } from "@wagmi/core";
 import { config } from "@/lib/wagmi";
 import { bloomLog, formatAddress, inCurrencyFormat } from "@/lib/utils";
-import { Deal, Token, TypeChainId } from "@/types";
+import { Deal, EvidenceType, Token, TypeChainId } from "@/types";
 import { useModal } from "@/providers/ModalProvider";
 
 interface Evidence {
@@ -223,6 +224,27 @@ const EvidencePage = () => {
     }
   };
 
+  const mapMimeTypeToEvidenceType = (mime: string): EvidenceType => {
+    if (!mime) return EvidenceType.DOCUMENT; // default fallback
+
+    if (mime.startsWith("image/")) return EvidenceType.IMAGE;
+    if (mime.startsWith("video/")) return EvidenceType.VIDEO;
+    if (mime.startsWith("audio/")) return EvidenceType.AUDIO;
+
+    // Handle text or document formats
+    if (mime === "text/plain") return EvidenceType.TEXT;
+    if (
+      mime === "application/pdf" ||
+      mime.startsWith("application/msword") ||
+      mime.startsWith("application/vnd")
+    ) {
+      return EvidenceType.DOCUMENT;
+    }
+
+    // fallback if nothing matches
+    return EvidenceType.DOCUMENT;
+  };
+
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files) return;
     const file = e.target.files[0];
@@ -318,7 +340,7 @@ const EvidencePage = () => {
   const addEvidenceTransaction = async (
     dealId: bigint | string,
     uri: string,
-    evidenceType: number,
+    evidenceType: EvidenceType,
     description: string
   ) => {
     try {
@@ -341,58 +363,69 @@ const EvidencePage = () => {
     }
   };
 
-  // const handleAddEvidence = () => {
-  //   openModal({
-  //     type: "confirm",
-  //     title: "Submit Evidence",
-  //     description: (
-  //       <div className="space-y-2 text-[13px]">
-  //         <p>You are about to submit an evidence.</p>
-  //       </div>
-  //     ),
-  //     confirmText: "Yes, Submit",
-  //     cancelText: "Cancel",
-  //     onConfirm: async () => {
-  //       closeModal();
-  //       setSubmit({ loading: true, error: null, text: "Submitting..." });
-  //       try {
-  //         const validatedDealId = dealId;
-  //         const validatedUri = upload.data?.cid;
-  //         const validatedEvidenceType = "";
-  //         const validatedDescription = description;
+  const handleAddEvidence = () => {
+    openModal({
+      type: "confirm",
+      title: "Submit Evidence",
+      description: (
+        <div className="space-y-2 text-[13px]">
+          <p>You are about to submit an evidence.</p>
+        </div>
+      ),
+      confirmText: "Yes, Submit",
+      cancelText: "Cancel",
+      onConfirm: async () => {
+        closeModal();
+        setSubmit({ loading: true, error: null, text: "Submitting..." });
+        try {
+          const validatedDealId = dealId;
+          const validatedUri = upload.data?.cid;
+          const mime = upload.data.mime_type;
+          const validatedEvidenceType = mapMimeTypeToEvidenceType(mime);
+          const validatedDescription = description;
 
-  //         const receipt = await addEvidenceTransaction(
-  //           validatedDealId,
-  //           validatedUri,
-  //           validatedEvidenceType,
-  //           validatedDescription
-  //         );
-  //         if (receipt.status == "success") {
-  //           openModal({
-  //             type: "success",
-  //             title: "Submission Successful",
-  //             description: (
-  //               <div className="space-y-2 text-[13px]">
-  //                 <p>You successfully submitted an evidence.</p>
-  //               </div>
-  //             ),
-  //             confirmText: "Close",
-  //           });
-  //           // await loadEvidence(signerAddress!);
-  //           // await loadUserWalletTokens(signerAddress!);
-  //           setSubmit({
-  //             loading: false,
-  //             error: null,
-  //             text: "Submit Evidence",
-  //           });
-  //         }
-  //       } catch (err: any) {
-  //         bloomLog("Unexpected Error: ", err);
-  //         setSubmit({ loading: false, error: err, text: "Submit Evidence" });
-  //       }
-  //     },
-  //   });
-  // };
+          const receipt = await addEvidenceTransaction(
+            validatedDealId,
+            validatedUri,
+            validatedEvidenceType,
+            validatedDescription
+          );
+          if (receipt.status == "success") {
+            openModal({
+              type: "success",
+              title: "Submission Successful",
+              description: (
+                <div className="space-y-2 text-[13px]">
+                  <p>You successfully submitted an evidence.</p>
+                </div>
+              ),
+              confirmText: "Close",
+            });
+            // await loadEvidence(signerAddress!);
+            // await loadUserWalletTokens(signerAddress!);
+            setSubmit({
+              loading: false,
+              error: null,
+              text: "Submit Evidence",
+            });
+          }
+        } catch (err: any) {
+          bloomLog("Unexpected Error: ", err);
+           openModal({
+              type: "error",
+              title: "Submission Failed",
+              description: (
+                <div className="space-y-2 text-[13px]">
+                  <p>Submission failed.</p>
+                </div>
+              ),
+              confirmText: "Close",
+            });
+          setSubmit({ loading: false, error: err, text: "Submit Evidence" });
+        }
+      },
+    });
+  };
 
   return (
     <>
@@ -508,10 +541,12 @@ const EvidencePage = () => {
 
               {/* Submit button */}
               <Button
-                onClick={handleUpload}
-                className="mx-auto flex bg-emerald-500 text-white px-4 py-2 rounded hover:bg-emerald-600 transition w-full"
-                disabled={!selectedFile}
+                onClick={handleAddEvidence}
+                className="mx-auto flex bg-emerald-500 text-white px-4 py-2 rounded hover:bg-emerald-600 transition w-full cursor-pointer"
+                disabled={submit.loading || !selectedFile || !upload.data}
               >
+                {submit.loading && <Loader2 className="animate-spin mr-2" />}
+
                 {submit.text}
               </Button>
 
