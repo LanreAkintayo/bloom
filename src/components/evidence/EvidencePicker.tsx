@@ -28,13 +28,11 @@ interface EvidencePickerProps {
     setAbortController: any;
   };
   handleFileChange: any;
-  cancelUpload: (() => void) | null;
 }
 
 const EvidencePicker: React.FC<EvidencePickerProps> = ({
   evidenceState,
   handleFileChange,
-  cancelUpload,
 }) => {
   const {
     selectedFile,

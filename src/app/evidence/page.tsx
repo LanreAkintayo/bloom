@@ -46,35 +46,6 @@ import { bloomLog, formatAddress, inCurrencyFormat } from "@/lib/utils";
 import { Deal, EvidenceType, Token, TypeChainId, Evidence } from "@/types";
 import { useModal } from "@/providers/ModalProvider";
 
-// interface Evidence {
-//   id: number;
-//   fileName: string;
-//   fileType: "pdf" | "image" | "video";
-//   uploadDate: string;
-//   status: "Pending" | "Verified";
-//   description?: string;
-// }
-
-// Dummy deal data
-const dummyDeals: Record<string, any> = {
-  "123": {
-    id: 123,
-    sender: "0xA1B2...C3D4",
-    recipient: "0xE5F6...G7H8",
-    token: "USDC",
-    amount: 500,
-    arbitrationFee: 20,
-  },
-  "456": {
-    id: 456,
-    sender: "0xI9J0...K1L2",
-    recipient: "0xM3N4...O5P6",
-    token: "ETH",
-    amount: 1.2,
-    arbitrationFee: 0.05,
-  },
-};
-
 const EvidencePage = () => {
   const { address: signerAddress } = useAccount();
   const currentChain = getChainConfig("sepolia");
@@ -98,6 +69,12 @@ const EvidencePage = () => {
     error: any;
     text: string;
   }>({ loading: false, error: "", text: "Submit Evidence" });
+
+  const [remove, setRemove] = useState<{
+    loading: boolean;
+    error: any;
+    text: string;
+  }>({ loading: false, error: "", text: "Remove" });
 
   const [evidenceList, setEvidenceList] = useState<Evidence[]>([
     {
@@ -166,6 +143,8 @@ const EvidencePage = () => {
       })) as Evidence[];
 
       bloomLog("Evidence here: ", evidence);
+
+      // setEvidences(evidences!);
 
       return evidence;
     } catch (error) {
@@ -393,6 +372,30 @@ const EvidencePage = () => {
     }
   };
 
+  const removeEvidenceTransaction = async (
+    dealId: bigint | string,
+    evidenceIndex: number
+  ) => {
+    try {
+      const { request: removeRequest } = await simulateContract(config, {
+        abi: disputeManagerAbi,
+        address: disputeManagerAddress as Address,
+        functionName: "removeEvidence",
+        args: [dealId, evidenceIndex],
+        chainId: currentChain.chainId as TypeChainId,
+      });
+
+      const hash = await writeContract(config, removeRequest);
+      const receipt = await waitForTransactionReceipt(config, { hash });
+
+      // return something meaningful
+      return receipt;
+    } catch (err) {
+      // rethrow so handleAddEvidence can catch it
+      throw err;
+    }
+  };
+
   const handleAddEvidence = () => {
     openModal({
       type: "confirm",
@@ -436,7 +439,8 @@ const EvidencePage = () => {
               ),
               confirmText: "Close",
             });
-            // await loadEvidence(signerAddress!);
+            const newEvidences = await getEvidence(dealId!);
+            setEvidences(newEvidences!);
             // await loadUserWalletTokens(signerAddress!);
             setSubmit({
               loading: false,
@@ -464,6 +468,68 @@ const EvidencePage = () => {
     });
   };
 
+  const handleRemoveEvidence = (evidenceIndex: number) => {
+    bloomLog("Evidence Index: ", evidenceIndex);
+    openModal({
+      type: "confirm",
+      title: "Remove Evidence",
+      description: (
+        <div className="space-y-2 text-[13px]">
+          <p>You are about to remove an evidence.</p>
+        </div>
+      ),
+      confirmText: "Yes, Remove",
+      cancelText: "Cancel",
+      onConfirm: async () => {
+        closeModal();
+        setRemove({ loading: true, error: null, text: "Removing..." });
+        try {
+          const validatedDealId = dealId;
+
+          const receipt = await removeEvidenceTransaction(
+            validatedDealId,
+            evidenceIndex
+          );
+          if (receipt.status == "success") {
+            openModal({
+              type: "success",
+              title: "Removeal Successful",
+              description: (
+                <div className="space-y-2 text-[13px]">
+                  <p>You successfully removed an evidence.</p>
+                </div>
+              ),
+              confirmText: "Close",
+            });
+            const newEvidences = await getEvidence(dealId!);
+            setEvidences(newEvidences!);
+            // await loadUserWalletTokens(signerAddress!);
+            setRemove({
+              loading: false,
+              error: null,
+              text: "Remove",
+            });
+          }
+        } catch (err: any) {
+          const errorMessage = (err as Error).message;
+
+          bloomLog("Unexpected Error: ", err);
+          openModal({
+            type: "error",
+            title: "Removal Failed",
+            description: (
+              <div className="space-y-2 text-[13px]">
+                <p>{errorMessage}</p>
+              </div>
+            ),
+            confirmText: "Close",
+          });
+          setRemove({ loading: false, error: err, text: "Remove" });
+        }
+      },
+    });
+  };
+
   return (
     <>
       <Header />
@@ -478,10 +544,10 @@ const EvidencePage = () => {
 
         <div className="flex flex-col md:flex-row gap-6">
           {/* Left Panel - Upload Card */}
-          <div className="flex-none md:w-5/12 space-y-6">
+          <div className="flex-none md:w-6/12 space-y-6">
             <Card className="flex flex-col gap-4 p-4 bg-slate-900/95">
               {/* Header with mobile scroll button */}
-              <div className="flex justify-between items-center">
+              <div className="flex justify-between items-center mb-4">
                 <h2 className="text-white font-semibold text-lg flex items-center gap-2">
                   <UploadCloud className="w-5 h-5" /> Upload Your Evidence
                 </h2>
@@ -640,45 +706,46 @@ const EvidencePage = () => {
                       No evidence uploaded yet.
                     </div>
                   ) : (
-                    evidences.map(
-                      (currentEvidence: Evidence, index: number) => (
-                        <EvidenceCard
-                          key={index}
-                          evidence={currentEvidence}
-                          index={index}
-                          // setEvidenceList={setEvidenceList}
-                        />
-                      )
-                    )
+                    evidences
+                      .slice() // copy so you don't mutate
+                      .reverse()
+                      .slice(0, 2) // only take the first 2 after reversing
+                      .map((currentEvidence, indexFromReversed) => {
+                        const originalIndex =
+                          evidences.length - 1 - indexFromReversed;
+                        return (
+                          <EvidenceCard
+                            key={originalIndex}
+                            evidence={currentEvidence}
+                            index={originalIndex} // still original index
+                            isJurorView={false}
+                            handleRemoveEvidence={handleRemoveEvidence}
+                            removalState={{ remove, setRemove }}
+                          />
+                        );
+                      })
                   )}
+                  {/* Add "View All" link or button */}
+                  <div className="text-center mt-4">
+                    <Button
+                      variant="outline"
+                      className="bg-green-900 hover:bg-green-800/70 text-white hover:text-white"
+                      onClick={() => {
+                        // Navigate to the dispute page
+                        window.location.href = `/disputes/${
+                          /* disputeId */ ""
+                        }`;
+                      }}
+                    >
+                      View All Evidences
+                    </Button>
+                  </div>
                 </div>
               ) : (
                 <div>Nah</div>
               )}
             </Card>
           </div>
-
-          {/* <div className="flex-1" ref={evidenceRef}>
-          {evidenceList.length === 0 ? (
-            <Card className="bg-slate-900/95 border border-emerald-500/30 shadow-lg hover:shadow-emerald-500/50 transition-transform transform hover:-translate-y-1 p-4">
-              <CardContent className="text-center text-gray-400 p-6">
-                No evidence uploaded yet. Use the panel on the left to upload
-                your evidence.
-              </CardContent>
-            </Card>
-          ) : (
-            <ul className="space-y-4">
-              {evidenceList.map((e, index) => (
-                <EvidenceCard
-                  key={e.id}
-                  e={e}
-                  index={index}
-                  setEvidenceList={setEvidenceList}
-                />
-              ))}
-            </ul>
-          )}
-        </div> */}
         </div>
       </div>
     </>

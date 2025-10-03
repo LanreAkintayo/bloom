@@ -35,7 +35,7 @@ export const formatTime = (timestamp: string | bigint): string => {
     day: "numeric",    // e.g. 2
     hour: "2-digit",
     minute: "2-digit",
-    second: "2-digit",
+    // second: "2-digit",
     hour12: true,      // 12hr format, change to false for 24hr
   });
 };
