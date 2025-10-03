@@ -19,3 +19,23 @@ export const inCurrencyFormat = (amount: string) => {
 
   return pretty;
 };
+
+export const formatTime = (timestamp: string | bigint): string => {
+  if (!timestamp) return "";
+
+  // convert to number (milliseconds)
+  const ts = Number(timestamp) * 1000;
+  const date = new Date(ts);
+
+  // Format it to something readable
+  return date.toLocaleString("en-US", {
+    weekday: "short",  // e.g. Mon
+    year: "numeric",   // e.g. 2025
+    month: "short",    // e.g. Oct
+    day: "numeric",    // e.g. 2
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: true,      // 12hr format, change to false for 24hr
+  });
+};

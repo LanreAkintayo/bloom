@@ -31,6 +31,7 @@ import {
   addressToToken,
   bloomEscrowAbi,
   disputeManagerAbi,
+  disputeStorageAbi,
   feeControllerAbi,
   getChainConfig,
 } from "@/constants";
@@ -42,17 +43,17 @@ import {
 } from "@wagmi/core";
 import { config } from "@/lib/wagmi";
 import { bloomLog, formatAddress, inCurrencyFormat } from "@/lib/utils";
-import { Deal, EvidenceType, Token, TypeChainId } from "@/types";
+import { Deal, EvidenceType, Token, TypeChainId, Evidence } from "@/types";
 import { useModal } from "@/providers/ModalProvider";
 
-interface Evidence {
-  id: number;
-  fileName: string;
-  fileType: "pdf" | "image" | "video";
-  uploadDate: string;
-  status: "Pending" | "Verified";
-  description?: string;
-}
+// interface Evidence {
+//   id: number;
+//   fileName: string;
+//   fileType: "pdf" | "image" | "video";
+//   uploadDate: string;
+//   status: "Pending" | "Verified";
+//   description?: string;
+// }
 
 // Dummy deal data
 const dummyDeals: Record<string, any> = {
@@ -118,24 +119,17 @@ const EvidencePage = () => {
         "This image is like a guard and it has 5 separate moves apart from the one everyone used to know. So, it would be nice if you carefully read out and make the best judgement.",
     },
   ]);
-
-  let cancelUpload: (() => void) | null = null;
-
-  // bloomLog("Upload: ", upload);
+  const [evidences, setEvidences] = useState<Evidence[] | null>(null);
 
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [description, setDescription] = useState("");
   const evidenceRef = useRef<HTMLDivElement>(null);
   const [showRules, setShowRules] = useState(true);
-  const [cid, setCid] = useState(null);
   const [abortController, setAbortController] =
     React.useState<AbortController | null>(null);
 
-  // bloomLog("Deals: ", deal);
-  // bloomLog("Selected file: ", selectedFile);
-  // bloomLog("Description: ", description);
-
-  bloomLog("Upload: ", upload);
+  // bloomLog("Upload: ", upload);
+  bloomLog("Evidences: ", evidences);
 
   const getDeal = async (dealId: string) => {
     try {
@@ -157,13 +151,37 @@ const EvidencePage = () => {
     }
   };
 
+  const getEvidence = async (dealId: string) => {
+    bloomLog("Inside getEvidence");
+    try {
+      const disputeStorageAddress =
+        currentChain.disputeStorageAddress as Address;
+
+      const evidence = (await readContract(config, {
+        abi: disputeStorageAbi,
+        address: disputeStorageAddress,
+        functionName: "getDealEvidence",
+        args: [dealId, signerAddress],
+        chainId,
+      })) as Evidence[];
+
+      bloomLog("Evidence here: ", evidence);
+
+      return evidence;
+    } catch (error) {
+      console.error("Failed to load evidence :", error);
+
+      return null;
+    }
+  };
+
   useEffect(() => {
     if (!dealId) return;
 
     const fetchDealAndToken = async () => {
-      bloomLog("Getting deal");
+      // bloomLog("Getting deal");
       const deal = await getDeal(dealId);
-      bloomLog("Deal: ", deal);
+      // bloomLog("Deal: ", deal);
       setDeal(deal);
 
       if (deal) {
@@ -171,7 +189,7 @@ const EvidencePage = () => {
           addressToToken[chainId]?.[deal.tokenAddress.toLowerCase()];
         if (tokenSymbol) {
           const token = TOKEN_META[chainId][tokenSymbol];
-          bloomLog("Token: ", token);
+          // bloomLog("Token: ", token);
           const newToken = {
             ...token,
             address: deal.tokenAddress.toLowerCase(),
@@ -185,6 +203,18 @@ const EvidencePage = () => {
 
     fetchDealAndToken();
   }, [dealId, chainId]);
+
+  useEffect(() => {
+    if (!dealId || !signerAddress) return;
+
+    const fetchEvidence = async () => {
+      bloomLog("Getting evidences");
+      const evidences = await getEvidence(dealId);
+      setEvidences(evidences!);
+    };
+
+    fetchEvidence();
+  }, [dealId, signerAddress]);
 
   const handleDealChange = (id: string) => {
     setDealId(id);
@@ -384,6 +414,11 @@ const EvidencePage = () => {
           const validatedEvidenceType = mapMimeTypeToEvidenceType(mime);
           const validatedDescription = description;
 
+          bloomLog("Validated Deal ID:", validatedDealId);
+          bloomLog("Validated URI:", validatedUri);
+          bloomLog("Validated Evidence Type:", validatedEvidenceType);
+          bloomLog("Validated Description:", validatedDescription);
+
           const receipt = await addEvidenceTransaction(
             validatedDealId,
             validatedUri,
@@ -410,17 +445,19 @@ const EvidencePage = () => {
             });
           }
         } catch (err: any) {
+          const errorMessage = (err as Error).message;
+
           bloomLog("Unexpected Error: ", err);
-           openModal({
-              type: "error",
-              title: "Submission Failed",
-              description: (
-                <div className="space-y-2 text-[13px]">
-                  <p>Submission failed.</p>
-                </div>
-              ),
-              confirmText: "Close",
-            });
+          openModal({
+            type: "error",
+            title: "Submission Failed",
+            description: (
+              <div className="space-y-2 text-[13px]">
+                <p>{errorMessage}</p>
+              </div>
+            ),
+            confirmText: "Close",
+          });
           setSubmit({ loading: false, error: err, text: "Submit Evidence" });
         }
       },
@@ -535,7 +572,6 @@ const EvidencePage = () => {
                     setAbortController,
                   }}
                   handleFileChange={handleFileChange}
-                  cancelUpload={cancelUpload}
                 />
               </div>
 
@@ -597,22 +633,28 @@ const EvidencePage = () => {
               <h2 className="text-white text-xl font-semibold mb-4">
                 Uploaded Evidences
               </h2>
-              <div className="grid gap-4">
-                {evidenceList.length === 0 ? (
-                  <div className="bg-slate-800 p-6 rounded-2xl shadow-md text-center text-gray-400">
-                    No evidence uploaded yet.
-                  </div>
-                ) : (
-                  evidenceList.map((e, index) => (
-                    <EvidenceCard
-                      key={e.id}
-                      e={e}
-                      index={index}
-                      setEvidenceList={setEvidenceList}
-                    />
-                  ))
-                )}
-              </div>
+              {evidences ? (
+                <div className="grid gap-4">
+                  {evidences.length === 0 ? (
+                    <div className="bg-slate-800 p-6 rounded-2xl shadow-md text-center text-gray-400">
+                      No evidence uploaded yet.
+                    </div>
+                  ) : (
+                    evidences.map(
+                      (currentEvidence: Evidence, index: number) => (
+                        <EvidenceCard
+                          key={index}
+                          evidence={currentEvidence}
+                          index={index}
+                          // setEvidenceList={setEvidenceList}
+                        />
+                      )
+                    )
+                  )}
+                </div>
+              ) : (
+                <div>Nah</div>
+              )}
             </Card>
           </div>
 

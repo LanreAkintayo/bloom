@@ -58,3 +58,13 @@ export type Deal = {
   status: Status;
   id: bigint;
 };
+
+export type Evidence = {
+  dealId: bigint;
+  uploader: string;
+  uri: string;
+  timestamp: bigint;
+  evidenceType: EvidenceType;
+  description?: string;
+  removed: boolean;
+}

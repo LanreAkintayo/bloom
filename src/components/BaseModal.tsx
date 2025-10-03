@@ -1,6 +1,13 @@
 "use client";
 
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import React from "react";
 
@@ -29,14 +36,19 @@ export default function BaseModal({
 }: BaseModalProps) {
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="bg-slate-900 text-white border border-slate-700">
+      <DialogContent className="bg-slate-900 text-white rounded-2xl max-w-md w-full max-h-[80vh] shadow-xl flex flex-col animate-scale-up overflow-hidden">
         <DialogHeader>
           <DialogTitle className="text-lg font-bold">{title}</DialogTitle>
-          {description && (
-            <DialogDescription asChild>
-              <div className="text-white/70">{description}</div>
-            </DialogDescription>
-          )}
+
+          <div className="flex-1 overflow-y-auto py-4 text-sm flex flex-col items-center text-center scrollbar-none">
+            {description && (
+              <DialogDescription asChild>
+                <div className="text-white/70 break-words whitespace-pre-wrap">
+                  {description}
+                </div>
+              </DialogDescription>
+            )}
+          </div>
         </DialogHeader>
 
         <DialogFooter className="flex space-x-2">

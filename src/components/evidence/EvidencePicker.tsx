@@ -61,12 +61,12 @@ const EvidencePicker: React.FC<EvidencePickerProps> = ({
     }
   }, [upload.error, setUpload]);
 
-  bloomLog(
-    "IPFS URL: ",
-    `https://amethyst-intimate-swallow-509.mypinata.cloud/ipfs/${upload.data?.cid}`
-  );
+  // bloomLog(
+  //   "IPFS URL: ",
+  //   `https://amethyst-intimate-swallow-509.mypinata.cloud/ipfs/${upload.data?.cid}`
+  // );
 
-  
+
 
   return (
     <div className="flex flex-col gap-4">
@@ -146,7 +146,7 @@ const EvidencePicker: React.FC<EvidencePickerProps> = ({
                 <p className="text-gray-200 text-sm">{upload.progress || 0}%</p>
                 <button
                   onClick={(e) => {
-                    bloomLog("This has been clicked;");
+                    // bloomLog("This has been clicked;");
                     e.preventDefault();
                     if (abortController) {
                       abortController.abort();
