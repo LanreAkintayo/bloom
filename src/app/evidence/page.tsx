@@ -1,6 +1,8 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
+import axios from "axios";
+
 import {
   FileText,
   Image as LucideImage,
@@ -81,6 +83,12 @@ const EvidencePage = () => {
 
   const [deal, setDeal] = useState<Deal | null>(null);
   const [token, setToken] = useState<any>(null);
+  const [upload, setUpload] = useState<{
+    loading: boolean;
+    error: any;
+    data: any;
+    progress: number | null;
+  }>({ loading: false, error: "", data: null, progress: null });
 
   const [evidenceList, setEvidenceList] = useState<Evidence[]>([
     {
@@ -103,14 +111,21 @@ const EvidencePage = () => {
     },
   ]);
 
+  let cancelUpload: (() => void) | null = null;
+
+  // bloomLog("Upload: ", upload);
+
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [description, setDescription] = useState("");
   const evidenceRef = useRef<HTMLDivElement>(null);
   const [showRules, setShowRules] = useState(true);
+  const [cid, setCid] = useState(null);
+  const [abortController, setAbortController] =
+    React.useState<AbortController | null>(null);
 
   // bloomLog("Deals: ", deal);
-  bloomLog("Selected file: ", selectedFile);
-  bloomLog("Description: ", description)
+  // bloomLog("Selected file: ", selectedFile);
+  // bloomLog("Description: ", description);
 
   const getDeal = async (dealId: string) => {
     try {
@@ -199,25 +214,97 @@ const EvidencePage = () => {
     }
   };
 
-  const handleFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files) return;
     const file = e.target.files[0];
     if (!file) return;
 
+    // File size validation
+    const isImage = file.type.startsWith("image/");
+    const isVideo = file.type.startsWith("video/");
+
+    if (isImage && file.size > 10 * 1024 * 1024) {
+      // > 1MB
+      setUpload({
+        loading: false,
+        error: "Image must be less than 1MB",
+        data: null,
+        progress: null,
+      });
+      return;
+    }
+
+    if (isVideo && file.size > 40 * 1024 * 1024) {
+      // > 20MB
+      setUpload({
+        loading: false,
+        error: "Video must be less than 20MB",
+        data: null,
+        progress: null,
+      });
+      return;
+    }
+
     const formData = new FormData();
-    formData.append("file", file);         // required
-    formData.append("network", "public");  // or "private"
+    formData.append("file", file);
+    formData.append("network", "public");
 
-    const res = await fetch("https://uploads.pinata.cloud/v3/files", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${process.env.NEXT_PUBLIC_PINATA_JWT}`, 
-      },
-      body: formData,
-    });
+    bloomLog("We are here;");
+    setSelectedFile(file);
 
-    const data = await res.json();
-    setCid(data?.data?.cid);
-  }
+    try {
+      setUpload({ loading: true, error: "", data: null, progress: 0 });
+      const controller = new AbortController();
+      setAbortController(controller);
+
+      const res = await axios.post(
+        "https://uploads.pinata.cloud/v3/files",
+        formData,
+        {
+          headers: {
+            Authorization: `Bearer ${process.env.NEXT_PUBLIC_PINATA_JWT}`,
+          },
+          onUploadProgress: (progressEvent) => {
+            if (progressEvent.total) {
+              const percent = Math.round(
+                (progressEvent.loaded * 100) / progressEvent.total
+              );
+              setUpload((prev) => ({ ...prev, progress: percent }));
+            }
+          },
+          signal: controller.signal,
+        }
+      );
+
+      setUpload({
+        loading: false,
+        error: "",
+        data: res.data.data,
+        progress: 100,
+      });
+    } catch (err: any) {
+      // bloomLog("axios.isCancel(err): ", axios.isCancel(err));
+      // bloomLog("err.name and err.code is", err.name, err.code);
+
+      // if (err.name === "CanceledError" || err.code === "ERR_CANCELED") {
+      if (axios.isCancel(err)) {
+        setUpload({
+          loading: false,
+          error: "Upload cancelled",
+          data: null,
+          progress: null,
+        });
+      } else {
+        setUpload({
+          loading: false,
+          error: err.message,
+          data: null,
+          progress: null,
+        });
+      }
+      setSelectedFile(null);
+    }
+  };
 
   return (
     <>
@@ -286,13 +373,13 @@ const EvidencePage = () => {
                     {deal?.sender ? formatAddress(deal.sender) : "-"}
                   </span>
                   <span className="bg-emerald-500/20 text-emerald-400 text-xs px-3 py-1 rounded-full flex items-center gap-1 font-semibold">
-                    <DollarSign className="w-3 h-3" /> 
+                    <DollarSign className="w-3 h-3" />
                     {deal?.amount
                       ? inCurrencyFormat(
                           formatUnits(deal.amount, token.decimal)
                         )
                       : "-"}{" "}
-                    {token.symbol}
+                    {token?.symbol}
                   </span>
                 </div>
 
@@ -309,11 +396,25 @@ const EvidencePage = () => {
                 <Label htmlFor="dealId" className="text-slate-300">
                   Add Evidence
                 </Label>
+                {/* {upload.loading && (
+                  <div className="text-white">
+                    I a mcurrently loding at {upload!.progress}
+                  </div>
+                )} */}
+
                 <EvidencePicker
-                  selectedFile={selectedFile}
-                  setSelectedFile={setSelectedFile}
-                  description={description}
-                  setDescription={setDescription}
+                  evidenceState={{
+                    selectedFile,
+                    setSelectedFile,
+                    description,
+                    setDescription,
+                    upload,
+                    setUpload,
+                    abortController,
+                    setAbortController,
+                  }}
+                  handleFileChange={handleFileChange}
+                  cancelUpload={cancelUpload}
                 />
               </div>
 
