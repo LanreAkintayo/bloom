@@ -3,21 +3,21 @@
 import React from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Coins, Star, AlertCircle } from "lucide-react";
+import { Juror } from "@/types";
+import { inCurrencyFormat } from "@/lib/utils";
+import { formatUnits } from "viem";
 
 interface StatsProps {
-  blmStaked: number;
-  reputation: number;
-  votesMissed: number;
-  maxMissed?: number;
+  juror: Juror;
 }
 
-export default function StatsCard({
-  blmStaked,
-  reputation,
-  votesMissed,
-  maxMissed = 3,
-}: StatsProps) {
+export default function StatsCard({ juror }: StatsProps) {
   // Calculate circle progress
+  const votesMissed = Number(juror.missedVotesCount);
+  const stakedAmount = inCurrencyFormat(formatUnits(juror.stakeAmount, 18));
+  const reputation = juror.reputation;
+  const maxMissed = 5;
+
   const percentage = Math.min((votesMissed / maxMissed) * 100, 100);
   const votesColor =
     votesMissed < 2
@@ -37,7 +37,9 @@ export default function StatsCard({
             <Coins className="w-5 h-5 text-emerald-400" />
             <span className="text-white/80 font-medium">BLM Staked</span>
           </div>
-          <span className="font-bold text-white text-sm">{blmStaked} BLM</span>
+          <span className="font-bold text-white text-sm">
+            {stakedAmount} BLM
+          </span>
         </div>
 
         {/* Reputation */}

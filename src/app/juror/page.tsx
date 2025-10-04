@@ -16,21 +16,31 @@ import StatsCard from "@/components/juror/StatsCard";
 import RewardsCard from "@/components/juror/RewardsCard";
 import Header from "@/components/Header";
 import { useAccount } from "wagmi";
-import { Juror } from "@/types";
+import { Juror, Token, TypeChainId } from "@/types";
 import { useQuery } from "@tanstack/react-query";
 import {
   getDispute,
   getJuror,
   getJurorDisputeHistory,
+  getJurorTokenPayment,
 } from "@/hooks/useDisputeStorage";
 import { bloomLog } from "@/lib/utils";
+import {
+  addressToToken,
+  IMAGES,
+  SUPPORTED_CHAIN_ID,
+  supportedTokens,
+  TOKEN_META,
+} from "@/constants";
+import { Address } from "viem";
+
+export type TokenPayment = Token & {
+  payment: bigint | null;
+};
 
 export default function JurorDashboard() {
   const { address: signerAddress } = useAccount();
-
-  const [jurorDisputeHistory, setJurorDisputeHistory] = useState<
-    bigint[] | null
-  >(null);
+  const chainId = SUPPORTED_CHAIN_ID as TypeChainId;
 
   const {
     data: juror,
@@ -59,9 +69,35 @@ export default function JurorDashboard() {
     enabled: !!disputeIds && disputeIds.length > 0,
   });
 
+  const { data: rewards } = useQuery({
+    queryKey: ["rewards", supportedTokens, signerAddress],
+    queryFn: async () => {
+      bloomLog("Supported Tokens: ", supportedTokens)
+      bloomLog("signer address: ", signerAddress)
+      const results = await Promise.all(
+        supportedTokens.map(async (tokenAddress) => {
+          const payment = await getJurorTokenPayment(
+            signerAddress!,
+            tokenAddress as Address
+          );
+
+          bloomLog("Payment: ", payment);
+          const symbol = addressToToken[chainId]?.[tokenAddress.toLowerCase()];
+          const tokenMeta = TOKEN_META[chainId][symbol];
+          const image = IMAGES[symbol];
+
+          return { payment, image, ...tokenMeta, address: tokenAddress };
+        })
+      );
+      return results;
+    },
+    enabled: !!signerAddress && supportedTokens.length > 0,
+  });
+
   bloomLog("juror: ", juror);
   bloomLog("disputeids: ", disputeIds);
   bloomLog("Disputes: ", disputes);
+  bloomLog("Rewards: ", rewards);
 
   const [activeTab, setActiveTab] = useState<"active" | "past">("active");
 
@@ -145,7 +181,7 @@ export default function JurorDashboard() {
       <Header />
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-950 to-black text-white p-6">
         {/* Page Header */}
-        <div className="my-10 text-center">
+        <div className="mb-10 text-center">
           <h1 className="text-3xl font-bold text-white">Juror Dashboard</h1>
           <p className="text-white/70 mt-1 text-sm">
             Track your disputes, reputation, and rewards.
@@ -155,11 +191,7 @@ export default function JurorDashboard() {
           {/* Left Panel */}
           <div className="space-y-6">
             {/* Staked & Reputation Card */}
-            <StatsCard
-              blmStaked={dummyStats.blmStaked}
-              reputation={dummyStats.reputation}
-              votesMissed={dummyStats.votesMissed}
-            />
+            {juror && <StatsCard juror={juror} />}
 
             {/* Rewards Card */}
             <RewardsCard rewards={dummyStats.rewards} onClaim={handleClaim} />

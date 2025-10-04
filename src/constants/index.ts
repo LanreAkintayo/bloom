@@ -138,9 +138,9 @@ export const getChainConfig = (chainName: string) => {
 // Example usage
 const currentChain = getChainConfig("sepolia");
 export const supportedTokens = [
-  currentChain.tokenAddresses.weth,
-  currentChain.tokenAddresses.usdc,
-  currentChain.tokenAddresses.dai,
+  // currentChain.tokenAddresses.WETH,
+  currentChain.tokenAddresses.USDC,
+  currentChain.tokenAddresses.DAI,
   currentChain.wrappedNativeTokenAddress,
 ];
 export const SUPPORTED_CHAIN_ID = currentChain.chainId;
