@@ -86,7 +86,7 @@ export const getDisputeId = async (
 // -------------------------------
 export const getDispute = async (
   disputeId: bigint
-): Promise<Dispute | null> => {
+): Promise<(Dispute & { disputeId: bigint }) | null> => {
   try {
     const dispute = (await readContract(config, {
       abi: disputeStorageAbi,
@@ -96,7 +96,7 @@ export const getDispute = async (
       chainId,
     })) as Dispute;
 
-    return dispute;
+    return { ...dispute, disputeId };
   } catch (error) {
     console.error("Failed to get dispute:", error);
     return null;

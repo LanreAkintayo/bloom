@@ -97,3 +97,11 @@ export type Vote = {
   dealId: bigint;
   support: Address;
 };
+
+export type TokenPayment = Token & {
+  payment: bigint;
+};
+
+export type ExtendedDispute = Dispute & {
+  disputeId: bigint
+}
