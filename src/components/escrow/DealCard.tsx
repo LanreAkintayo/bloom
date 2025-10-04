@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Wallet, Coins, FileText, Loader2 } from "lucide-react";
@@ -295,12 +296,18 @@ export default function DealCard({
             </Button>
           )}
           {currentStatus === "Disputed" && signerAddress === deal.receiver && (
-            <Button
-              onClick={() => onCancel(deal.id)}
-              className="bg-green-800 hover:bg-green-800/70 flex items-center justify-center gap-2 text-[13px] py-0 px-2"
-            >
-              View Updates
-            </Button>
+            // <Button
+            //   onClick={() => onCancel(deal.id)}
+            //   className="bg-green-800 hover:bg-green-800/70 flex items-center justify-center gap-2 text-[13px] py-0 px-2"
+            // >
+            //   View Updates
+            // </Button>
+
+            <Link href={`/dispute/${deal.id}`} passHref>
+              <Button className="bg-green-800 hover:bg-green-800/70 flex items-center justify-center gap-2 text-[13px] py-0 px-2">
+                View Updates
+              </Button>
+            </Link>
           )}
         </div>
       </CardContent>

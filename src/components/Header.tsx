@@ -47,9 +47,9 @@ const defaultNavItems: HeaderItem[] = [
     label: "Disputes",
     type: "dropdown",
     dropdownItems: [
-      { label: "Report dispute", href: "/dispute" },
-      { label: "Active disputes", href: "/dispute" },
-      { label: "My disputes", href: "/dispute" },
+      { label: "Report dispute", href: "/dispute/report_dispute" },
+      { label: "Active disputes", href: "/dispute/my_disputes" },
+      { label: "My disputes", href: "/dispute/my_disputes" },
       { label: "Add Evidence", href: "/evidence" },
     ],
   },

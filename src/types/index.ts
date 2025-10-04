@@ -1,3 +1,5 @@
+import { Address } from "viem";
+
 export type Token = {
   name: string;
   symbol: string;
@@ -67,4 +69,31 @@ export type Evidence = {
   evidenceType: EvidenceType;
   description?: string;
   removed: boolean;
-}
+};
+
+export type Dispute = {
+  initiator: Address;
+  sender: Address;
+  receiver: Address;
+  winner: Address;
+  description: string;
+  dealId: bigint;
+  disputeFee: bigint;
+  feeTokenAddress: Address;
+};
+
+export type Candidate = {
+  disputeId: bigint;
+  jurorAddress: Address;
+  stakeAmount: bigint;
+  reputation: bigint;
+  score: bigint;
+  missed: boolean;
+};
+
+export type Vote = {
+  jurorAddress: Address;
+  disputeId: bigint;
+  dealId: bigint;
+  support: Address;
+};
