@@ -33,6 +33,7 @@ import ConfirmDisputeModal from "@/components/disputes/ConfirmDisputeModal";
 import ErrorModal from "@/components/disputes/ErrorModal";
 import { useAccount } from "wagmi";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { getDeal, getDispute, getDisputeFee, getDisputeId, getDisputeVote, getJurorAddresses, getJurorCandidate } from "@/hooks/useDisputeStorage";
 
 interface Props {
   params: Promise<{ dealId: string }>;
@@ -83,139 +84,17 @@ export default function DisputePage({ params }: Props) {
 
   bloomLog("Dispute data: ", disputeData);
 
-  const getDisputeFee = async (amount: bigint) => {
-    try {
-      const feeControllerAddress = currentChain.feeControllerAddress as Address;
 
-      const disputeFee = (await readContract(config, {
-        abi: feeControllerAbi,
-        address: feeControllerAddress,
-        functionName: "calculateDisputeFee",
-        args: [amount],
-        chainId,
-      })) as bigint;
-
-      return disputeFee;
-    } catch (error) {
-      console.error("Failed to calculate dispute :", error);
-
-      return null;
-    }
-  };
-  const getDisputeId = async () => {
-    try {
-      const disputeId = (await readContract(config, {
-        abi: disputeStorageAbi,
-        address: disputeStorageAddress,
-        functionName: "dealToDispute",
-        args: [dealId],
-        chainId,
-      })) as bigint;
-
-      return disputeId;
-    } catch (error) {
-      console.error("Failed to get dispute id :", error);
-
-      return null;
-    }
-  };
-  const getDispute = async (disputeId: bigint) => {
-    try {
-      const dispute = (await readContract(config, {
-        abi: disputeStorageAbi,
-        address: disputeStorageAddress,
-        functionName: "getDispute",
-        args: [disputeId],
-        chainId,
-      })) as Dispute;
-
-      return dispute;
-    } catch (error) {
-      console.error("Failed to get dispute :", error);
-
-      return null;
-    }
-  };
-
-  const getJurorAddresses = async (disputeId: bigint) => {
-    try {
-      const jurorAddresses = (await readContract(config, {
-        abi: disputeStorageAbi,
-        address: disputeStorageAddress,
-        functionName: "getDisputeJurors",
-        args: [disputeId],
-        chainId,
-      })) as Address[];
-
-      return jurorAddresses;
-    } catch (error) {
-      console.error("Failed to get juror addressess :", error);
-
-      return null;
-    }
-  };
-
-  const getJurorCandidate = async (
-    disputeId: bigint,
-    jurorAddress: Address
-  ) => {
-    try {
-      const jurorCandidate = (await readContract(config, {
-        abi: disputeStorageAbi,
-        address: disputeStorageAddress,
-        functionName: "getDisputeCandidate",
-        args: [disputeId, jurorAddress],
-        chainId,
-      })) as Candidate;
-
-      return jurorCandidate;
-    } catch (error) {
-      console.error("Failed to get juror condidate :", error);
-    }
-  };
-  const getDisputeVote = async (disputeId: bigint, jurorAddress: Address) => {
-    try {
-      const disputeVote = (await readContract(config, {
-        abi: disputeStorageAbi,
-        address: disputeStorageAddress,
-        functionName: "getDisputeVote",
-        args: [disputeId, jurorAddress],
-        chainId,
-      })) as Vote;
-
-      return disputeVote;
-    } catch (error) {
-      console.error("Failed to get juror condidate :", error);
-    }
-  };
-
-  const getDeal = async (dealId: string) => {
-    try {
-      const bloomEscrowAddress = currentChain.bloomEscrowAddress as Address;
-
-      const deal = (await readContract(config, {
-        abi: bloomEscrowAbi,
-        address: bloomEscrowAddress,
-        functionName: "getDeal",
-        args: [dealId],
-        chainId,
-      })) as Deal;
-
-      return deal;
-    } catch (error) {
-      console.error("Failed to load deal :", error);
-
-      return null;
-    }
-  };
 
   useEffect(() => {
     if (!dealId) return; // no dealId, do nothing
 
     const loadDisputeData = async () => {
       try {
+        if (!dealId) return;
+        
         // Step 1: get disputeId
-        const disputeId = await getDisputeId();
+        const disputeId = await getDisputeId(dealId);
         if (!disputeId) return;
 
         // Get Dispute itself
