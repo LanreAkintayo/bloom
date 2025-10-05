@@ -9,7 +9,7 @@ import { bloomLog, inCurrencyFormat } from "@/lib/utils";
 import { formatUnits } from "viem";
 
 interface RewardsCardProps {
-  rewards: TokenPayment[];
+  rewards: TokenPayment[]
   onClaim: (token: string, amount: number) => void;
 }
 
@@ -46,7 +46,7 @@ export default function RewardsCard({ rewards, onClaim }: RewardsCardProps) {
 
           <div className="space-y-3">
             {rewards.length > 0 &&
-              rewards.map((currentReward: TokenPayment, index) => {
+              rewards.map((currentReward: TokenPayment, index: number) => {
                 const amount =
                   currentReward.payment > 0
                     ? inCurrencyFormat(

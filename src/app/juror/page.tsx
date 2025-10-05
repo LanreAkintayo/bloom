@@ -23,13 +23,21 @@ import {
   TokenPayment,
   Dispute,
   ExtendedDispute,
+  Vote,
+  Timer,
+  StorageParams,
 } from "@/types";
-import { useQuery } from "@tanstack/react-query";
+import { useQueries, useQuery } from "@tanstack/react-query";
 import {
   getDispute,
   getJuror,
   getJurorDisputeHistory,
   getJurorTokenPayment,
+  getManyDisputes,
+  getManyDisputeTimer,
+  getManyDisputeVote,
+  getManyJurorPayments,
+  getStorageParams,
 } from "@/hooks/useDisputeStorage";
 import { bloomLog } from "@/lib/utils";
 import {
@@ -46,35 +54,137 @@ export default function JurorDashboard() {
   const { address: signerAddress } = useAccount();
   const chainId = SUPPORTED_CHAIN_ID as TypeChainId;
 
-  const {
-    data: juror,
-    isLoading: jurorLoading,
-    isError,
-  } = useQuery({
-    queryKey: ["juror", signerAddress],
-    queryFn: () => getJuror(signerAddress!),
-    enabled: !!signerAddress, // 👈 This is the key
-  });
+  // Fetch all independent data in parallel using useQueries
+  const results = useQueries({
+    queries: [
+      {
+        queryKey: ["storageParams"],
+        queryFn: getStorageParams,
+        enabled: true,
+      },
+      {
+        queryKey: ["juror", signerAddress],
+        queryFn: () => getJuror(signerAddress!),
+        enabled: !!signerAddress,
+      },
+      {
+        queryKey: ["jurorDisputeHistory", signerAddress],
+        queryFn: () => getJurorDisputeHistory(signerAddress!),
+        enabled: !!signerAddress,
+      },
+      {
+        queryKey: ["rewards", signerAddress],
+        queryFn: () => getManyJurorPayments(signerAddress!, supportedTokens),
+        enabled: !!signerAddress,
+      },
+    ],
+  }) as [
+    { data?: StorageParams },
+    { data?: Juror },
+    { data?: bigint[] },
+    { data?: TokenPayment[] }
+  ];
 
-  const { data: disputeIds, isLoading: isLoadingHistory } = useQuery({
-    queryKey: ["jurorDisputeHistory", signerAddress],
-    queryFn: () => getJurorDisputeHistory(signerAddress!),
-    enabled: !!signerAddress,
-  });
+  const [
+    storageParamsResult,
+    jurorResult,
+    disputeHistoryResult,
+    rewardsResult,
+  ] = results;
 
-  const { data: disputes, isLoading: isLoadingDisputes } = useQuery({
-    queryKey: ["disputes", disputeIds?.map((id) => id.toString())],
-    queryFn: async () => {
-      const results = await Promise.all(
-        disputeIds!.map((id) => {
-          const dispute = getDispute(id);
-          return dispute;
-        })
-      );
-      return results;
-    },
-    enabled: !!disputeIds && disputeIds.length > 0,
-  });
+  // Safely extract data with fallbacks
+  const storageParams = storageParamsResult.data ?? null;
+  const juror = jurorResult.data ?? null;
+  const disputeIds = disputeHistoryResult.data ?? [];
+  const rewards = rewardsResult.data ?? [];
+
+  const dependentResults = useQueries({
+    queries: [
+      {
+        queryKey: ["disputes", disputeIds?.map((d) => d.toString())],
+        queryFn: () => getManyDisputes(disputeIds!),
+        enabled: !!disputeIds?.length,
+      },
+      {
+        queryKey: [
+          "disputeVotes",
+          signerAddress,
+          disputeIds?.map((d) => d.toString()),
+        ],
+        queryFn: () => getManyDisputeVote(disputeIds!, signerAddress!),
+        enabled: !!signerAddress && !!disputeIds?.length,
+      },
+      {
+        queryKey: ["disputeTimers", disputeIds?.map((d) => d.toString())],
+        queryFn: () => getManyDisputeTimer(disputeIds!),
+        enabled: !!disputeIds?.length,
+      },
+    ],
+  }) as [{ data?: ExtendedDispute[] }, { data?: Vote[] }, { data?: Timer[] }];
+
+  const [disputesResult, disputeVotesResult, disputeTimersResult] =
+    dependentResults;
+  const disputes = disputesResult?.data ?? [];
+  const disputeVotes = disputeVotesResult?.data ?? [];
+  const disputeTimers = disputeTimersResult?.data ?? [];
+
+  // const { data: storageParams } = useQuery({
+  //   queryKey: ["storageParams"],
+  //   queryFn: () => getStorageParams(),
+  //   enabled: true, // 👈 This is the key
+  // });
+
+  // const {
+  //   data: juror,
+  //   isLoading: jurorLoading,
+  //   isError,
+  // } = useQuery({
+  //   queryKey: ["juror", signerAddress],
+  //   queryFn: () => getJuror(signerAddress!),
+  //   enabled: !!signerAddress, // 👈 This is the key
+  // });
+
+  // const { data: disputeIds, isLoading: isLoadingHistory } = useQuery({
+  //   queryKey: ["jurorDisputeHistory", signerAddress],
+  //   queryFn: () => getJurorDisputeHistory(signerAddress!),
+  //   enabled: !!signerAddress,
+  // });
+
+  // const { data: disputes } = useQuery({
+  //   queryKey: ["disputes", disputeIds?.map((d) => d.toString())],
+  //   queryFn: () => getManyDisputes(disputeIds!),
+  //   enabled: !!disputeIds?.length,
+  // });
+
+  // const { data: disputeVotes } = useQuery({
+  //   queryKey: [
+  //     "manyDisputeVotes",
+  //     signerAddress,
+  //     disputeIds?.map((d) => d.toString()),
+  //   ],
+  //   queryFn: () => getManyDisputeVote(disputeIds!, signerAddress!),
+  //   enabled: !!signerAddress && !!disputeIds,
+  // });
+
+  const disputeVotesMap = useMemo(() => {
+    if (!disputeVotes) return;
+    const map = new Map<bigint, Vote>();
+    disputeVotes.forEach((v) => map.set(v.disputeId, v));
+    return map;
+  }, [disputeVotes]);
+
+  // const { data: disputeTimers } = useQuery({
+  //   queryKey: ["manyDisputeTimers", disputeIds?.map((d) => d.toString())],
+  //   queryFn: () => getManyDisputeTimer(disputeIds!),
+  //   enabled: !!disputeIds,
+  // });
+
+  const disputeTimersMap = useMemo(() => {
+    if (!disputeTimers) return;
+    const map = new Map<bigint, Timer>();
+    disputeTimers.forEach((timer) => map.set(timer.disputeId, timer));
+    return map;
+  }, [disputeTimers]);
 
   const activeDisputes = useMemo(() => {
     if (!disputes) return;
@@ -89,34 +199,11 @@ export default function JurorDashboard() {
   bloomLog("Active disputes: ", activeDisputes);
   bloomLog("Past disputes: ", pastDisputes);
 
-  // const pastDisputes = useMemo(
-  //   () => disputes?.filter((d: Dispute) => d.winner),
-  //   [disputes]
-  // );
-
-  const { data: rewards } = useQuery({
-    queryKey: ["rewards", supportedTokens, signerAddress],
-    queryFn: async () => {
-      bloomLog("Supported Tokens: ", supportedTokens);
-      bloomLog("signer address: ", signerAddress);
-      const results = await Promise.all(
-        supportedTokens.map(async (tokenAddress) => {
-          const payment = (await getJurorTokenPayment(
-            signerAddress!,
-            tokenAddress as Address
-          )) as bigint;
-
-          const symbol = addressToToken[chainId]?.[tokenAddress.toLowerCase()];
-          const tokenMeta = TOKEN_META[chainId][symbol];
-          const image = IMAGES[symbol];
-
-          return { payment, image, ...tokenMeta, address: tokenAddress };
-        })
-      );
-      return results;
-    },
-    enabled: !!signerAddress && supportedTokens.length > 0,
-  });
+  // const { data: rewards } = useQuery({
+  //   queryKey: ["rewards", signerAddress],
+  //   queryFn: () => getManyJurorPayments(signerAddress!, supportedTokens),
+  //   enabled: !!signerAddress,
+  // });
 
   bloomLog("juror: ", juror);
   bloomLog("disputeids: ", disputeIds);
@@ -126,63 +213,6 @@ export default function JurorDashboard() {
   const [activeTab, setActiveTab] = useState<"active" | "past">("active");
 
   // Dummy data
-
-  const dummyDisputes = {
-    active: [
-      {
-        id: 1,
-        title: "Dispute #1023",
-        sender: "0xA1B2...C3D4",
-        recipient: "0xE5F6...G7H8",
-        dealDetails: "Buyer claims seller did not deliver the agreed NFT",
-        duration: 8, // voting duration in hours (urgent)
-        token: "USDC",
-        fee: 100,
-      },
-      {
-        id: 2,
-        title: "Dispute #1027",
-        sender: "0xI9J0...K1L2",
-        recipient: "0xM3N4...O5P6",
-        dealDetails: "Seller claims buyer refused payment after delivery",
-        duration: 20, // voting duration in hours (medium)
-        token: "ETH",
-        fee: 0.5,
-      },
-      {
-        id: 3,
-        title: "Dispute #1030",
-        sender: "0xQ7R8...S9T0",
-        recipient: "0xU1V2...W3X4",
-        dealDetails: "Buyer claims seller sent wrong NFT",
-        duration: 36, // voting duration in hours (plenty of time)
-        token: "USDC",
-        fee: 500,
-      },
-    ],
-    past: [
-      {
-        id: 4,
-        title: "Dispute #1010",
-        sender: "0xA9B8...C7D6",
-        recipient: "0xE5F4...G3H2",
-        dealDetails: "Seller delivered partially defective NFT",
-        token: "USDC",
-        reward: 20, // reward won
-        outcome: "Won",
-      },
-      {
-        id: 5,
-        title: "Dispute #1005",
-        sender: "0xI1J2...K3L4",
-        recipient: "0xM5N6...O7P8",
-        dealDetails: "Buyer refused to pay for NFT delivery",
-        token: "ETH",
-        reward: 0, // no reward since lost
-        outcome: "Lost",
-      },
-    ],
-  };
 
   const handleClaim = (token: string, amount: number) => {
     console.log(`Claiming ${amount} of ${token}`);
@@ -204,7 +234,7 @@ export default function JurorDashboard() {
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Left Panel */}
-          <div className="space-y-6">
+          <div className="space-y-6 sm:mt-16">
             {/* Staked & Reputation Card */}
             {juror && <StatsCard juror={juror} />}
 
@@ -239,18 +269,27 @@ export default function JurorDashboard() {
             </div>
 
             {/* Content Area */}
-            <div className="space-y-4">
-              {activeTab === "active" &&
-                activeDisputes &&
-                activeDisputes.map((dispute: ExtendedDispute | null) => (
-                  <DisputeCard key={dispute!.disputeId} dispute={dispute!} />
-                ))}
-              {activeTab === "past" &&
-                pastDisputes &&
-                pastDisputes.map((dispute: ExtendedDispute | null) => (
-                  <DisputeCard key={dispute!.disputeId.toString()} dispute={dispute!} />
-                ))}
-            </div>
+            {/* Dispute List */}
+            {activeDisputes && pastDisputes && (
+              <div className="space-y-4">
+                {(activeTab === "active" ? activeDisputes : pastDisputes).map(
+                  (dispute: ExtendedDispute | null) => {
+                    if (!dispute) return null;
+                    const vote = disputeVotesMap?.get(dispute.disputeId);
+                    const timer = disputeTimersMap?.get(dispute.disputeId);
+                    return (
+                      <DisputeCard
+                        key={dispute.disputeId.toString()}
+                        dispute={dispute}
+                        disputeVote={vote!}
+                        disputeTimer={timer!}
+                        storageParams={storageParams!}
+                      />
+                    );
+                  }
+                )}
+              </div>
+            )}
 
             {/* Rules Section */}
             <Card className="bg-slate-900/95 border border-slate-700 shadow-lg">

@@ -222,7 +222,9 @@ export default function DisputePage() {
           return;
         }
       } else {
-        setStep(1);
+        if (step < 1) {
+          setStep(1);
+        }
       }
 
       // Now, we call openDispute.

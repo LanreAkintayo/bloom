@@ -98,10 +98,23 @@ export type Vote = {
   support: Address;
 };
 
+export type Timer = {
+  disputeId: bigint;
+  startTime: bigint;
+  standardVotingDuration: bigint;
+  extendDuration: bigint;
+};
+
 export type TokenPayment = Token & {
   payment: bigint;
 };
 
 export type ExtendedDispute = Dispute & {
-  disputeId: bigint
+  disputeId: bigint;
+};
+
+export type StorageParams = {
+  tieBreakingDuration: bigint;
+  missedVoteThreshold: bigint;
+  ongoingDisputeThreshold:bigint;
 }

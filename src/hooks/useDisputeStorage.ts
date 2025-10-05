@@ -9,9 +9,11 @@ import {
   disputeStorageAbi,
   feeControllerAbi,
   getChainConfig,
+  IMAGES,
 } from "@/constants";
 import {
   readContract,
+  readContracts,
   simulateContract,
   waitForTransactionReceipt,
   writeContract,
@@ -26,6 +28,10 @@ import {
   Token,
   TypeChainId,
   Vote,
+  TokenPayment,
+  Timer,
+  StorageParams,
+  ExtendedDispute,
 } from "@/types";
 
 /**
@@ -101,6 +107,23 @@ export const getDispute = async (
     console.error("Failed to get dispute:", error);
     return null;
   }
+};
+
+export const getManyDisputes = async (disputeIds: bigint[]):Promise<ExtendedDispute[]> => {
+  const contracts = disputeIds.map((id) => ({
+    abi: disputeStorageAbi,
+    address: disputeStorageAddress,
+    functionName: "getDispute",
+    args: [id],
+    chainId,
+  }));
+
+  const results = await readContracts(config, { contracts });
+
+  return results.map((r, i) => ({
+    disputeId: disputeIds[i],
+    ...(r.result as Dispute),
+  }));
 };
 
 // -------------------------------
@@ -256,5 +279,122 @@ export const getJurorTokenPayment = async (
   } catch (error) {
     console.error("Failed to get juror token payment :", error);
     return null;
+  }
+};
+
+export const getManyJurorPayments = async (
+  juror: Address,
+  tokenAddresses: string[]
+): Promise<TokenPayment[]> => {
+  const contracts = tokenAddresses.map((token) => ({
+    abi: disputeStorageAbi,
+    address: disputeStorageAddress,
+    functionName: "getJurorTokenPayment",
+    args: [juror, token],
+    chainId,
+  }));
+
+  const results = await readContracts(config, { contracts });
+
+  return results.map((r, i) => {
+    const tokenAddress = tokenAddresses[i];
+    const symbol = addressToToken[chainId]?.[tokenAddress.toLowerCase()];
+    const tokenMeta = TOKEN_META[chainId][symbol];
+    const image = IMAGES[symbol];
+
+    return {
+      ...tokenMeta,
+      image,
+      address: tokenAddress,
+      payment: r.result as bigint,
+    };
+  });
+};
+
+export const getManyDisputeVote = async (
+  disputeIds: bigint[],
+  voter: Address
+): Promise<Vote[]> => {
+  if (!voter || !disputeIds?.length) return [];
+
+  try {
+    const contracts = disputeIds.map((disputeId) => ({
+      address: disputeStorageAddress as Address,
+      abi: disputeStorageAbi,
+      functionName: "getDisputeVote",
+      args: [disputeId, voter],
+    }));
+
+    const results = await readContracts(config, { contracts });
+
+    return results.map((r, i) => ({
+      ...(r.result as Vote), // This could be support or vote data depending on your contract
+    }));
+  } catch (error) {
+    console.error("Error fetching many dispute votes:", error);
+    return [];
+  }
+};
+
+export const getManyDisputeTimer = async (
+  disputeIds: bigint[]
+): Promise<Timer[]> => {
+  if (!disputeIds?.length) return [];
+
+  try {
+    const contracts = disputeIds.map((disputeId) => ({
+      address: disputeStorageAddress as Address,
+      abi: disputeStorageAbi,
+      functionName: "getDisputeTimer",
+      args: [disputeId],
+    }));
+
+    const results = await readContracts(config, { contracts });
+
+    bloomLog("Inside many dispute timers: ", results)
+
+    return results.map((r, i) => ({
+      ...(r.result as Timer), // This could be support or vote data depending on your contract
+    }));
+  } catch (error) {
+    console.error("Error fetching many dispute votes:", error);
+    return [];
+  }
+};
+
+export const getStorageParams = async (): Promise<StorageParams> => {
+  try {
+    const contracts = [
+      {
+        abi: disputeStorageAbi,
+        address: disputeStorageAddress,
+        functionName: "tieBreakingDuration",
+      },
+      {
+        abi: disputeStorageAbi,
+        address: disputeStorageAddress,
+        functionName: "missedVoteThreshold",
+      },
+      {
+        abi: disputeStorageAbi,
+        address: disputeStorageAddress,
+        functionName: "ongoingDisputeThreshold",
+      },
+    ];
+
+    const results = await readContracts(config, { contracts });
+
+    return {
+      tieBreakingDuration: results[0].result as bigint,
+      missedVoteThreshold: results[1].result as bigint,
+      ongoingDisputeThreshold: results[2].result as bigint,
+    };
+  } catch (error) {
+    console.error("Error fetching storage params:", error);
+    return {
+      tieBreakingDuration: BigInt(0),
+      missedVoteThreshold: BigInt(0),
+      ongoingDisputeThreshold: BigInt(0),
+    };
   }
 };
