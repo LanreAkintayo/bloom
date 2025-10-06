@@ -682,7 +682,9 @@ const EvidencePage = () => {
                   </ul>
 
                   <Button
-                    target="_blank"
+                    onClick={() => {
+                      bloomLog("Learn More");
+                    }}
                     className="bg-slate-800 my-5 w-full border border-slate-700"
                   >
                     Learn More
@@ -694,7 +696,7 @@ const EvidencePage = () => {
 
           {/* Right Panel - Evidence List */}
 
-          <div className="" ref={evidenceRef}>
+          <div className="w-full" ref={evidenceRef}>
             <Card className="flex flex-col gap-4 p-4 bg-slate-900/95 border border-slate-800/95">
               <h2 className="text-white text-xl font-semibold mb-4">
                 Uploaded Evidences
@@ -725,8 +727,7 @@ const EvidencePage = () => {
                         );
                       })
                   )}
-                  {/* Add "View All" link or button */}
-                  <div className="text-center mt-4">
+                 {evidences.length > 2 &&(
                     <Button
                       variant="outline"
                       className="bg-green-900 hover:bg-green-800/70 text-white hover:text-white"
@@ -739,10 +740,12 @@ const EvidencePage = () => {
                     >
                       View All Evidences
                     </Button>
-                  </div>
+                 )}
                 </div>
               ) : (
-                <div>Nah</div>
+                <div className="bg-slate-800 p-6 rounded-2xl shadow-md text-center text-gray-400">
+                  No evidence uploaded yet.
+                </div>
               )}
             </Card>
           </div>
@@ -753,3 +756,5 @@ const EvidencePage = () => {
 };
 
 export default EvidencePage;
+
+
