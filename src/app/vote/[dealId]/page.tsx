@@ -1,89 +1,161 @@
 "use client";
 
-import React, { useState } from "react";
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import axios from "axios";
+import React, { useState, useEffect, use, useMemo } from "react";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+
 import {
-  User,
   FileText,
   Info,
   ArrowRight,
   Clock,
   Hash,
   Layers,
+  Image as LucideImage,
+  Video,
+  Lightbulb,
+  UploadCloud,
+  ArrowDown,
+  ChevronDown,
+  ChevronUp,
+  User,
+  DollarSign,
+  Loader2,
 } from "lucide-react";
-import { Label } from "@/components/ui/label";
+import EvidencePicker from "@/components/evidence/EvidencePicker";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import EvidenceCard from "@/components/evidence/EvidenceCard";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 import Header from "@/components/Header";
+import { useAccount } from "wagmi";
+import { Address, erc20Abi, formatUnits, parseGwei } from "viem";
+import {
+  SUPPORTED_CHAIN_ID,
+  TOKEN_META,
+  addressToToken,
+  bloomEscrowAbi,
+  disputeManagerAbi,
+  disputeStorageAbi,
+  feeControllerAbi,
+  getChainConfig,
+} from "@/constants";
+import {
+  readContract,
+  simulateContract,
+  waitForTransactionReceipt,
+  writeContract,
+} from "@wagmi/core";
+import { config } from "@/lib/wagmi";
+import { bloomLog, formatAddress, formatCountdown, inCurrencyFormat } from "@/lib/utils";
+import { Deal, EvidenceType, Token, TypeChainId, Evidence } from "@/types";
+import { useModal } from "@/providers/ModalProvider";
+import useDefi from "@/hooks/useDefi";
+import { useQuery } from "@tanstack/react-query";
+import {
+  getDeal,
+  getDispute,
+  getDisputeId,
+  getDisputeTimer,
+  getEvidence,
+} from "@/hooks/useDisputeStorage";
 
-export default function DisputeVotingPage() {
+interface Props {
+  params: Promise<{ dealId: string }>;
+}
+
+export default function DisputeVotingPage({ params }: Props) {
+  const { dealId } = use(params);
+  const { storageParams } = useDefi();
+
   const [selectedVote, setSelectedVote] = useState<string>("");
+  const { address: signerAddress } = useAccount();
+  const currentChain = getChainConfig("sepolia");
+  const disputeManagerAddress = currentChain.disputeManagerAddress as Address;
+  const chainId = SUPPORTED_CHAIN_ID as TypeChainId;
+  // const [deal, setDeal] = useState<Deal | null>(null);
 
-  const metaInfo = [
-    {
-      label: "Deal ID",
-      value: "#D-29301",
-      icon: Hash,
-      color: "text-emerald-400",
-    },
-    {
-      label: "Dispute ID",
-      value: "#DS-9810",
-      icon: Layers,
-      color: "text-cyan-400",
-    },
-    {
-      label: "Time Left",
-      value: "2d 14h",
-      icon: Clock,
-      color: "text-amber-400 animate-pulse",
-    },
-  ];
+  const { data: deal } = useQuery({
+    queryKey: ["deal", dealId?.toString()],
+    queryFn: () => getDeal(dealId!),
+    enabled: !!dealId,
+  });
 
-  // Dummy parties
-  const plaintiff = {
-    name: "0xA1B2...C3D4",
-    claim: "Buyer claims seller did not deliver the agreed NFT",
-  };
+  const { data: disputeId } = useQuery({
+    queryKey: ["disputeId", chainId, dealId?.toString()],
+    queryFn: () => getDisputeId(dealId!),
+    enabled: !!dealId,
+  });
 
-  const defendant = {
-    name: "0xE5F6...G7H8",
-    defense: "Seller insists NFT was delivered as agreed",
-  };
+  const { data: dispute } = useQuery({
+    queryKey: ["dispute", chainId.toString(), disputeId?.toString()],
+    queryFn: () => getDispute(disputeId!),
+    enabled: !!disputeId,
+  });
 
-  // Dummy evidences
-  const [evidenceList, setEvidenceList] = useState([
-    {
-      id: 1,
-      fileName: "payment-proof.pdf",
-      fileType: "pdf",
-      uploadDate: "2025-09-15",
-      status: "Verified",
-      description:
-        "Screenshot of transaction record showing payment made and this is not even the first time that they will be sending stuff like this. I tried my best to no to talk too much but it proved abortive. I would love if you find something to do about that. Thank you",
-      submittedBy: "Plaintiff",
+  const { data: disputeTimer } = useQuery({
+    queryKey: ["disputeTimer", disputeId?.toString()],
+    queryFn: () => getDisputeTimer(disputeId!),
+    enabled: !!disputeId,
+  });
+
+  const initiator = dispute?.initiator;
+  const against =
+    dispute?.initiator === dispute?.sender
+      ? dispute?.receiver
+      : dispute?.sender;
+
+  const { data: evidences } = useQuery({
+    queryKey: ["disputeEvidences", dealId?.toString(), dispute?.initiator],
+    queryFn: async () => {
+      const initiator = dispute!.initiator;
+      const against =
+        dispute!.initiator === dispute!.sender
+          ? dispute!.receiver
+          : dispute!.sender;
+
+      const [initiatorEvidences, againstEvidences] = await Promise.all([
+        getEvidence(dealId!, initiator),
+        getEvidence(dealId!, against),
+      ]);
+
+      return { initiatorEvidences, againstEvidences };
     },
-    {
-      id: 2,
-      fileName: "delivery-proof.png",
-      fileType: "image",
-      uploadDate: "2025-09-15",
-      status: "Pending",
-      description: "Proof of delivery on-chain transaction link.",
-      submittedBy: "Defendant",
-    },
-    {
-      id: 3,
-      fileName: "chat-logs.mp4",
-      fileType: "video",
-      uploadDate: "2025-09-16",
-      status: "Verified",
-      description: "Chat logs of conversation where seller promised delivery.",
-      submittedBy: "Plaintiff",
-    },
-  ]);
+    enabled: !!dispute && !!dealId,
+  });
+
+  const initiatorEvidences = evidences?.initiatorEvidences;
+  const againstEvidences = evidences?.againstEvidences;
+
+  const endTime = useMemo(() => {
+    return (
+      (Number(disputeTimer?.startTime ?? 0) +
+        Number(disputeTimer?.standardVotingDuration ?? 0) +
+        Number(disputeTimer?.extendDuration ?? 0)) *
+      1000
+    );
+  }, [disputeTimer]);
+
+  // Countdown state
+  const [remainingMs, setRemainingMs] = useState(() =>
+    Math.max(endTime - Date.now(), 0)
+  );
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setRemainingMs((prev) => {
+        const next = endTime - Date.now();
+        return next > 0 ? next : 0;
+      });
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [endTime]);
+
+  const remainingHours = Math.floor(remainingMs / (1000 * 60 * 60));
+  const remainingMinutes = remainingHours * 60;
 
   const handleSubmitVote = () => {
     if (!selectedVote) {
@@ -118,21 +190,27 @@ export default function DisputeVotingPage() {
                     <Hash className="w-4 h-4 text-emerald-400" />
                     <span>
                       Deal ID:{" "}
-                      <span className="font-semibold text-white">#D-29301</span>
+                      <span className="font-semibold text-white">
+                        #{dealId && dealId.toString()}
+                      </span>
                     </span>
                   </div>
                   <div className="flex items-center gap-2">
                     <Layers className="w-4 h-4 text-cyan-400" />
                     <span>
                       Dispute ID:{" "}
-                      <span className="font-semibold text-white">#DS-9810</span>
+                      <span className="font-semibold text-white">
+                        #{disputeId && disputeId.toString()}
+                      </span>
                     </span>
                   </div>
                   <div className="flex items-center gap-2">
                     <Clock className="w-4 h-4 text-amber-400 animate-pulse" />
                     <span>
                       Time Left:{" "}
-                      <span className="font-semibold text-white">2d 14h</span>
+                      <span className="font-semibold text-white">
+                        {remainingMs && formatCountdown(remainingMs)}
+                      </span>
                     </span>
                   </div>
                 </div>
@@ -145,7 +223,7 @@ export default function DisputeVotingPage() {
                       <User className="w-5 h-5" /> Plaintiff
                     </h3>
                     <p className="text-sm text-white/80 mt-2">
-                      {plaintiff.name}
+                      {initiator && formatAddress(initiator)}
                     </p>
                     {/* <p className="text-sm text-white/60">{plaintiff.claim}</p> */}
                   </div>
@@ -156,7 +234,7 @@ export default function DisputeVotingPage() {
                       <User className="w-5 h-5" /> Defendant
                     </h3>
                     <p className="text-sm text-white/80 mt-2">
-                      {defendant.name}
+                      {against && formatAddress(against)}
                     </p>
                     {/* <p className="text-sm text-white/60">{defendant.defense}</p> */}
                   </div>
@@ -196,32 +274,50 @@ export default function DisputeVotingPage() {
 
                 {/* Plaintiff Evidence */}
                 <TabsContent value="plaintiff" className="mt-4 grid gap-4">
-                  {evidenceList
-                    .filter((e) => e.submittedBy === "Plaintiff")
-                    .map((e, i) => (
-                      <EvidenceCard
-                        key={e.id}
-                        e={e}
-                        index={i}
-                        setEvidenceList={setEvidenceList}
-                        isJurorView={true}
-                      />
-                    ))}
+                  {initiatorEvidences &&
+                    initiatorEvidences.length > 0 &&
+                    initiatorEvidences
+                      .slice() // copy so you don't mutate
+                      .reverse()
+                      .slice(0, 2) // only take the first 2 after reversing
+                      .map((currentEvidence, indexFromReversed) => {
+                        const originalIndex =
+                          initiatorEvidences.length - 1 - indexFromReversed;
+                        return (
+                          <EvidenceCard
+                            key={originalIndex}
+                            evidence={currentEvidence}
+                            index={originalIndex} // still original index
+                            isJurorView={true}
+                            handleRemoveEvidence={() => {}}
+                            removalState={null}
+                          />
+                        );
+                      })}
                 </TabsContent>
 
                 {/* Defendant Evidence */}
                 <TabsContent value="defendant" className="mt-4 grid gap-4">
-                  {evidenceList
-                    .filter((e) => e.submittedBy === "Defendant")
-                    .map((e, i) => (
-                      <EvidenceCard
-                        key={e.id}
-                        e={e}
-                        index={i}
-                        setEvidenceList={setEvidenceList}
-                        isJurorView={true}
-                      />
-                    ))}
+                  {againstEvidences &&
+                    againstEvidences.length > 0 &&
+                    againstEvidences
+                      .slice() // copy so you don't mutate
+                      .reverse()
+                      .slice(0, 2) // only take the first 2 after reversing
+                      .map((currentEvidence, indexFromReversed) => {
+                        const originalIndex =
+                          againstEvidences.length - 1 - indexFromReversed;
+                        return (
+                          <EvidenceCard
+                            key={originalIndex}
+                            evidence={currentEvidence}
+                            index={originalIndex} // still original index
+                            isJurorView={true}
+                            handleRemoveEvidence={() => {}}
+                            removalState={null}
+                          />
+                        );
+                      })}
                 </TabsContent>
               </Tabs>
             </div>

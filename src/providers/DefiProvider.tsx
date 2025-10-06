@@ -1,6 +1,6 @@
 import React, { useReducer } from "react";
 import { Address } from "viem";
-import { Juror, Token, WalletToken } from "@/types";
+import { Juror, StorageParams, Token, WalletToken } from "@/types";
 import DefiContext from "./defi-context";
 import {
   bloomEscrowAbi,
@@ -26,6 +26,7 @@ const defaultDefiState = {
   recipientDeals: null,
   creatorDeals: null,
   juror: null,
+  storageParams: null
 };
 
 const defiReducer = (
@@ -37,6 +38,7 @@ const defiReducer = (
     recipientDeals?: any[];
     creatorDeals?: any[];
     juror?: Juror;
+    storageParams?: StorageParams;
   }
 ) => {
   if (action.type === "USER_WALLET_TOKENS") {
@@ -67,6 +69,12 @@ const defiReducer = (
     return {
       ...state,
       juror: action.juror,
+    };
+  }
+  if (action.type === "STORAGE_PARAMS") {
+    return {
+      ...state,
+      storageParams: action.storageParams,
     };
   }
 
@@ -203,6 +211,55 @@ const DefiProvider = (props: any) => {
         allSupportedTokens: [],
       });
       return [];
+    }
+  };
+
+  const loadStorageParamsHandler = async (): Promise<StorageParams | null> => {
+    bloomLog("Inside load storage params");
+
+    const disputeStorageAddress = currentChain.disputeStorageAddress as Address;
+
+    try {
+      const contracts = [
+        {
+          abi: disputeStorageAbi,
+          address: disputeStorageAddress,
+          functionName: "tieBreakingDuration",
+        },
+        {
+          abi: disputeStorageAbi,
+          address: disputeStorageAddress,
+          functionName: "missedVoteThreshold",
+        },
+        {
+          abi: disputeStorageAbi,
+          address: disputeStorageAddress,
+          functionName: "ongoingDisputeThreshold",
+        },
+      ];
+
+      const results = await readContracts(config, { contracts });
+
+      const storageParams = {
+        tieBreakingDuration: results[0].result as bigint,
+        missedVoteThreshold: results[1].result as bigint,
+        ongoingDisputeThreshold: results[2].result as bigint,
+      };
+
+      // bloomLog("All Supported Tokens: ", allSupportedTokens);
+
+      dispatchDefiAction({
+        type: "STORAGE_PARAMS",
+        storageParams: storageParams,
+      });
+      return storageParams;
+    } catch (error) {
+      console.error("Failed to storage params:", error);
+      dispatchDefiAction({
+        type: "STORAGE_PARAMS",
+        storageParams: undefined
+      });
+      return null;
     }
   };
 
@@ -362,19 +419,19 @@ const DefiProvider = (props: any) => {
     }
   };
 
-  
-
   const defiContext = {
     userWalletTokens: defiState.userWalletTokens,
     allSupportedTokens: defiState.allSupportedTokens,
     recipientDeals: defiState.recipientDeals,
     creatorDeals: defiState.creatorDeals,
     juror: defiState.juror,
+    storageParams: defiState.storageParams,
     loadUserWalletTokens: loadUserWalletTokensHandler,
     loadAllSupportedTokens: loadAllSupportedTokensHandler,
     loadRecipientDeals: loadRecipientDealsHandler,
     loadCreatorDeals: loadCreatorDealsHandler,
     loadJuror: loadJurorHandler,
+    loadStorageParams: loadStorageParamsHandler
   };
 
   return (

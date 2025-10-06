@@ -11,6 +11,7 @@ import useDefi from "@/hooks/useDefi";
 import { formatUnits } from "viem";
 import Image from "next/image";
 import { useAccount } from "wagmi";
+import { useRouter } from "next/navigation";
 
 interface Deal {
   id: number;
@@ -55,6 +56,8 @@ export default function DealCard({
   const token: Token = allSupportedTokens?.find(
     (t: Token) => t.address === deal.tokenAddress
   ) as Token;
+
+  const router = useRouter();
 
   // bloomLog("Token in DealCard: ", token);
 
@@ -255,24 +258,17 @@ export default function DealCard({
                     "Unacknowledge Deal"
                   )}
                 </Button>
-                <Button
-                  onClick={() => onDispute(deal.id)}
-                  className="bg-cyan-700 hover:bg-cyan-700/70 flex items-center justify-center gap-2 text-[13px] py-0 px-2"
-                  disabled={
-                    loadingAction.dealId === deal.id &&
-                    loadingAction.type === "dispute"
-                  }
-                >
-                  {loadingAction.dealId === deal.id &&
-                  loadingAction.type === "dispute" ? (
-                    <>
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                      Opening Dispute...
-                    </>
-                  ) : (
-                    "Open Dispute"
-                  )}
-                </Button>
+
+                <Link href={`/dispute/report_dispute/${deal.id}`}>
+                  <Button
+                    onClick={() => {
+                      router.push(`/dispute/report_dispute/${deal.id}`);
+                    }}
+                    className="bg-cyan-700 hover:bg-cyan-700/70 flex items-center justify-center gap-2 text-[13px] py-0 px-2"
+                  >
+                    Open Dispute
+                  </Button>
+                </Link>
               </div>
             )}
           {currentStatus === "Pending" && signerAddress === deal.receiver && (

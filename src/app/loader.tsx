@@ -5,7 +5,8 @@ import { useAccount } from "wagmi";
 import useDefi from "@/hooks/useDefi";
 
 export default function DeFiLoader() {
-  const { loadUserWalletTokens, loadAllSupportedTokens } = useDefi();
+  const { loadUserWalletTokens, loadAllSupportedTokens, loadStorageParams } =
+    useDefi();
   const { address: signerAddress } = useAccount();
 
   useEffect(() => {
@@ -14,6 +15,13 @@ export default function DeFiLoader() {
       console.error("Failed to load DeFi data:", err)
     );
   }, [signerAddress]);
+
+  
+  useEffect(() => {
+    loadStorageParams().catch((err) =>
+      console.error("Failed to load DeFi data:", err)
+    );
+  }, []);
 
   return null; // doesn't render anything, just runs effects
 }

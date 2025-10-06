@@ -21,11 +21,15 @@ import {
 } from "@/constants";
 import { bloomLog } from "@/lib/utils";
 import { Address } from "viem";
+import { Deal } from "@/types";
+import DealCard from "../escrow/DealCard";
+import { useRouter } from "next/navigation";
 
 interface DisputeModalProps {
   isOpen: boolean;
   onClose: () => void;
   token: any;
+  deal: Deal;
   currentChain: ChainConfig;
   disputeState: any;
 }
@@ -34,11 +38,13 @@ export default function DisputeModal({
   isOpen,
   onClose,
   token,
+  deal,
   currentChain,
   disputeState,
 }: DisputeModalProps) {
   const { step, setStep } = disputeState;
   const { address: signerAddress } = useAccount();
+  const router = useRouter()
 
   useEffect(() => {
     if (!isOpen) setStep(0);
@@ -53,7 +59,7 @@ export default function DisputeModal({
     onLogs(logs) {
       if (!isOpen) return; // only react when modal is open
       bloomLog("Approval event detected", logs);
-      setStep(1);
+      setStep((prev:number) => Math.max(prev, 1));
     },
   });
 
@@ -66,9 +72,8 @@ export default function DisputeModal({
     onLogs(logs) {
       if (!isOpen) return;
       bloomLog("DisputeOpened event detected", logs);
-      if (step < 2) {
-        setStep(2);
-      }
+      setStep((prev:number) => Math.max(prev, 2));
+
     },
   });
 
@@ -80,9 +85,8 @@ export default function DisputeModal({
     onLogs(logs) {
       if (!isOpen) return;
       bloomLog("Random number request event detected", logs);
-      if (step < 3) {
-        setStep(3);
-      }
+      setStep((prev:number) => Math.max(prev, 3));
+
     },
   });
 
@@ -94,10 +98,7 @@ export default function DisputeModal({
     onLogs(logs) {
       if (!isOpen) return;
       bloomLog("JurorsSelected event detected", logs);
-      if (step < 4) {
-        setStep(4);
-        setStep(5);
-      }
+      setStep((prev:number) => Math.max(prev, 5));
     },
   });
 
@@ -189,7 +190,7 @@ export default function DisputeModal({
     },
     {
       title: "Selecting Jurors",
-      descOngoing: "Selecting jurors...",
+      descOngoing: "Selecting jurors (~3 minutes)...",
       descDone: "Jurors selected",
     },
     {
@@ -260,7 +261,7 @@ export default function DisputeModal({
               className="bg-green-800 hover:bg-green-800/70 text-white hover:text-white"
               onClick={() => {
                 // Navigate to the dispute page
-                window.location.href = `/disputes/${/* disputeId */ ""}`;
+                router.push(`/dispute/${deal.id}`);
               }}
             >
               View Dispute

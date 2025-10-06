@@ -61,7 +61,6 @@ export default function DisputePage() {
   });
 
   const [step, setStep] = useState(0);
-
   const disputeState = { step, setStep };
 
   const getDisputeFee = async (amount: bigint) => {
@@ -222,7 +221,7 @@ export default function DisputePage() {
           return;
         }
       } else {
-        setStep(1);
+        setStep((prev: number) => Math.max(prev, 1));
       }
 
       // Now, we call openDispute.
@@ -298,6 +297,7 @@ export default function DisputePage() {
             setSubmitted(false); // reset submit state if needed
           }}
           token={token}
+          deal={deal!}
           currentChain={currentChain}
           disputeState={disputeState}
         />

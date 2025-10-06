@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, use } from "react";
+import { useEffect, useState, use } from "react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -8,48 +8,140 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Clock, FileText, Scale, BookOpen } from "lucide-react";
 import Header from "@/components/Header";
-import { bloomLog } from "@/lib/utils";
+import { bloomLog, formatAddress, inCurrencyFormat } from "@/lib/utils";
+import {
+  SUPPORTED_CHAIN_ID,
+  TOKEN_META,
+  addressToToken,
+  bloomEscrowAbi,
+  disputeManagerAbi,
+  feeControllerAbi,
+  getChainConfig,
+} from "@/constants";
+import {
+  readContract,
+  simulateContract,
+  waitForTransactionReceipt,
+  writeContract,
+} from "@wagmi/core";
+import { Address, erc20Abi, formatUnits, parseGwei } from "viem";
+import { config } from "@/lib/wagmi";
+import { Deal, Token, TypeChainId } from "@/types";
+import DisputeModal from "@/components/disputes/DisputeModal";
+import ConfirmDisputeModal from "@/components/disputes/ConfirmDisputeModal";
+import ErrorModal from "@/components/disputes/ErrorModal";
+import { useAccount } from "wagmi";
 
-// Dummy deal data
-const dummyDeals: Record<string, any> = {
-  "123": {
-    sender: "0xA1B2...C3D4",
-    recipient: "0xE5F6...G7H8",
-    token: "USDC",
-    amount: 500,
-    arbitrationFee: 20,
-  },
-  "456": {
-    sender: "0xI9J0...K1L2",
-    recipient: "0xM3N4...O5P6",
-    token: "ETH",
-    amount: 1.2,
-    arbitrationFee: 0.05,
-  },
-};
 interface Props {
-  params: Promise<{ dealId: string }>
+  params: Promise<{ dealId: string }>;
 }
-
 export default function DisputePage({ params }: Props) {
-  const [dealId, setDealId] = useState("");
-  const [dealData, setDealData] = useState<any>(null);
+  const { address: signerAddress } = useAccount();
+  const currentChain = getChainConfig("sepolia");
+  const disputeManagerAddress = currentChain.disputeManagerAddress as Address;
+
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+
+  const chainId = SUPPORTED_CHAIN_ID as TypeChainId;
+
+  const { dealId } = use(params);
+
   const [description, setDescription] = useState("");
   const [approved, setApproved] = useState(false);
   const [approving, setApproving] = useState(false);
   const [submitted, setSubmitted] = useState(false);
-  const { dealId:newOne } = use(params);
+  const [deal, setDeal] = useState<Deal | null>(null);
+  const [token, setToken] = useState<any>(null);
+  const [disputeFee, setDisputeFee] = useState<bigint | null>(null);
 
-  bloomLog("New one: ", newOne)
+  const [errorModal, setErrorModal] = useState<{
+    open: boolean;
+    title?: string;
+    message?: string;
+  }>({
+    open: false,
+  });
 
-  const handleDealChange = (id: string) => {
-    setDealId(id);
-    if (dummyDeals[id]) {
-      setDealData(dummyDeals[id]);
-    } else {
-      setDealData(null);
+  const [step, setStep] = useState(0);
+
+  const disputeState = { step, setStep };
+
+  const getDisputeFee = async (amount: bigint) => {
+    try {
+      const feeControllerAddress = currentChain.feeControllerAddress as Address;
+
+      const disputeFee = (await readContract(config, {
+        abi: feeControllerAbi,
+        address: feeControllerAddress,
+        functionName: "calculateDisputeFee",
+        args: [amount],
+        chainId,
+      })) as bigint;
+
+      return disputeFee;
+    } catch (error) {
+      console.error("Failed to calculate dispute :", error);
+
+      return null;
     }
   };
+
+  const getDeal = async (dealId: string) => {
+    try {
+      const bloomEscrowAddress = currentChain.bloomEscrowAddress as Address;
+
+      const deal = (await readContract(config, {
+        abi: bloomEscrowAbi,
+        address: bloomEscrowAddress,
+        functionName: "getDeal",
+        args: [dealId],
+        chainId,
+      })) as Deal;
+
+      return deal;
+    } catch (error) {
+      console.error("Failed to load deal :", error);
+
+      return null;
+    }
+  };
+
+  useEffect(() => {
+    if (!dealId) return;
+
+    const fetchDealAndToken = async () => {
+      bloomLog("Getting deal");
+      const deal = await getDeal(dealId);
+      bloomLog("Deal: ", deal);
+      setDeal(deal);
+
+      if (deal) {
+        const tokenSymbol =
+          addressToToken[chainId]?.[deal.tokenAddress.toLowerCase()];
+        if (tokenSymbol) {
+          const token = TOKEN_META[chainId][tokenSymbol];
+          bloomLog("Token: ", token);
+          const newToken = {
+            ...token,
+            address: deal.tokenAddress.toLowerCase(),
+          };
+          setToken(newToken);
+        } else {
+          bloomLog("Token not found for address: ", deal.tokenAddress);
+        }
+
+        const validatedDisputeFee = await getDisputeFee(deal.amount);
+
+        if (validatedDisputeFee) {
+          bloomLog("dispute fee: ", validatedDisputeFee);
+          setDisputeFee(validatedDisputeFee);
+        }
+      }
+    };
+
+    fetchDealAndToken();
+  }, [dealId, chainId]);
 
   const handleApprove = async () => {
     setApproving(true);
@@ -60,14 +152,159 @@ export default function DisputePage({ params }: Props) {
     }, 1500);
   };
 
-  const handleSubmit = () => {
-    setSubmitted(true);
-    setTimeout(() => setSubmitted(false), 2000);
+  const approveTransaction = async (amountToApprove: bigint) => {
+    bloomLog("Token address: ", token.address);
+    try {
+      const { request: approveRequest } = await simulateContract(config, {
+        abi: erc20Abi,
+        address: token.address as Address,
+        functionName: "approve",
+        args: [disputeManagerAddress, amountToApprove],
+        chainId: currentChain.chainId as TypeChainId,
+      });
+      const hash = await writeContract(config, approveRequest);
+
+      const approveReceipt = await waitForTransactionReceipt(config, {
+        hash,
+      });
+      if (approveReceipt.status == "success") {
+        bloomLog("Approve Transaction is successful");
+        return null;
+      }
+    } catch (error) {
+      return error;
+    } finally {
+      // return isSuccessful;
+    }
   };
+
+  // handle submit button
+  const handleSubmit = () => {
+    if (!dealId || !description) return;
+
+    // Open confirmation modal first
+    setIsConfirmOpen(true);
+  };
+
+  // callback when user confirms
+  const handleConfirmDispute = async () => {
+    setIsConfirmOpen(false);
+    setIsModalOpen(true);
+    // optionally set submitted state
+    setSubmitted(true);
+
+    try {
+      // Now, we approve to spend the arbitration fee;
+      // const validatedArbitrationFee = 50e18;
+
+      // Approve transaction if only there is no allowance;
+      const allowance = await readContract(config, {
+        abi: erc20Abi,
+        address: token.address as Address,
+        args: [signerAddress as Address, disputeManagerAddress as Address],
+        functionName: "allowance",
+        chainId: currentChain.chainId as TypeChainId,
+      });
+
+      if (allowance < disputeFee!) {
+        const error = await approveTransaction(disputeFee!);
+        if (error) {
+          const message = (error as Error).message;
+          setErrorModal({
+            open: true,
+            title: "Approval Failed",
+            message:
+              message ||
+              "Your transaction could not be confirmed on-chain. Please try again.",
+          });
+          setIsModalOpen(false);
+          return;
+        }
+      } else {
+        if (step < 1) {
+          setStep(1);
+        }
+      }
+
+      // Now, we call openDispute.
+
+      bloomLog("Deal ID is ", dealId);
+      bloomLog("Description is ", description);
+
+      const { request: openRequest } = await simulateContract(config, {
+        abi: disputeManagerAbi,
+        address: disputeManagerAddress as Address,
+        functionName: "openDispute",
+        args: [dealId, description],
+        maxFeePerGas: parseGwei("2"), // slightly above average network fee
+        maxPriorityFeePerGas: parseGwei("2"),
+        gas: BigInt(1200000),
+        chainId: currentChain.chainId as TypeChainId,
+      });
+      const hash = await writeContract(config, openRequest);
+
+      const openReceipt = await waitForTransactionReceipt(config, {
+        hash,
+      });
+
+      if (openReceipt.status == "success") {
+        bloomLog("Open Transaction is successful");
+        return null;
+      }
+    } catch (error) {
+      bloomLog("There is an Error: ", error);
+      const errorMessage = (error as Error).message;
+      setErrorModal({
+        open: true,
+        title: "Error Occured",
+        message: errorMessage || "Something went wrong during operation.",
+      });
+      setIsModalOpen(false);
+    } finally {
+      setSubmitted(false);
+    }
+
+    // here you can also call openDispute() to trigger blockchain interaction
+  };
+  const openDispute = async () => {
+    // Here I don't know, you try to track all the events and if any of the event comes up, It shows here or something.
+  };
+
+  // bloomLog("Description: ", description);
 
   return (
     <>
       <Header />
+
+      <ErrorModal
+        isOpen={errorModal.open}
+        onClose={() => setErrorModal({ ...errorModal, open: false })}
+        title={errorModal.title}
+        message={errorModal.message}
+      />
+
+      <ConfirmDisputeModal
+        isOpen={isConfirmOpen}
+        onClose={() => setIsConfirmOpen(false)}
+        onConfirm={handleConfirmDispute}
+        dealId={dealId}
+        description={description}
+      />
+
+      {signerAddress && token && (
+        <DisputeModal
+          isOpen={isModalOpen}
+          onClose={() => {
+            setIsModalOpen(false);
+            setSubmitted(false); // reset submit state if needed
+          }}
+          token={token}
+          currentChain={currentChain}
+          disputeState={disputeState}
+          deal={deal!}
+        />
+      )}
+
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-950 to-black text-white p-6">
         <div className="mb-10 text-center">
           <h1 className="text-3xl font-bold text-white">Dispute</h1>
@@ -112,7 +349,10 @@ export default function DisputePage({ params }: Props) {
                     id="dealId"
                     placeholder="Enter deal ID"
                     value={dealId}
-                    onChange={(e) => handleDealChange(e.target.value)}
+                    disabled={true}
+                    onChange={(e) => {
+                      bloomLog("DealId:", dealId);
+                    }}
                     className="bg-slate-800 border-slate-700 text-white placeholder:text-slate-500"
                   />
                 </div>
@@ -122,30 +362,49 @@ export default function DisputePage({ params }: Props) {
                   <h3 className="text-white text-lg font-semibold mb-4">
                     Deal Details
                   </h3>
-                  <div className="space-y-3">
-                    {[
-                      { label: "Sender", value: dealData?.sender },
-                      { label: "Recipient", value: dealData?.recipient },
-                      { label: "Token", value: dealData?.token },
-                      { label: "Amount", value: dealData?.amount },
-                      {
-                        label: "Arbitration Fee",
-                        value: dealData?.arbitrationFee,
-                      },
-                    ].map((item, i) => (
-                      <div
-                        key={i}
-                        className="flex justify-between items-center"
-                      >
-                        <span className="text-slate-400 text-sm">
-                          {item.label}
-                        </span>
+
+                  {deal && token && disputeFee && (
+                    <div className="space-y-3">
+                      <div className="flex justify-between items-center">
+                        <span className="text-slate-400 text-sm">Deal ID</span>
                         <span className="text-white font-medium">
-                          {item.value ?? <div className=""> --</div>}
+                          {deal.id}
                         </span>
                       </div>
-                    ))}
-                  </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-slate-400 text-sm">Sender</span>
+                        <span className="text-white font-medium">
+                          {formatAddress(deal.sender)}
+                        </span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-slate-400 text-sm">Receiver</span>
+                        <span className="text-white font-medium">
+                          {formatAddress(deal.receiver)}
+                        </span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-slate-400 text-sm">Amount</span>
+                        <span className="text-white font-medium">
+                          {inCurrencyFormat(
+                            formatUnits(deal.amount, token.decimal)
+                          )}{" "}
+                          {token.symbol}
+                        </span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-slate-400 text-sm">
+                          Arbitration Fee
+                        </span>
+                        <span className="text-white font-medium">
+                          {inCurrencyFormat(
+                            formatUnits(disputeFee, token.decimal)
+                          )}{" "}
+                          {token.symbol}
+                        </span>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 {/* Dispute Description */}
@@ -164,23 +423,13 @@ export default function DisputePage({ params }: Props) {
 
                 {/* Approve + Submit Flow */}
                 <div className="space-y-3">
-                  {!approved ? (
-                    <Button
-                      className="mx-auto flex justify-center bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-3 rounded-xl shadow-md"
-                      disabled={!dealData || !description || approving}
-                      onClick={handleApprove}
-                    >
-                      {approving ? "Approving..." : "Approve Arbitration Fee"}
-                    </Button>
-                  ) : (
-                    <Button
-                      className="mx-auto flex justify-center  bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-3 rounded-xl shadow-md"
-                      disabled={!dealData || !description || submitted}
-                      onClick={handleSubmit}
-                    >
-                      {submitted ? "Submitting..." : "Submit Dispute"}
-                    </Button>
-                  )}
+                  <Button
+                    className="mx-auto flex justify-center  bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-3 rounded-xl shadow-md"
+                    disabled={!deal || !description || submitted}
+                    onClick={handleSubmit}
+                  >
+                    {submitted ? "Submitting..." : "Submit Dispute"}
+                  </Button>
                 </div>
               </CardContent>
             </Card>

@@ -41,7 +41,7 @@ const EvidenceCard: React.FC<EvidenceCardProps> = ({
   handleRemoveEvidence,
   removalState,
 }) => {
-  const { remove } = removalState;
+  const { remove } = removalState || {};
   const fileType = EvidenceType[evidence.evidenceType];
   const fileURI = `https://amethyst-intimate-swallow-509.mypinata.cloud/ipfs/${evidence.uri}`;
   const uploadDate = formatTime(evidence.timestamp);

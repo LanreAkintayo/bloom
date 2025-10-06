@@ -32,6 +32,7 @@ import {
   Timer,
   StorageParams,
   ExtendedDispute,
+  Evidence,
 } from "@/types";
 
 /**
@@ -61,6 +62,31 @@ export const getDeal = async (dealId: string): Promise<Deal | null> => {
     return deal;
   } catch (error) {
     console.error("Failed to load deal :", error);
+
+    return null;
+  }
+};
+
+// -------------------------------
+// Get evidence
+// -------------------------------
+export const getEvidence = async (
+  dealId: string,
+  userAddress: Address
+): Promise<Evidence[] | null> => {
+  bloomLog("Inside getEvidence");
+  try {
+    const evidence = (await readContract(config, {
+      abi: disputeStorageAbi,
+      address: disputeStorageAddress,
+      functionName: "getDealEvidence",
+      args: [dealId, userAddress],
+      chainId,
+    })) as Evidence[];
+
+    return evidence;
+  } catch (error) {
+    console.error("Failed to load evidence :", error);
 
     return null;
   }
@@ -109,7 +135,9 @@ export const getDispute = async (
   }
 };
 
-export const getManyDisputes = async (disputeIds: bigint[]):Promise<ExtendedDispute[]> => {
+export const getManyDisputes = async (
+  disputeIds: bigint[]
+): Promise<ExtendedDispute[]> => {
   const contracts = disputeIds.map((id) => ({
     abi: disputeStorageAbi,
     address: disputeStorageAddress,
@@ -336,6 +364,25 @@ export const getManyDisputeVote = async (
   }
 };
 
+export const getDisputeTimer = async (
+  disputeId: bigint
+): Promise<Timer | null> => {
+   try {
+    const disputeTimer = (await readContract(config, {
+      abi: disputeStorageAbi,
+      address: disputeStorageAddress,
+      functionName: "getDisputeTimer",
+      args: [disputeId],
+      chainId,
+    })) as Timer;
+
+    return disputeTimer;
+  } catch (error) {
+    console.error("Failed to get juror token payment :", error);
+    return null;
+  }
+};
+
 export const getManyDisputeTimer = async (
   disputeIds: bigint[]
 ): Promise<Timer[]> => {
@@ -351,7 +398,7 @@ export const getManyDisputeTimer = async (
 
     const results = await readContracts(config, { contracts });
 
-    bloomLog("Inside many dispute timers: ", results)
+    bloomLog("Inside many dispute timers: ", results);
 
     return results.map((r, i) => ({
       ...(r.result as Timer), // This could be support or vote data depending on your contract

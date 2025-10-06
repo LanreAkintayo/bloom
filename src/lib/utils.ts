@@ -1,5 +1,6 @@
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
+import { Address } from "viem";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -7,7 +8,7 @@ export function cn(...inputs: ClassValue[]) {
 
 export const bloomLog = (...args: any[]) => console.log("[Bloom] ", ...args);
 
-export const formatAddress = (address: string) => {
+export const formatAddress = (address: string | Address) => {
   return `${address.slice(0, 6)}...${address.slice(-4)}`;
 };
 
@@ -40,4 +41,11 @@ export const formatTime = (timestamp: string | bigint): string => {
   });
 };
 
+  export const formatCountdown = (ms: number) => {
+    const totalSeconds = Math.floor(ms / 1000);
+    const hours = Math.floor(totalSeconds / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const seconds = totalSeconds % 60;
 
+    return `${hours}h ${minutes}m ${seconds}s`;
+  };

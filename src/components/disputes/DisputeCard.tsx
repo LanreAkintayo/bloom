@@ -12,7 +12,8 @@ import {
 import { useAccount } from "wagmi";
 import { formatUnits, zeroAddress } from "viem";
 import { SUPPORTED_CHAIN_ID, TOKEN_META, addressToToken } from "@/constants";
-import { bloomLog, formatAddress, inCurrencyFormat } from "@/lib/utils";
+import { bloomLog, formatAddress, formatCountdown, inCurrencyFormat } from "@/lib/utils";
+import Link from "next/link";
 
 interface DisputeCardProps {
   dispute: ExtendedDispute;
@@ -46,10 +47,11 @@ export default function DisputeCard({
   // Calculate end time
   const endTime = useMemo(() => {
     return (
-      Number(disputeTimer?.startTime ?? 0) +
-      Number(disputeTimer?.standardVotingDuration ?? 0) +
-      Number(disputeTimer?.extendDuration ?? 0)
-    ) * 1000;
+      (Number(disputeTimer?.startTime ?? 0) +
+        Number(disputeTimer?.standardVotingDuration ?? 0) +
+        Number(disputeTimer?.extendDuration ?? 0)) *
+      1000
+    );
   }, [disputeTimer]);
 
   // Countdown state
@@ -70,23 +72,18 @@ export default function DisputeCard({
     return () => clearInterval(interval);
   }, [endTime, isActive]);
 
-  // Format time
-  const formatCountdown = (ms: number) => {
-    const totalSeconds = Math.floor(ms / 1000);
-    const hours = Math.floor(totalSeconds / 3600);
-    const minutes = Math.floor((totalSeconds % 3600) / 60);
-    const seconds = totalSeconds % 60;
-
-    return `${hours}h ${minutes}m ${seconds}s`;
-  };
 
   const remainingHours = Math.floor(remainingMs / (1000 * 60 * 60));
-  const remainingMinutes = Math.floor(remainingMs / (1000 * 60 * 60 * 60));
+  const remainingMinutes = remainingHours * 60;
 
   const getStatusColor = (minutes: number) => {
-    if (minutes <= 60) return { stripe: "bg-red-500", badge: "bg-red-500/30 text-red-500" };
-    if (minutes <= 100)
-      return { stripe: "bg-yellow-400", badge: "bg-yellow-400/30 text-yellow-400" };
+    if (minutes <= remainingMinutes * (1 / 3))
+      return { stripe: "bg-red-500", badge: "bg-red-500/30 text-red-500" };
+    if (minutes <= remainingMinutes * (2 / 3))
+      return {
+        stripe: "bg-yellow-400",
+        badge: "bg-yellow-400/30 text-yellow-400",
+      };
     return { stripe: "bg-green-500", badge: "bg-green-500/30 text-green-500" };
   };
 
@@ -95,7 +92,9 @@ export default function DisputeCard({
   return (
     <Card className="bg-slate-900/95 border border-cyan-500/30 shadow-md hover:shadow-2xl hover:scale-[1.02] transition-all rounded-2xl p-5 flex flex-col md:flex-row justify-between gap-4 relative overflow-hidden">
       {/* Status Stripe */}
-      <span className={`absolute left-0 top-0 h-full w-1 rounded-l-2xl ${stripe}`} />
+      <span
+        className={`absolute left-0 top-0 h-full w-1 rounded-l-2xl ${stripe}`}
+      />
 
       {/* Badge */}
       {isActive ? (
@@ -114,7 +113,9 @@ export default function DisputeCard({
 
       {/* Dispute Info */}
       <div className="flex-1 space-y-3">
-        <h4 className="font-semibold text-white text-lg">Dispute #{disputeId}</h4>
+        <h4 className="font-semibold text-white text-lg">
+          Dispute #{disputeId}
+        </h4>
 
         <div className="flex flex-col sm:flex-row sm:items-center gap-2 text-sm text-white/80">
           <span className="flex items-center gap-1">
@@ -125,17 +126,23 @@ export default function DisputeCard({
           </span>
           <span className="flex items-center gap-1">
             <User className="w-4 h-4 text-emerald-400" />
-            <span className="font-medium">Against: {formatAddress(against)}</span>
+            <span className="font-medium">
+              Against: {formatAddress(against)}
+            </span>
           </span>
         </div>
 
-        <p className="text-white/70 text-sm line-clamp-2">{dispute.description}</p>
+        <p className="text-white/70 text-sm line-clamp-2">
+          {dispute.description}
+        </p>
 
         <div className="flex items-center gap-3 text-sm">
           {isActive ? (
             <>
               <span className="text-white/80">Time Left:</span>
-              <span className={`px-2 py-1 rounded-full text-xs font-semibold ${badge}`}>
+              <span
+                className={`px-2 py-1 rounded-full text-xs font-semibold ${badge}`}
+              >
                 {formatCountdown(remainingMs)}
               </span>
             </>
@@ -160,9 +167,11 @@ export default function DisputeCard({
       {/* Action */}
       <div className="flex items-center md:justify-end mt-3 md:mt-0">
         {isActive ? (
-          <Button className="bg-emerald-600 hover:bg-emerald-700 shadow-lg hover:shadow-xl transition-all px-6 py-3 rounded-2xl font-semibold flex items-center gap-2">
-            Vote Now <ArrowRight className="w-4 h-4" />
-          </Button>
+          <Link href={`/vote/${dispute.dealId}`}>
+            <Button className="bg-emerald-600 hover:bg-emerald-700 shadow-lg hover:shadow-xl transition-all px-6 py-3 rounded-2xl font-semibold flex items-center gap-2">
+              Vote Now <ArrowRight className="w-4 h-4" />
+            </Button>
+          </Link>
         ) : (
           <Button className="bg-cyan-600 hover:bg-cyan-700 shadow-lg hover:shadow-xl transition-all px-6 py-3 rounded-2xl font-semibold flex items-center gap-2">
             View Details

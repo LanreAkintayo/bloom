@@ -269,6 +269,7 @@ export default function DisputePage({ params }: Props) {
           token={token}
           currentChain={currentChain}
           disputeState={disputeState}
+          deal={deal!}
         />
       )}
 

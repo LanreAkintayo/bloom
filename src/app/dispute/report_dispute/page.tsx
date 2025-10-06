@@ -302,6 +302,7 @@ export default function DisputePage() {
           token={token}
           currentChain={currentChain}
           disputeState={disputeState}
+          deal={deal!}
         />
       )}
 
