@@ -179,6 +179,8 @@ export default function JurorDashboard() {
   //   enabled: !!disputeIds,
   // });
 
+  bloomLog("DisputeVotes: ", disputeVotes);
+
   const disputeTimersMap = useMemo(() => {
     if (!disputeTimers) return;
     const map = new Map<bigint, Timer>();
@@ -272,8 +274,10 @@ export default function JurorDashboard() {
             {/* Dispute List */}
             {activeDisputes && pastDisputes && (
               <div className="space-y-4">
-                {(activeTab === "active" ? activeDisputes : pastDisputes).map(
-                  (dispute: ExtendedDispute | null) => {
+                {(activeTab === "active" ? activeDisputes : pastDisputes)
+                  .slice()
+                  .map((_, index, array) => {
+                    const dispute = array[array.length - 1 - index];
                     if (!dispute) return null;
                     const vote = disputeVotesMap?.get(dispute.disputeId);
                     const timer = disputeTimersMap?.get(dispute.disputeId);
@@ -286,8 +290,7 @@ export default function JurorDashboard() {
                         storageParams={storageParams!}
                       />
                     );
-                  }
-                )}
+                  })}
               </div>
             )}
 

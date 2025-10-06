@@ -12,7 +12,12 @@ import {
 import { useAccount } from "wagmi";
 import { formatUnits, zeroAddress } from "viem";
 import { SUPPORTED_CHAIN_ID, TOKEN_META, addressToToken } from "@/constants";
-import { bloomLog, formatAddress, formatCountdown, inCurrencyFormat } from "@/lib/utils";
+import {
+  bloomLog,
+  formatAddress,
+  formatCountdown,
+  inCurrencyFormat,
+} from "@/lib/utils";
 import Link from "next/link";
 
 interface DisputeCardProps {
@@ -72,7 +77,6 @@ export default function DisputeCard({
     return () => clearInterval(interval);
   }, [endTime, isActive]);
 
-
   const remainingHours = Math.floor(remainingMs / (1000 * 60 * 60));
   const remainingMinutes = remainingHours * 60;
 
@@ -88,6 +92,8 @@ export default function DisputeCard({
   };
 
   const { stripe, badge } = getStatusColor(remainingMinutes);
+
+  // bloomLog("Disptue vote: ", disputeVote);
 
   return (
     <Card className="bg-slate-900/95 border border-cyan-500/30 shadow-md hover:shadow-2xl hover:scale-[1.02] transition-all rounded-2xl p-5 flex flex-col md:flex-row justify-between gap-4 relative overflow-hidden">
@@ -169,7 +175,14 @@ export default function DisputeCard({
         {isActive ? (
           <Link href={`/vote/${dispute.dealId}`}>
             <Button className="bg-emerald-600 hover:bg-emerald-700 shadow-lg hover:shadow-xl transition-all px-6 py-3 rounded-2xl font-semibold flex items-center gap-2">
-              Vote Now <ArrowRight className="w-4 h-4" />
+              {disputeVote?.jurorAddress === signerAddress ? (
+                "Already Voted"
+              ) : (
+                <>
+                  Vote Now <ArrowRight className="w-4 h-4" />
+                </>
+              )}
+              {/* Vote Now <ArrowRight className="w-4 h-4" /> */}
             </Button>
           </Link>
         ) : (

@@ -1,7 +1,14 @@
 "use-client";
 import React, { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
-import { FileAudio2Icon, FileText, Image as LucideImage, Video, X } from "lucide-react";
+import {
+  FileAudio2Icon,
+  FileText,
+  Image as LucideImage,
+  Play,
+  Video,
+  X,
+} from "lucide-react";
 
 import { Evidence, EvidenceType } from "@/types";
 import { bloomLog, formatTime } from "@/lib/utils";
@@ -48,7 +55,7 @@ const EvidenceCard: React.FC<EvidenceCardProps> = ({
   const evidenceName = fancyEvidenceName(index, evidence.timestamp.toString());
 
   const [isOpen, setIsOpen] = useState(false);
-  bloomLog("Filetype: ", fileType)
+  bloomLog("Filetype: ", fileType);
 
   const getFileIcon = (type: string) => {
     if (type === "DOCUMENT")
@@ -56,7 +63,8 @@ const EvidenceCard: React.FC<EvidenceCardProps> = ({
     if (type === "IMAGE")
       return <LucideImage className="w-6 h-6 text-yellow-400" />;
     if (type === "VIDEO") return <Video className="w-6 h-6 text-purple-500" />;
-    if (type === "AUDIO") return <FileAudio2Icon className="w-6 h-6 text-purple-500" />;
+    if (type === "AUDIO")
+      return <FileAudio2Icon className="w-6 h-6 text-purple-500" />;
   };
 
   return (
@@ -79,8 +87,14 @@ const EvidenceCard: React.FC<EvidenceCardProps> = ({
                   className="w-full max-h-40 object-cover rounded-xl transition-transform hover:scale-105"
                 />
               ) : fileType === "VIDEO" ? (
-                <div className="bg-slate-800 flex items-center justify-center h-40 text-gray-400 text-sm">
-                  Click to view video
+                <div
+                  className="bg-slate-900/80 border border-slate-700 hover:border-emerald-500/50 
+             rounded-xl flex flex-col items-center justify-center h-32 text-gray-400 
+             text-sm cursor-pointer transition-all duration-300 hover:text-emerald-400
+             hover:shadow-lg hover:shadow-emerald-500/10 group"
+                >
+                  <Play className="w-8 h-8 mb-2 text-emerald-500 group-hover:scale-110 transition-transform" />
+                  <p>Click to view video</p>
                 </div>
               ) : null}
 

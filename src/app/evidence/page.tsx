@@ -76,26 +76,7 @@ const EvidencePage = () => {
     text: string;
   }>({ loading: false, error: "", text: "Remove" });
 
-  const [evidenceList, setEvidenceList] = useState<Evidence[]>([
-    {
-      id: 1,
-      fileName: "contract.pdf",
-      fileType: "pdf",
-      uploadDate: "2025-09-16",
-      status: "Pending",
-      description:
-        "Read this doc. This was what I had to give him for me to submit it. He is a very bad person oo. Like I tried all my best to listen and to understand him but everything proved abortive. I'm already tired.",
-    },
-    {
-      id: 2,
-      fileName: "screenshot.png",
-      fileType: "image",
-      uploadDate: "2025-09-15",
-      status: "Verified",
-      description:
-        "This image is like a guard and it has 5 separate moves apart from the one everyone used to know. So, it would be nice if you carefully read out and make the best judgement.",
-    },
-  ]);
+
   const [evidences, setEvidences] = useState<Evidence[] | null>(null);
 
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -199,26 +180,6 @@ const EvidencePage = () => {
     setDealId(id);
   };
 
-  const handleUpload = () => {
-    if (!selectedFile) return;
-
-    const newEvidence: Evidence = {
-      id: Date.now(),
-      fileName: selectedFile.name,
-      fileType: selectedFile.name.endsWith(".pdf")
-        ? "pdf"
-        : selectedFile.type.includes("image")
-        ? "image"
-        : "video",
-      uploadDate: new Date().toISOString().split("T")[0],
-      status: "Pending",
-      description: description || undefined,
-    };
-
-    setEvidenceList([newEvidence, ...evidenceList]);
-    setSelectedFile(null);
-    setDescription("");
-  };
 
   const getFileIcon = (type: string) => {
     if (type === "pdf") return <FileText className="w-6 h-6 text-red-500" />;

@@ -31,7 +31,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import Header from "@/components/Header";
 import { useAccount } from "wagmi";
-import { Address, erc20Abi, formatUnits, parseGwei } from "viem";
+import { Address, erc20Abi, formatUnits, parseGwei, zeroAddress } from "viem";
 import {
   SUPPORTED_CHAIN_ID,
   TOKEN_META,
@@ -41,6 +41,7 @@ import {
   disputeStorageAbi,
   feeControllerAbi,
   getChainConfig,
+  jurorManagerAbi,
 } from "@/constants";
 import {
   readContract,
@@ -49,9 +50,13 @@ import {
   writeContract,
 } from "@wagmi/core";
 import { config } from "@/lib/wagmi";
-import { bloomLog, formatAddress, formatCountdown, inCurrencyFormat } from "@/lib/utils";
+import {
+  bloomLog,
+  formatAddress,
+  formatCountdown,
+  inCurrencyFormat,
+} from "@/lib/utils";
 import { Deal, EvidenceType, Token, TypeChainId, Evidence } from "@/types";
-import { useModal } from "@/providers/ModalProvider";
 import useDefi from "@/hooks/useDefi";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -59,8 +64,10 @@ import {
   getDispute,
   getDisputeId,
   getDisputeTimer,
+  getDisputeVote,
   getEvidence,
 } from "@/hooks/useDisputeStorage";
+import { useModal } from "@/providers/ModalProvider";
 
 interface Props {
   params: Promise<{ dealId: string }>;
@@ -73,9 +80,18 @@ export default function DisputeVotingPage({ params }: Props) {
   const [selectedVote, setSelectedVote] = useState<string>("");
   const { address: signerAddress } = useAccount();
   const currentChain = getChainConfig("sepolia");
-  const disputeManagerAddress = currentChain.disputeManagerAddress as Address;
+  const jurorManagerAddress = currentChain.jurorManagerAddress as Address;
   const chainId = SUPPORTED_CHAIN_ID as TypeChainId;
   // const [deal, setDeal] = useState<Deal | null>(null);
+  const { openModal, closeModal } = useModal();
+
+  bloomLog("Selected vote: ", selectedVote);
+
+  const [voteData, setVoteData] = useState<{
+    loading: boolean;
+    error: any;
+    text: string;
+  }>({ loading: false, error: "", text: "Submit Vote" });
 
   const { data: deal } = useQuery({
     queryKey: ["deal", dealId?.toString()],
@@ -99,6 +115,16 @@ export default function DisputeVotingPage({ params }: Props) {
     queryKey: ["disputeTimer", disputeId?.toString()],
     queryFn: () => getDisputeTimer(disputeId!),
     enabled: !!disputeId,
+  });
+
+  const {
+    data: disputeVote,
+    refetch: refetchDisputeVote,
+    isLoading: disputeVoteLoading,
+  } = useQuery({
+    queryKey: ["disputeVote", signerAddress, disputeId?.toString()],
+    queryFn: () => getDisputeVote(disputeId!, signerAddress!),
+    enabled: !!signerAddress && !!disputeId,
   });
 
   const initiator = dispute?.initiator;
@@ -157,13 +183,99 @@ export default function DisputeVotingPage({ params }: Props) {
   const remainingHours = Math.floor(remainingMs / (1000 * 60 * 60));
   const remainingMinutes = remainingHours * 60;
 
-  const handleSubmitVote = () => {
-    if (!selectedVote) {
-      alert("Please select an option before submitting.");
-      return;
+  // const handleSubmitVote = () => {
+  //   if (!selectedVote) {
+  //     alert("Please select an option before submitting.");
+  //     return;
+  //   }
+  //   console.log("Vote submitted:", selectedVote);
+  //   alert(`You voted: ${selectedVote}`);
+  // };
+
+  const voteTransaction = async (
+    disputeId: bigint | string,
+    support: string
+  ) => {
+    try {
+      const { request: voteRequest } = await simulateContract(config, {
+        abi: jurorManagerAbi,
+        address: jurorManagerAddress as Address,
+        functionName: "vote",
+        args: [disputeId, support],
+        chainId: currentChain.chainId as TypeChainId,
+      });
+
+      const hash = await writeContract(config, voteRequest);
+      const receipt = await waitForTransactionReceipt(config, { hash });
+
+      // return something meaningful
+      return receipt;
+    } catch (err) {
+      // rethrow so handleAddEvidence can catch it
+      throw err;
     }
-    console.log("Vote submitted:", selectedVote);
-    alert(`You voted: ${selectedVote}`);
+  };
+
+  const handleSubmitVote = () => {
+    openModal({
+      type: "confirm",
+      title: "Vote Submission",
+      description: (
+        <div className="space-y-2 text-[13px]">
+          <p>You are about to submit a vote.</p>
+        </div>
+      ),
+      confirmText: "Yes, Vote",
+      cancelText: "Cancel",
+      onConfirm: async () => {
+        closeModal();
+        setVoteData({ loading: true, error: null, text: "Submitting Vote..." });
+        try {
+          const validatedDisputeId = disputeId!;
+          const validatedSupport =
+            selectedVote == "plaintiff" ? initiator! : against!;
+
+          const receipt = await voteTransaction(
+            validatedDisputeId,
+            validatedSupport
+          );
+          if (receipt.status == "success") {
+            openModal({
+              type: "success",
+              title: "Submission Successful",
+              description: (
+                <div className="space-y-2 text-[13px]">
+                  <p>You successfully submitted a vote.</p>
+                </div>
+              ),
+              confirmText: "Close",
+            });
+            await refetchDisputeVote();
+
+            setVoteData({
+              loading: false,
+              error: null,
+              text: "Submit Vote",
+            });
+          }
+        } catch (err: any) {
+          const errorMessage = (err as Error).message;
+
+          bloomLog("Unexpected Error: ", err);
+          openModal({
+            type: "error",
+            title: "Submission Failed",
+            description: (
+              <div className="space-y-2 text-[13px]">
+                <p>{errorMessage}</p>
+              </div>
+            ),
+            confirmText: "Close",
+          });
+          setVoteData({ loading: false, error: err, text: "Submit Vote" });
+        }
+      },
+    });
   };
 
   return (
@@ -172,8 +284,10 @@ export default function DisputeVotingPage({ params }: Props) {
 
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-950 to-black text-white p-6">
         {/* Header */}
-        <div className="my-10 text-center">
-          <h1 className="text-3xl font-bold text-white">Dispute #1023</h1>
+        <div className="mb-10 text-center">
+          <h1 className="text-3xl font-bold text-white">
+            Dispute #{disputeId}
+          </h1>
           <p className="text-white/70 mt-1 text-sm">
             Review evidence and cast your vote.
           </p>
@@ -322,50 +436,57 @@ export default function DisputeVotingPage({ params }: Props) {
               </Tabs>
             </div>
 
-            {/* Voting Section */}
             <Card className="bg-slate-900/95 border border-emerald-500/30 shadow-xl rounded-3xl overflow-hidden">
-              <CardContent className="py-2 px-4 space-y-8">
-                {/* Title */}
-                <div className="flex items-center gap-3">
-                  <Info className="w-6 h-6 text-emerald-400 animate-pulse" />
-                  <h3 className="text-xl font-bold text-white tracking-wide">
-                    Cast Your Vote
-                  </h3>
-                </div>
+              {disputeVoteLoading || !disputeVote ? (
+                <CardContent className="py-6 px-4 flex items-center justify-center">
+                  <p className="text-slate-400 animate-pulse">
+                    Loading vote data...
+                  </p>
+                </CardContent>
+              ) : disputeVote?.support === zeroAddress ? (
+                // show vote UI here
+                <CardContent className="py-2 px-4 space-y-8">
+                  {/* Title */}
+                  <div className="flex items-center gap-3">
+                    <Info className="w-6 h-6 text-emerald-400 animate-pulse" />
+                    <h3 className="text-xl font-bold text-white tracking-wide">
+                      Cast Your Vote
+                    </h3>
+                  </div>
 
-                {/* Voting Options */}
-                <RadioGroup
-                  value={selectedVote}
-                  onValueChange={setSelectedVote}
-                  className="grid grid-cols-1 gap-4"
-                >
-                  {[
-                    {
-                      value: "Plaintiff",
-                      label: "In favor of Plaintiff",
-                      color: "from-emerald-600 to-emerald-400",
-                    },
-                    {
-                      value: "Defendant",
-                      label: "In favor of Defendant",
-                      color: "from-cyan-600 to-cyan-400",
-                    },
-                  ].map((opt) => (
-                    <label
-                      key={opt.value}
-                      htmlFor={opt.value}
-                      className={`relative cursor-pointer group`}
-                    >
-                      <input
-                        type="radio"
-                        id={opt.value}
-                        value={opt.value}
-                        checked={selectedVote === opt.value}
-                        onChange={() => setSelectedVote(opt.value)}
-                        className="peer hidden"
-                      />
-                      <div
-                        className={`
+                  {/* Voting Options */}
+                  <RadioGroup
+                    value={selectedVote}
+                    onValueChange={setSelectedVote}
+                    className="grid grid-cols-1 gap-4"
+                  >
+                    {[
+                      {
+                        value: "plaintiff",
+                        label: "In favor of Plaintiff",
+                        color: "from-emerald-600 to-emerald-400",
+                      },
+                      {
+                        value: "defendant",
+                        label: "In favor of Defendant",
+                        color: "from-cyan-600 to-cyan-400",
+                      },
+                    ].map((opt) => (
+                      <label
+                        key={opt.value}
+                        htmlFor={opt.value}
+                        className={`relative cursor-pointer group`}
+                      >
+                        <input
+                          type="radio"
+                          id={opt.value}
+                          value={opt.value}
+                          checked={selectedVote === opt.value}
+                          onChange={() => setSelectedVote(opt.value)}
+                          className="peer hidden"
+                        />
+                        <div
+                          className={`
               rounded-2xl p-3 flex items-center justify-between 
               bg-slate-800/70 border border-slate-700 
               group-hover:border-emerald-400/50 transition-all 
@@ -375,47 +496,55 @@ export default function DisputeVotingPage({ params }: Props) {
               peer-checked:text-white
               peer-checked:shadow-sm peer-checked:shadow-emerald-500/30
             `}
-                      >
-                        <span className="text-base font-semibold tracking-wide">
-                          {opt.label}
-                        </span>
-                        <div
-                          className={`w-5 h-5 rounded-full border-2 transition-colors
+                        >
+                          <span className="text-base font-semibold tracking-wide">
+                            {opt.label}
+                          </span>
+                          <div
+                            className={`w-5 h-5 rounded-full border-2 transition-colors
                 ${
                   selectedVote === opt.value
                     ? "bg-white border-white"
                     : "border-gray-400"
                 }`}
-                        ></div>
-                      </div>
-                    </label>
-                  ))}
-                </RadioGroup>
+                          ></div>
+                        </div>
+                      </label>
+                    ))}
+                  </RadioGroup>
 
-                {/* Submit */}
-                <div className="flex justify-center pt-4">
-                  <Button
-                    disabled={!selectedVote}
-                    className={`
+                  {/* Submit */}
+                  <div className="flex justify-center pt-4">
+                    <Button
+                      disabled={!selectedVote || voteData.loading}
+                      className={`
       w-full shadow-sm px-8 py-4 rounded-2xl font-bold text-lg tracking-wide 
-      flex items-center gap-2 transition-all 
+      flex items-center gap-2 transition-all disabled:cursor-not-allowed disabled:opacity-50
       ${
         !selectedVote
           ? "bg-slate-700 text-gray-400 cursor-not-allowed"
-          : selectedVote === "Plaintiff"
+          : selectedVote === "plaintiff"
           ? "bg-gradient-to-r from-emerald-600 to-emerald-400 hover:from-emerald-700 hover:to-emerald-500 shadow-emerald-500/40"
           : "bg-gradient-to-r from-cyan-600 to-cyan-400 hover:from-cyan-700 hover:to-cyan-500 shadow-cyan-500/40"
       }
     `}
-                    onClick={handleSubmitVote}
-                  >
-                    {selectedVote
-                      ? "Submit Final Vote"
-                      : "Select a Side to Vote"}
-                    <ArrowRight className="w-5 h-5" />
-                  </Button>
-                </div>
-              </CardContent>
+                      onClick={handleSubmitVote}
+                    >
+                      {selectedVote ? voteData.text : "Select a Side to Vote"}
+                      {/* <ArrowRight className="w-5 h-5" /> */}
+                    </Button>
+                  </div>
+                </CardContent>
+              ) : (
+                <CardContent className="py-2 px-4 space-y-8">
+                  <div className="flex items-center gap-3">
+                    <Info className="w-6 h-6 text-emerald-400 animate-pulse" />
+                    <h3 className="text-xl font-bold text-white tracking-wide">
+                      You have already voted
+                    </h3>
+                  </div>
+                </CardContent>
+              )}
             </Card>
           </div>
         </div>
