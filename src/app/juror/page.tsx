@@ -207,10 +207,10 @@ export default function JurorDashboard() {
   //   enabled: !!signerAddress,
   // });
 
-  bloomLog("juror: ", juror);
-  bloomLog("disputeids: ", disputeIds);
-  bloomLog("Disputes: ", disputes);
-  bloomLog("Rewards: ", rewards);
+  // bloomLog("juror: ", juror);
+  // bloomLog("disputeids: ", disputeIds);
+  // bloomLog("Disputes: ", disputes);
+  // bloomLog("Rewards: ", rewards);
 
   const [activeTab, setActiveTab] = useState<"active" | "past">("active");
 
