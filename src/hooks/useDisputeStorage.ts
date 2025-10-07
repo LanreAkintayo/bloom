@@ -287,6 +287,8 @@ export const getJuror = async (
     return null;
   }
 };
+
+
 // -------------------------------
 // Get Juror Token Payment
 // -------------------------------

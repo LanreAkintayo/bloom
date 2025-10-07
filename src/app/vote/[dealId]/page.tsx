@@ -66,6 +66,7 @@ import {
   getDisputeTimer,
   getDisputeVote,
   getEvidence,
+  getJurorDisputeHistory,
 } from "@/hooks/useDisputeStorage";
 import { useModal } from "@/providers/ModalProvider";
 
@@ -85,7 +86,7 @@ export default function DisputeVotingPage({ params }: Props) {
   // const [deal, setDeal] = useState<Deal | null>(null);
   const { openModal, closeModal } = useModal();
 
-  bloomLog("Selected vote: ", selectedVote);
+  // bloomLog("Selected vote: ", selectedVote);
 
   const [voteData, setVoteData] = useState<{
     loading: boolean;
@@ -94,28 +95,45 @@ export default function DisputeVotingPage({ params }: Props) {
   }>({ loading: false, error: "", text: "Submit Vote" });
 
   const { data: deal } = useQuery({
-    queryKey: ["deal", dealId?.toString()],
+    queryKey: ["deal", dealId.toString()],
     queryFn: () => getDeal(dealId!),
     enabled: !!dealId,
+    staleTime: 60_000,
   });
 
   const { data: disputeId } = useQuery({
-    queryKey: ["disputeId", chainId, dealId?.toString()],
+    queryKey: ["disputeId", chainId, dealId.toString()],
     queryFn: () => getDisputeId(dealId!),
     enabled: !!dealId,
+    staleTime: 60_000,
   });
 
-  const { data: dispute } = useQuery({
-    queryKey: ["dispute", chainId.toString(), disputeId?.toString()],
-    queryFn: () => getDispute(disputeId!),
+  // Combine dispute + timer (they depend on disputeId)
+  const { data: disputeBundle } = useQuery({
+    queryKey: ["disputeBundle", disputeId?.toString()],
+    queryFn: async () => {
+      const [dispute, disputeTimer] = await Promise.all([
+        getDispute(disputeId!),
+        getDisputeTimer(disputeId!),
+      ]);
+      return { dispute, disputeTimer };
+    },
     enabled: !!disputeId,
+    staleTime: 60_000,
   });
 
-  const { data: disputeTimer } = useQuery({
-    queryKey: ["disputeTimer", disputeId?.toString()],
-    queryFn: () => getDisputeTimer(disputeId!),
-    enabled: !!disputeId,
+  const dispute = disputeBundle?.dispute;
+  const disputeTimer = disputeBundle?.disputeTimer;
+
+  // Juror dispute history — optional or lazy
+  const { data: jurorDisputeHistory } = useQuery({
+    queryKey: ["jurorDisputeHistory", signerAddress],
+    queryFn: () => getJurorDisputeHistory(signerAddress!),
+    enabled: !!signerAddress,
+    staleTime: 120_000,
   });
+
+  // bloomLog("Juror dispute history: ", jurorDisputeHistory)
 
   const {
     data: disputeVote,
@@ -154,6 +172,17 @@ export default function DisputeVotingPage({ params }: Props) {
 
   const initiatorEvidences = evidences?.initiatorEvidences;
   const againstEvidences = evidences?.againstEvidences;
+  // Check if the disputeId is in the juror dispute history
+  const isJuror = useMemo(() => {
+    if (!jurorDisputeHistory || !disputeId) return undefined;
+    return jurorDisputeHistory.includes(disputeId);
+  }, [jurorDisputeHistory, disputeId]);
+
+  // const isJuror = jurorDisputeHistory && Array.isArray(jurorDisputeHistory)
+  //   ? jurorDisputeHistory.some((id) => id === disputeId)
+  //   : undefined;
+
+  bloomLog("IsJuror: ", isJuror);
 
   const endTime = useMemo(() => {
     return (
@@ -182,15 +211,6 @@ export default function DisputeVotingPage({ params }: Props) {
 
   const remainingHours = Math.floor(remainingMs / (1000 * 60 * 60));
   const remainingMinutes = remainingHours * 60;
-
-  // const handleSubmitVote = () => {
-  //   if (!selectedVote) {
-  //     alert("Please select an option before submitting.");
-  //     return;
-  //   }
-  //   console.log("Vote submitted:", selectedVote);
-  //   alert(`You voted: ${selectedVote}`);
-  // };
 
   const voteTransaction = async (
     disputeId: bigint | string,
