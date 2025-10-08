@@ -64,6 +64,7 @@ const EvidencePage = () => {
     data: any;
     progress: number | null;
   }>({ loading: false, error: "", data: null, progress: null });
+  
   const [submit, setSubmit] = useState<{
     loading: boolean;
     error: any;
@@ -193,6 +194,7 @@ const EvidencePage = () => {
       evidenceRef.current.scrollIntoView({ behavior: "smooth" });
     }
   };
+
 
   const mapMimeTypeToEvidenceType = (mime: string): EvidenceType => {
     if (!mime) return EvidenceType.DOCUMENT; // default fallback

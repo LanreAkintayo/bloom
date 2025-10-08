@@ -179,7 +179,7 @@ export default function JurorDashboard() {
   //   enabled: !!disputeIds,
   // });
 
-  bloomLog("DisputeVotes: ", disputeVotes);
+  // bloomLog("DisputeVotes: ", disputeVotes);
 
   const disputeTimersMap = useMemo(() => {
     if (!disputeTimers) return;

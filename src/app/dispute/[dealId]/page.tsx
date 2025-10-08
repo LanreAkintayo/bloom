@@ -6,7 +6,18 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { Clock, FileText, Scale, BookOpen } from "lucide-react";
+import {
+  Clock,
+  FileText,
+  Scale,
+  BookOpen,
+  ArrowRight,
+  CircleUser,
+  Wallet,
+  ArrowDown,
+  Link,
+  User,
+} from "lucide-react";
 import Header from "@/components/Header";
 import { bloomLog, formatAddress, inCurrencyFormat } from "@/lib/utils";
 import {
@@ -42,9 +53,13 @@ import {
   getDisputeTimer,
   getJurorAddresses,
   getJurorCandidate,
+  getEvidence,
 } from "@/hooks/useDisputeStorage";
 import { useQuery } from "@tanstack/react-query";
 import DisputeTimer from "@/components/disputes/DisputeTimer";
+import JurorModal from "@/components/disputes/JurorModal";
+import EvidenceCard from "@/components/evidence/EvidenceCard";
+import { useModal } from "@/providers/ModalProvider";
 
 interface Props {
   params: Promise<{ dealId: string }>;
@@ -70,6 +85,8 @@ export default function DisputePage({ params }: Props) {
   const [deal, setDeal] = useState<Deal | null>(null);
   const [token, setToken] = useState<any>(null);
   const [disputeFee, setDisputeFee] = useState<bigint | null>(null);
+  const [selectedJurorAddress, setSelectedJurorAddress] =
+    useState<Address>(zeroAddress);
 
   const [errorModal, setErrorModal] = useState<{
     open: boolean;
@@ -78,6 +95,8 @@ export default function DisputePage({ params }: Props) {
   }>({
     open: false,
   });
+
+  const { openModal, closeModal } = useModal();
 
   const [step, setStep] = useState(0);
 
@@ -105,11 +124,21 @@ export default function DisputePage({ params }: Props) {
     staleTime: 60_000,
   });
 
+  const { data: dealEvidences, refetch: refetchEvidences } = useQuery({
+    queryKey: ["dealEvidence", dealId.toString(), signerAddress],
+    queryFn: () => getEvidence(dealId!, signerAddress!),
+    enabled: !!dealId && !!signerAddress,
+    staleTime: 60_000,
+  });
+
+  bloomLog("Deal evidences: ", dealEvidences);
+
   const dispute = disputeBundle?.dispute;
   const disputeTimer = disputeBundle?.disputeTimer;
   const jurorAddresses = disputeBundle?.jurorAddresses;
 
   const status = dispute?.winner != zeroAddress ? "Ended" : "Ongoing";
+  const [isJurorModalOpen, setIsJurorModalOpen] = useState(false);
 
   useEffect(() => {
     if (!dealId) return;
@@ -162,6 +191,90 @@ export default function DisputePage({ params }: Props) {
 
     // Open confirmation modal first
     setIsConfirmOpen(true);
+  };
+
+  const removeEvidenceTransaction = async (
+    dealId: bigint | string,
+    evidenceIndex: number
+  ) => {
+    try {
+      const { request: removeRequest } = await simulateContract(config, {
+        abi: disputeManagerAbi,
+        address: disputeManagerAddress as Address,
+        functionName: "removeEvidence",
+        args: [dealId, evidenceIndex],
+        chainId: currentChain.chainId as TypeChainId,
+      });
+
+      const hash = await writeContract(config, removeRequest);
+      const receipt = await waitForTransactionReceipt(config, { hash });
+
+      // return something meaningful
+      return receipt;
+    } catch (err) {
+      // rethrow so handleAddEvidence can catch it
+      throw err;
+    }
+  };
+  const handleRemoveEvidence = (evidenceIndex: number) => {
+    bloomLog("Evidence Index: ", evidenceIndex);
+    openModal({
+      type: "confirm",
+      title: "Remove Evidence",
+      description: (
+        <div className="space-y-2 text-[13px]">
+          <p>You are about to remove an evidence.</p>
+        </div>
+      ),
+      confirmText: "Yes, Remove",
+      cancelText: "Cancel",
+      onConfirm: async () => {
+        closeModal();
+        setRemove({ loading: true, error: null, text: "Removing..." });
+        try {
+          const validatedDealId = dealId;
+
+          const receipt = await removeEvidenceTransaction(
+            validatedDealId,
+            evidenceIndex
+          );
+          if (receipt.status == "success") {
+            openModal({
+              type: "success",
+              title: "Removeal Successful",
+              description: (
+                <div className="space-y-2 text-[13px]">
+                  <p>You successfully removed an evidence.</p>
+                </div>
+              ),
+              confirmText: "Close",
+            });
+
+            refetchEvidences();
+            setRemove({
+              loading: false,
+              error: null,
+              text: "Remove",
+            });
+          }
+        } catch (err: any) {
+          const errorMessage = (err as Error).message;
+
+          bloomLog("Unexpected Error: ", err);
+          openModal({
+            type: "error",
+            title: "Removal Failed",
+            description: (
+              <div className="space-y-2 text-[13px]">
+                <p>{errorMessage}</p>
+              </div>
+            ),
+            confirmText: "Close",
+          });
+          setRemove({ loading: false, error: err, text: "Remove" });
+        }
+      },
+    });
   };
 
   // callback when user confirms
@@ -228,6 +341,18 @@ export default function DisputePage({ params }: Props) {
     // here you can also call openDispute() to trigger blockchain interaction
   };
 
+  const plaintiff =
+    dispute?.initiator == dispute?.sender ? dispute?.sender : dispute?.receiver;
+
+  const defendant =
+    dispute?.initiator == dispute?.sender ? dispute?.receiver : dispute?.sender;
+
+  const [remove, setRemove] = useState<{
+    loading: boolean;
+    error: any;
+    text: string;
+  }>({ loading: false, error: "", text: "Remove" });
+
   return (
     <>
       <Header />
@@ -261,8 +386,20 @@ export default function DisputePage({ params }: Props) {
         />
       )}
 
-      
-      
+      {signerAddress && (
+        <JurorModal
+          open={isJurorModalOpen}
+          onClose={() => {
+            setSelectedJurorAddress(zeroAddress);
+            setIsJurorModalOpen(false);
+          }}
+          disputeId={disputeId!}
+          jurorAddress={selectedJurorAddress!}
+          plaintiff={plaintiff!}
+          defendant={defendant!}
+        />
+      )}
+
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-950 to-slate-900 text-white py-10">
         <div className="max-w-7xl mx-auto px-6">
           {/* PAGE HEADER */}
@@ -277,50 +414,75 @@ export default function DisputePage({ params }: Props) {
           <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
             {/* LEFT PANEL */}
             <div className="space-y-6">
-              <Card className="bg-gradient-to-br from-slate-900 to-slate-950 border border-emerald-500/20 p-6 rounded-2xl shadow-lg">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <h2 className="text-xl font-semibold text-emerald-400">
-                      Dispute #{disputeId?.toString() || "—"}
-                    </h2>
-                    <p className="text-slate-400 text-sm mt-1">
-                      Linked Deal: {dealId || "—"}
-                    </p>
-                  </div>
-                  <div className="text-right">
-                    <span className="text-xs bg-emerald-500/10 text-emerald-400 px-3 py-1 rounded-full">
-                      {status}
-                    </span>
-                    <div className="mt-2">
+              <Card className="relative w-full overflow-hidden rounded-2xl border border-white/10 bg-slate-900/80 shadow-lg backdrop-blur-sm p-0">
+                {/* Aurora Glow Effect */}
+                <div className="absolute -top-1/4 left-1/2 -z-10 h-1/2 w-full -translate-x-1/2 rounded-full bg-emerald-500/10 blur-3xl"></div>
+
+                <div className="flex flex-col gap-4 p-5 sm:p-6">
+                  {/* 1. Redesigned Header */}
+                  <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                    <div>
+                      <div className="flex items-center gap-3">
+                        <FileText className="h-6 w-6 shrink-0 text-emerald-400" />
+                        <h2 className="text-xl font-bold text-white sm:text-2xl">
+                          Dispute #{disputeId?.toString() || "—"}
+                        </h2>
+                      </div>
+                      <div className="mt-2 flex items-center gap-2">
+                        <Link className="h-3 w-3 text-slate-500" />
+                        <p className="text-xs text-slate-400">
+                          Linked Deal: {dealId?.toString() || "—"}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex shrink-0 flex-col items-start gap-2 sm:items-end">
+                      <span className="rounded-full bg-emerald-500/10 px-3 py-1 text-xs font-medium text-emerald-400">
+                        {status}
+                      </span>
                       {disputeTimer && (
                         <DisputeTimer disputeTimer={disputeTimer} />
                       )}
                     </div>
                   </div>
-                </div>
 
-                {deal && (
-                  <div className="border-t border-slate-800 mt-4 pt-4 grid grid-cols-2 gap-3 text-sm">
-                    <div>
-                      <p className="text-slate-400">Plaintiff</p>
-                      <p className="text-white font-medium">
-                        {formatAddress(deal.sender)}
-                      </p>
+                  {/* 2. "Plaintiff vs Defendant" Face-off Section */}
+                  {dispute && (
+                    <div className="mt-2 flex  items-center gap-4 rounded-xl  py-4 flex-row justify-between w-full ">
+                      {/* Plaintiff Info */}
+                      <div className="flex w-full items-center gap-3 md:w-auto md:flex-1">
+                        <User className="h-5 w-5 shrink-0 text-slate-400" />
+                        <div className="min-w-0">
+                          <p className="text-xs text-slate-500">Plaintiff</p>
+                          <p className="truncate font-mono text-sm font-medium text-white">
+                            {formatAddress(plaintiff!)}
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Visual Separator */}
+                      <div className="shrink-0 rounded-full border border-slate-700 bg-slate-800 p-2">
+                        <Scale className="h-5 w-5 text-emerald-500" />
+                      </div>
+
+                      {/* Defendant Info */}
+                      <div className="flex w-full items-center justify-end gap-3 text-right md:w-auto md:flex-1">
+                        <div className="min-w-0">
+                          <p className="text-xs text-slate-500">Defendant</p>
+                          <p className="truncate font-mono text-sm font-medium text-white">
+                            {formatAddress(defendant!)}
+                          </p>
+                        </div>
+                        <User className="h-5 w-5 shrink-0 text-slate-400" />
+                      </div>
                     </div>
-                    <div className="text-end">
-                      <p className="text-slate-400">Defendant</p>
-                      <p className="text-white font-medium">
-                        {formatAddress(deal.receiver)}
-                      </p>
-                    </div>
-                  </div>
-                )}
+                  )}
+                </div>
               </Card>
             </div>
 
             {/* RIGHT PANEL */}
             <div className="xl:col-span-2">
-              <Tabs defaultValue="jurors" className="w-full">
+              <Tabs defaultValue="evidence" className="w-full">
                 <TabsList className="w-full bg-slate-900/60 border border-slate-800 rounded-xl flex justify-around">
                   <TabsTrigger
                     className="flex-1 py-3 text-sm font-medium text-white data-[state=active]:bg-green-800"
@@ -345,45 +507,72 @@ export default function DisputePage({ params }: Props) {
                 {/* DEAL TAB */}
                 <TabsContent value="deal" className="mt-6">
                   {deal && (
-                    <Card className="relative overflow-hidden bg-gradient-to-br from-slate-900 to-slate-950 border border-slate-800 rounded-2xl  hover:border-emerald-500/40 transition-all duration-300">
-                      <CardContent className="p-0">
-                        {/* Header Section */}
-                        <div className="flex items-center justify-between border-b border-slate-800/70 px-6 pb-2">
-                          <div>
-                            <p className="text-xs text-slate-500 mb-1">
-                              Deal ID
-                            </p>
-                            <p className="text-white font-semibold tracking-wide">
-                              {deal.id}
+                    <Card className="relative w-full overflow-hidden rounded-2xl border border-white/10 bg-slate-900/80 shadow-lg backdrop-blur-sm p-0">
+                      {/* Aurora Glow Effect */}
+                      <div className="absolute -top-1/2 left-1/2 -z-10 h-full w-full -translate-x-1/2 rounded-full bg-emerald-500/10 blur-3xl"></div>
+
+                      <CardContent className="flex flex-col gap-6 p-4">
+                        {/* Header */}
+                        <div className="flex items-center justify-between">
+                          <div className="flex min-w-0 items-center gap-2">
+                            <Wallet className="h-4 w-4 shrink-0 text-slate-500" />
+                            <p className="truncate font-mono text-sm text-slate-300">
+                              {deal.id.toString()}
                             </p>
                           </div>
-                          <span className="text-[12px] bg-emerald-500/10 text-emerald-400 px-3 py-1 rounded-full">
-                            Active
-                          </span>
+                          <div className="flex shrink-0 items-center gap-2 rounded-full bg-emerald-500/10 px-3 py-1 text-xs font-medium text-emerald-400">
+                            <div className="h-1.5 w-1.5 rounded-full bg-emerald-500"></div>
+                            <span>Active</span>
+                          </div>
                         </div>
 
-                        {/* Details Section */}
-                        <div className="px-6 py-5 space-y-4 text-sm">
-                          <div className="flex items-center justify-between">
-                            <span className="text-slate-400">Sender</span>
-                            <span className="text-white font-medium">
-                              {formatAddress(deal.sender)}
-                            </span>
-                          </div>
-
-                          <div className="flex items-center justify-between">
-                            <span className="text-slate-400">Receiver</span>
-                            <span className="text-white font-medium">
-                              {formatAddress(deal.receiver)}
-                            </span>
-                          </div>
-
-                          <div className="flex items-center justify-between">
-                            <span className="text-slate-400">Amount</span>
-                            <span className="text-emerald-400 font-semibold">
-                              {inCurrencyFormat(formatUnits(deal.amount, 18))}{" "}
+                        {/* Hero Section */}
+                        <div className="text-center">
+                          <p className="text-sm text-slate-400">
+                            Amount Transferred
+                          </p>
+                          {/* */}
+                          <p className="mt-1 text-3xl font-bold tracking-tight text-emerald-400 sm:text-4xl">
+                            {inCurrencyFormat(formatUnits(deal.amount, 18))}
+                            <span className="ml-2 text-xl font-medium text-slate-400 sm:text-2xl">
                               {token.symbol}
                             </span>
+                          </p>
+                        </div>
+
+                        {/* Transaction Flow Section */}
+                        {/* */}
+                        <div className="flex flex-col items-center gap-4 rounded-xl bg-slate-900/50 p-4 sm:flex-row sm:justify-between">
+                          {/* */}
+                          <div className="flex min-w-0 flex-col items-center sm:flex-1 sm:items-start">
+                            <span className="mb-1 text-xs text-slate-500">
+                              From
+                            </span>
+                            <div className="flex min-w-0 items-center gap-2">
+                              <CircleUser className="h-4 w-4 shrink-0 text-slate-400" />
+                              <span className="truncate font-mono text-sm text-white">
+                                {formatAddress(deal.sender)}
+                              </span>
+                            </div>
+                          </div>
+
+                          {/* */}
+                          <div className="shrink-0 rounded-full bg-slate-800 p-2">
+                            <ArrowDown className="block h-5 w-5 text-emerald-500 sm:hidden" />
+                            <ArrowRight className="hidden h-5 w-5 text-emerald-500 sm:block" />
+                          </div>
+
+                          {/* */}
+                          <div className="flex min-w-0 flex-col items-center sm:flex-1 sm:items-end">
+                            <span className="mb-1 text-xs text-slate-500">
+                              To
+                            </span>
+                            <div className="flex min-w-0 items-center gap-2">
+                              <span className="truncate font-mono text-sm text-white">
+                                {formatAddress(deal.receiver)}
+                              </span>
+                              <CircleUser className="h-4 w-4 shrink-0 text-slate-400" />
+                            </div>
                           </div>
                         </div>
                       </CardContent>
@@ -399,7 +588,7 @@ export default function DisputePage({ params }: Props) {
                         return (
                           <Card
                             key={i}
-                            className="relative overflow-hidden bg-gradient-to-br from-slate-900 via-slate-950 to-black border border-slate-800 pt-4 px-2 rounded-2xl shadow-md transition-all duration-300 hover:-translate-y-1 hover:border-emerald-500/40 hover:shadow-emerald-500/10"
+                            className="relative overflow-hidden bg-slate-900  border border-slate-800 pt-4 px-4 rounded-2xl shadow-md transition-all duration-300 hover:border-emerald-500/40 hover:shadow-emerald-500/10 pb-2"
                           >
                             {/* Accent Glow Line */}
                             <div className="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-emerald-500/40 via-cyan-400/40 to-transparent"></div>
@@ -418,13 +607,17 @@ export default function DisputePage({ params }: Props) {
                               </div>
                             </div>
 
-                            <div className="mt-2">
-                              <div className="flex items-center justify-between cursor-pointer ">
-                                <span className="text-[11px] text-emerald-400 bg-emerald-500/10 px-2 py-1 rounded-full">
-                                  View Details
-                                </span>
-                              </div>
-                            </div>
+                            <button
+                              className="flex items-center justify-between cursor-pointer hover:scale-105"
+                              onClick={() => {
+                                setSelectedJurorAddress(address);
+                                setIsJurorModalOpen(true);
+                              }}
+                            >
+                              <span className="text-[11px] text-emerald-400 bg-emerald-500/10 px-2 py-1 rounded-full">
+                                View Details
+                              </span>
+                            </button>
                           </Card>
                         );
                       })}
@@ -438,11 +631,30 @@ export default function DisputePage({ params }: Props) {
 
                 {/* EVIDENCE TAB */}
                 <TabsContent value="evidence" className="mt-6">
-                  <Card className="bg-slate-900 border border-slate-800 rounded-2xl">
-                    <CardContent className="p-6 text-slate-400">
-                      <p>No evidence submitted yet.</p>
-                    </CardContent>
-                  </Card>
+                  {dealEvidences && dealEvidences.length > 0 ? (
+                    <div>
+                      {dealEvidences
+                        .slice() // copy so you don't mutate
+                        .reverse()
+                        .slice(0, 2) // only take the first 2 after reversing
+                        .map((currentEvidence, indexFromReversed) => {
+                          const originalIndex =
+                            dealEvidences.length - 1 - indexFromReversed;
+                          return (
+                            <EvidenceCard
+                              key={originalIndex}
+                              evidence={currentEvidence}
+                              index={originalIndex} // still original index
+                              isJurorView={false}
+                              handleRemoveEvidence={handleRemoveEvidence}
+                              removalState={{ remove, setRemove }}
+                            />
+                          );
+                        })}
+                    </div>
+                  ) : (
+                    <div>No Deals</div>
+                  )}
                 </TabsContent>
               </Tabs>
             </div>
