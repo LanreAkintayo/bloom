@@ -400,7 +400,7 @@ export default function EscrowPage() {
       form.amount,
       token.decimal
     ).toString();
-
+    
     const validatedDescription = form.description;
     let transactionReceipt;
 

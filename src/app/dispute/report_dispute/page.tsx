@@ -239,7 +239,7 @@ export default function DisputePage() {
         args: [dealId, description],
         maxFeePerGas: parseGwei("2"), // slightly above average network fee
         maxPriorityFeePerGas: parseGwei("2"),
-        gas: BigInt(1200000),
+        gas: BigInt(1300000),
         chainId: currentChain.chainId as TypeChainId,
       });
       const hash = await writeContract(config, openRequest);

@@ -33,7 +33,18 @@ import ConfirmDisputeModal from "@/components/disputes/ConfirmDisputeModal";
 import ErrorModal from "@/components/disputes/ErrorModal";
 import { useAccount } from "wagmi";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { getDeal, getDispute, getDisputeFee, getDisputeId, getDisputeVote, getJurorAddresses, getJurorCandidate } from "@/hooks/useDisputeStorage";
+import {
+  getDeal,
+  getDispute,
+  getDisputeFee,
+  getDisputeId,
+  getDisputeVote,
+  getDisputeTimer,
+  getJurorAddresses,
+  getJurorCandidate,
+} from "@/hooks/useDisputeStorage";
+import { useQuery } from "@tanstack/react-query";
+import DisputeTimer from "@/components/disputes/DisputeTimer";
 
 interface Props {
   params: Promise<{ dealId: string }>;
@@ -72,51 +83,33 @@ export default function DisputePage({ params }: Props) {
 
   const disputeState = { step, setStep };
 
-  const [disputeData, setDisputeData] = useState<{
-    disputeId: bigint | null;
-    dispute: Dispute | null;
-    jurorAddresses: Address[] | null;
-  }>({
-    disputeId: null,
-    dispute: null,
-    jurorAddresses: null,
+  const { data: disputeId } = useQuery({
+    queryKey: ["disputeId", chainId, dealId.toString()],
+    queryFn: () => getDisputeId(dealId!),
+    enabled: !!dealId,
+    staleTime: 60_000,
   });
 
-  bloomLog("Dispute data: ", disputeData);
+  // Combine dispute + timer (they depend on disputeId)
+  const { data: disputeBundle } = useQuery({
+    queryKey: ["disputeBundle", disputeId?.toString()],
+    queryFn: async () => {
+      const [dispute, disputeTimer, jurorAddresses] = await Promise.all([
+        getDispute(disputeId!),
+        getDisputeTimer(disputeId!),
+        getJurorAddresses(disputeId!),
+      ]);
+      return { dispute, disputeTimer, jurorAddresses };
+    },
+    enabled: !!disputeId,
+    staleTime: 60_000,
+  });
 
+  const dispute = disputeBundle?.dispute;
+  const disputeTimer = disputeBundle?.disputeTimer;
+  const jurorAddresses = disputeBundle?.jurorAddresses;
 
-
-  useEffect(() => {
-    if (!dealId) return; // no dealId, do nothing
-
-    const loadDisputeData = async () => {
-      try {
-        if (!dealId) return;
-        
-        // Step 1: get disputeId
-        const disputeId = await getDisputeId(dealId);
-        if (!disputeId) return;
-
-        // Get Dispute itself
-        const dispute = await getDispute(disputeId);
-
-        // Step 2: get juror addresses
-        const jurorAddresses = await getJurorAddresses(disputeId);
-
-        // Step 3: update state
-        setDisputeData((prev) => ({
-          ...prev,
-          disputeId,
-          dispute,
-          jurorAddresses,
-        }));
-      } catch (error) {
-        console.error("Error loading dispute data:", error);
-      }
-    };
-
-    loadDisputeData();
-  }, [dealId]); // runs when dealId changes
+  const status = dispute?.winner != zeroAddress ? "Ended" : "Ongoing";
 
   useEffect(() => {
     if (!dealId) return;
@@ -234,11 +227,6 @@ export default function DisputePage({ params }: Props) {
 
     // here you can also call openDispute() to trigger blockchain interaction
   };
-  const openDispute = async () => {
-    // Here I don't know, you try to track all the events and if any of the event comes up, It shows here or something.
-  };
-
-  // bloomLog("Description: ", description);
 
   return (
     <>
@@ -273,156 +261,193 @@ export default function DisputePage({ params }: Props) {
         />
       )}
 
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-950 to-black text-white p-8">
-        {/* HEADER */}
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold">Dispute for Deal #{dealId}</h1>
-          <p className="text-slate-400 text-sm mt-2">
-            Track juror decisions, evidence, and updates for this dispute
-          </p>
-        </div>
-
-        {/* META CARD */}
-        <Card className="bg-slate-900 border border-emerald-500/30 p-5 rounded-2xl shadow-md">
-          <div className="flex justify-between flex-wrap gap-3">
-            <div>
-              <h2 className="text-xl font-semibold text-emerald-400">
-                Dispute #{disputeData.disputeId?.toString() || "—"}
-              </h2>
-              <p className="text-slate-400 text-sm">
-                Linked Deal: {dealId || "—"}
-              </p>
-            </div>
-            <div className="text-right">
-              <p className="text-emerald-500 text-sm font-medium">
-                Status: Active
-              </p>
-              <p className="text-slate-500 text-xs">Time Left: 2d 14h</p>
-            </div>
+      
+      
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-950 to-slate-900 text-white py-10">
+        <div className="max-w-7xl mx-auto px-6">
+          {/* PAGE HEADER */}
+          <div className="text-center mb-12">
+            <h1 className="text-3xl font-bold">Dispute for Deal #{dealId}</h1>
+            <p className="text-slate-400 text-sm mt-2">
+              Track juror decisions, evidence, and updates for this dispute
+            </p>
           </div>
 
-          {deal && (
-            <div className="mt-4 border-t border-slate-800 pt-4 flex justify-between">
-              <div>
-                <p className="text-slate-400 text-sm">Plaintiff</p>
-                <p className="text-white font-medium">
-                  {formatAddress(deal.sender)}
-                </p>
-              </div>
-              <div>
-                <p className="text-slate-400 text-sm">Defendant</p>
-                <p className="text-white font-medium">
-                  {formatAddress(deal.receiver)}
-                </p>
-              </div>
-            </div>
-          )}
-        </Card>
-
-        {/* MAIN CONTENT */}
-        <Tabs defaultValue="deal" className="mt-8">
-          <TabsList className="bg-slate-800 border border-slate-700 rounded-xl">
-            <TabsTrigger value="deal">Deal Details</TabsTrigger>
-            <TabsTrigger value="jurors">Jurors</TabsTrigger>
-            <TabsTrigger value="evidence">Evidence</TabsTrigger>
-          </TabsList>
-
-          {/* DEAL DETAILS */}
-          <TabsContent value="deal">
-            <Card className="bg-slate-900 border border-slate-800 mt-6">
-              <CardContent className="space-y-3 p-5">
-                {deal ? (
-                  <>
-                    <div className="flex justify-between">
-                      <span className="text-slate-400 text-sm">Deal ID</span>
-                      <span className="text-white">{deal.id}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-slate-400 text-sm">Sender</span>
-                      <span className="text-white">
-                        {formatAddress(deal.sender)}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-slate-400 text-sm">Receiver</span>
-                      <span className="text-white">
-                        {formatAddress(deal.receiver)}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-slate-400 text-sm">Amount</span>
-                      <span className="text-white">
-                        {inCurrencyFormat(formatUnits(deal.amount, 18))} BLM
-                      </span>
-                    </div>
-                  </>
-                ) : (
-                  <p className="text-slate-500 text-center">
-                    Loading deal details...
-                  </p>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          {/* JURORS TAB */}
-          <TabsContent value="jurors">
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4 mt-6">
-              {disputeData.jurorAddresses && disputeData.disputeId ? (
-                disputeData.jurorAddresses.map(async (address, i) => {
-                  const candidate = await getJurorCandidate(
-                    disputeData!.disputeId!,
-                    address
-                  );
-                  const disputeVote = await getDisputeVote(
-                    disputeData!.disputeId!,
-                    address
-                  )
-                  //   const candidate = disputeData.jurorCandidates[address];
-                  return (
-                    <Card
-                      key={i}
-                      className="bg-slate-800 border border-slate-700 p-4 rounded-xl"
-                    >
-                      <p className="text-slate-400 text-sm mb-1">
-                        Juror {i + 1}
-                      </p>
-                      <p className="text-white font-medium">
-                        {formatAddress(address)}
-                      </p>
-                      {disputeVote ? (
-                        <div className="mt-3 text-slate-400 text-sm space-y-1">
-                          <p>Has Voted: {disputeVote.support != zeroAddress ? "Yes" : "No"}</p>
-                          <p>
-                            Decision:{" "}
-                            {disputeVote.support != zeroAddress
-                              ? disputeVote.support
-                              : "Not submitted"}
-                          </p>
-                        </div>
-                      ) : (
-                        <p className="text-slate-500 text-sm mt-3">
-                          Loading candidate info...
-                        </p>
+          {/* GRID LAYOUT */}
+          <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
+            {/* LEFT PANEL */}
+            <div className="space-y-6">
+              <Card className="bg-gradient-to-br from-slate-900 to-slate-950 border border-emerald-500/20 p-6 rounded-2xl shadow-lg">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <h2 className="text-xl font-semibold text-emerald-400">
+                      Dispute #{disputeId?.toString() || "—"}
+                    </h2>
+                    <p className="text-slate-400 text-sm mt-1">
+                      Linked Deal: {dealId || "—"}
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <span className="text-xs bg-emerald-500/10 text-emerald-400 px-3 py-1 rounded-full">
+                      {status}
+                    </span>
+                    <div className="mt-2">
+                      {disputeTimer && (
+                        <DisputeTimer disputeTimer={disputeTimer} />
                       )}
-                    </Card>
-                  );
-                })
-              ) : (
-                <p className="text-slate-500 mt-4">Loading jurors...</p>
-              )}
-            </div>
-          </TabsContent>
+                    </div>
+                  </div>
+                </div>
 
-          {/* EVIDENCE TAB */}
-          <TabsContent value="evidence">
-            <Card className="bg-slate-900 border border-slate-800 mt-6">
-              <CardContent className="p-5 text-slate-400">
-                <p>No evidence submitted yet.</p>
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
+                {deal && (
+                  <div className="border-t border-slate-800 mt-4 pt-4 grid grid-cols-2 gap-3 text-sm">
+                    <div>
+                      <p className="text-slate-400">Plaintiff</p>
+                      <p className="text-white font-medium">
+                        {formatAddress(deal.sender)}
+                      </p>
+                    </div>
+                    <div className="text-end">
+                      <p className="text-slate-400">Defendant</p>
+                      <p className="text-white font-medium">
+                        {formatAddress(deal.receiver)}
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </Card>
+            </div>
+
+            {/* RIGHT PANEL */}
+            <div className="xl:col-span-2">
+              <Tabs defaultValue="jurors" className="w-full">
+                <TabsList className="w-full bg-slate-900/60 border border-slate-800 rounded-xl flex justify-around">
+                  <TabsTrigger
+                    className="flex-1 py-3 text-sm font-medium text-white data-[state=active]:bg-green-800"
+                    value="deal"
+                  >
+                    Deal Details
+                  </TabsTrigger>
+                  <TabsTrigger
+                    className="flex-1 py-3 text-sm font-medium text-white data-[state=active]:bg-green-800"
+                    value="jurors"
+                  >
+                    Jurors
+                  </TabsTrigger>
+                  <TabsTrigger
+                    className="flex-1 py-3 text-sm font-medium text-white data-[state=active]:bg-green-800"
+                    value="evidence"
+                  >
+                    Evidence
+                  </TabsTrigger>
+                </TabsList>
+
+                {/* DEAL TAB */}
+                <TabsContent value="deal" className="mt-6">
+                  {deal && (
+                    <Card className="relative overflow-hidden bg-gradient-to-br from-slate-900 to-slate-950 border border-slate-800 rounded-2xl  hover:border-emerald-500/40 transition-all duration-300">
+                      <CardContent className="p-0">
+                        {/* Header Section */}
+                        <div className="flex items-center justify-between border-b border-slate-800/70 px-6 pb-2">
+                          <div>
+                            <p className="text-xs text-slate-500 mb-1">
+                              Deal ID
+                            </p>
+                            <p className="text-white font-semibold tracking-wide">
+                              {deal.id}
+                            </p>
+                          </div>
+                          <span className="text-[12px] bg-emerald-500/10 text-emerald-400 px-3 py-1 rounded-full">
+                            Active
+                          </span>
+                        </div>
+
+                        {/* Details Section */}
+                        <div className="px-6 py-5 space-y-4 text-sm">
+                          <div className="flex items-center justify-between">
+                            <span className="text-slate-400">Sender</span>
+                            <span className="text-white font-medium">
+                              {formatAddress(deal.sender)}
+                            </span>
+                          </div>
+
+                          <div className="flex items-center justify-between">
+                            <span className="text-slate-400">Receiver</span>
+                            <span className="text-white font-medium">
+                              {formatAddress(deal.receiver)}
+                            </span>
+                          </div>
+
+                          <div className="flex items-center justify-between">
+                            <span className="text-slate-400">Amount</span>
+                            <span className="text-emerald-400 font-semibold">
+                              {inCurrencyFormat(formatUnits(deal.amount, 18))}{" "}
+                              {token.symbol}
+                            </span>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  )}
+                </TabsContent>
+
+                {/* JURORS TAB */}
+                <TabsContent value="jurors" className="mt-6">
+                  {jurorAddresses ? (
+                    <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                      {jurorAddresses.map((address, i) => {
+                        return (
+                          <Card
+                            key={i}
+                            className="relative overflow-hidden bg-gradient-to-br from-slate-900 via-slate-950 to-black border border-slate-800 pt-4 px-2 rounded-2xl shadow-md transition-all duration-300 hover:-translate-y-1 hover:border-emerald-500/40 hover:shadow-emerald-500/10"
+                          >
+                            {/* Accent Glow Line */}
+                            <div className="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-emerald-500/40 via-cyan-400/40 to-transparent"></div>
+
+                            <div className="flex items-start justify-between">
+                              <div>
+                                <p className="text-xs text-slate-500 mb-1">
+                                  Juror {i + 1}
+                                </p>
+                                <p className="text-sm font-semibold text-white">
+                                  {formatAddress(address)}
+                                </p>
+                              </div>
+                              <div className="p-2 rounded-lg bg-slate-800/60 border border-slate-700">
+                                <Scale size={16} className="text-emerald-400" />
+                              </div>
+                            </div>
+
+                            <div className="mt-2">
+                              <div className="flex items-center justify-between cursor-pointer ">
+                                <span className="text-[11px] text-emerald-400 bg-emerald-500/10 px-2 py-1 rounded-full">
+                                  View Details
+                                </span>
+                              </div>
+                            </div>
+                          </Card>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <p className="text-slate-500 text-center">
+                      Loading jurors...
+                    </p>
+                  )}
+                </TabsContent>
+
+                {/* EVIDENCE TAB */}
+                <TabsContent value="evidence" className="mt-6">
+                  <Card className="bg-slate-900 border border-slate-800 rounded-2xl">
+                    <CardContent className="p-6 text-slate-400">
+                      <p>No evidence submitted yet.</p>
+                    </CardContent>
+                  </Card>
+                </TabsContent>
+              </Tabs>
+            </div>
+          </div>
+        </div>
       </div>
     </>
   );

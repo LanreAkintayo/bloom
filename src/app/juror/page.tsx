@@ -214,6 +214,8 @@ export default function JurorDashboard() {
 
   const [activeTab, setActiveTab] = useState<"active" | "past">("active");
 
+  bloomLog("Rewards: ", rewards);
+
   // Dummy data
 
   const handleClaim = (token: string, amount: number) => {

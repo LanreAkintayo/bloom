@@ -63,12 +63,12 @@ export const CHAINS: Record<string, ChainConfig> = {
       daiUsd: "0x14866185B1962B63C3Ea9E03Bc1da838bab34C19",
     },
     wrapperAddress: "0xab18414CD93297B0d12ac29E63Ca20f515b3DB46",
-    jurorManagerAddress: "0xCeDDfC31c1Ac1CA4F9D309eA9428E098e67f5531",
+    jurorManagerAddress: "0xb7A4158e74f2197efD620F6930A3d1E9Ae4B6C38",
     wrappedNativeTokenAddress: "0xC558DBdd856501FCd9aaF1E62eae57A9F0629a3c",
-    bloomEscrowAddress: "0x91e0F26Fa5326553bf997e6de1564D32ec48cd64",
-    disputeStorageAddress: "0x5940f05fCEb6Be0Fd1eeF6634AD3C7CF0fFB11f0",
-    disputeManagerAddress: "0x9654219C5E55200d7C5CCd75430b9a6BD8ee1960",
-    feeControllerAddress: "0xe932E2Efa098bF9AA53e49D67f3d110f0B82E1A2"
+    bloomEscrowAddress: "0x211B10124d3202570CbdB89682f1C561f59C383C",
+    disputeStorageAddress: "0xd0c932a9b30a85E748582CD8A8dcc38738055019",
+    disputeManagerAddress: "0xc65cA06E0d58ed170898C13e903a71e555FA0503",
+    feeControllerAddress: "0xAB2c418eeCAF037497734324A2c9CC7D28D6ccc6"
   },
 };
 
