@@ -69,10 +69,17 @@ export default function DealCard({
   const currentStatus = Status[deal.status] as string;
 
   // Determine milestones dynamically
+  // const milestones =
+  //   currentStatus === "Disputed"
+  //     ? ["Pending", "Acknowledged", "Disputed", "Resolved"]
+  //     : ["Pending", "Acknowledged", "Completed"];
+
   const milestones =
-    currentStatus === "Disputed"
-      ? ["Pending", "Acknowledged", "Disputed", "Finalized"]
-      : ["Pending", "Acknowledged", "Completed"];
+    currentStatus == "Completed"
+      ? ["Pending", "Acknowledged", "Completed"]
+      : currentStatus == "Disputed"
+      ? ["Pending", "Acknowledged", "Disputed", "Resolved"]
+      : ["Pending", "Acknowledged", "Disputed", "Resolved"];
 
   const currentIndex = milestones.indexOf(currentStatus);
 
@@ -89,6 +96,8 @@ export default function DealCard({
         return "bg-emerald-600";
       case "Disputed":
         return "bg-red-300";
+      case "Resolved":
+        return "bg-emerald-400";
       default:
         return "bg-slate-600";
     }
@@ -291,7 +300,7 @@ export default function DealCard({
               )}
             </Button>
           )}
-          {currentStatus === "Disputed" && signerAddress === deal.receiver && (
+          {currentStatus === "Disputed"  || currentStatus === "Resolved" &&  (
             // <Button
             //   onClick={() => onCancel(deal.id)}
             //   className="bg-green-800 hover:bg-green-800/70 flex items-center justify-center gap-2 text-[13px] py-0 px-2"
@@ -300,7 +309,7 @@ export default function DealCard({
             // </Button>
 
             <Link href={`/dispute/${deal.id}`} passHref>
-              <Button className="bg-green-800 hover:bg-green-800/70 flex items-center justify-center gap-2 text-[13px] py-0 px-2">
+              <Button className="bg-emerald-600 hover:bg-green-600/90 flex items-center justify-center gap-2 text-[13px] py-0 px-2 cursor-pointer">
                 View Updates
               </Button>
             </Link>

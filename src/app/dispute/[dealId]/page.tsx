@@ -17,6 +17,7 @@ import {
   ArrowDown,
   Link,
   User,
+  FileSearch,
 } from "lucide-react";
 import Header from "@/components/Header";
 import { bloomLog, formatAddress, inCurrencyFormat } from "@/lib/utils";
@@ -60,6 +61,9 @@ import DisputeTimer from "@/components/disputes/DisputeTimer";
 import JurorModal from "@/components/disputes/JurorModal";
 import EvidenceCard from "@/components/evidence/EvidenceCard";
 import { useModal } from "@/providers/ModalProvider";
+import DisputeOutcomeCard from "@/components/disputes/DisputeOutcomeCard";
+import EmptyState from "@/components/EmptyState";
+import { useRouter } from "next/navigation";
 
 interface Props {
   params: Promise<{ dealId: string }>;
@@ -67,6 +71,8 @@ interface Props {
 
 export default function DisputePage({ params }: Props) {
   const { dealId } = use(params);
+
+  const router = useRouter();
 
   const { address: signerAddress } = useAccount();
   const currentChain = getChainConfig("sepolia");
@@ -81,7 +87,7 @@ export default function DisputePage({ params }: Props) {
   const [description, setDescription] = useState("");
   const [approved, setApproved] = useState(false);
   const [approving, setApproving] = useState(false);
-  const [submitted, setSubmitted] = useState(false);
+  const [submitted, setClaimted] = useState(false);
   const [deal, setDeal] = useState<Deal | null>(null);
   const [token, setToken] = useState<any>(null);
   const [disputeFee, setDisputeFee] = useState<bigint | null>(null);
@@ -282,7 +288,7 @@ export default function DisputePage({ params }: Props) {
     setIsConfirmOpen(false);
     setIsModalOpen(true);
     // optionally set submitted state
-    setSubmitted(true);
+    setClaimted(true);
 
     try {
       // Now, we approve to spend the arbitration fee;
@@ -335,7 +341,7 @@ export default function DisputePage({ params }: Props) {
       });
       setIsModalOpen(false);
     } finally {
-      setSubmitted(false);
+      setClaimted(false);
     }
 
     // here you can also call openDispute() to trigger blockchain interaction
@@ -352,6 +358,92 @@ export default function DisputePage({ params }: Props) {
     error: any;
     text: string;
   }>({ loading: false, error: "", text: "Remove" });
+
+  const isWinner = dispute?.winner == signerAddress;
+
+  const [claim, setClaim] = useState<{
+    loading: boolean;
+    error: any;
+    text: string;
+  }>({ loading: false, error: "", text: "Claim" });
+
+  const claimFundsTransaction = async (disputeId: bigint | string) => {
+    try {
+      const { request: claimFundsRequest } = await simulateContract(config, {
+        abi: disputeManagerAbi,
+        address: disputeManagerAddress as Address,
+        functionName: "releaseFundsToWinner",
+        args: [disputeId],
+        chainId: currentChain.chainId as TypeChainId,
+      });
+
+      const hash = await writeContract(config, claimFundsRequest);
+      const receipt = await waitForTransactionReceipt(config, { hash });
+
+      // return something meaningful
+      return receipt;
+    } catch (err) {
+      // rethrow so handleAddEvidence can catch it
+      throw err;
+    }
+  };
+
+  const handleClaimFunds = () => {
+    openModal({
+      type: "confirm",
+      title: "Claim Funds",
+      description: (
+        <div className="space-y-2 text-[13px]">
+          <p>You are about to claim the deal funds.</p>
+        </div>
+      ),
+      confirmText: "Yes",
+      cancelText: "Cancel",
+      onConfirm: async () => {
+        closeModal();
+        setClaim({ loading: true, error: null, text: "Claiming..." });
+        try {
+          const receipt = await claimFundsTransaction(disputeId!);
+          if (receipt.status == "success") {
+            openModal({
+              type: "success",
+              title: "Claming Successful",
+              description: (
+                <div className="space-y-2 text-[13px]">
+                  <p>You successfully claimed the deal funds.</p>
+                </div>
+              ),
+              confirmText: "Close",
+            });
+
+            const newDeal = await getDeal(dealId);
+            setDeal(newDeal);
+
+            setClaim({
+              loading: false,
+              error: null,
+              text: "Claimed",
+            });
+          }
+        } catch (err: any) {
+          const errorMessage = (err as Error).message;
+
+          bloomLog("Unexpected Error: ", err);
+          openModal({
+            type: "error",
+            title: "Claim Failed",
+            description: (
+              <div className="space-y-2 text-[13px]">
+                <p>{errorMessage}</p>
+              </div>
+            ),
+            confirmText: "Close",
+          });
+          setClaim({ loading: false, error: err, text: "Claim Deal Funds" });
+        }
+      },
+    });
+  };
 
   return (
     <>
@@ -377,7 +469,7 @@ export default function DisputePage({ params }: Props) {
           isOpen={isModalOpen}
           onClose={() => {
             setIsModalOpen(false);
-            setSubmitted(false); // reset submit state if needed
+            setClaimted(false); // reset submit state if needed
           }}
           token={token}
           currentChain={currentChain}
@@ -411,93 +503,155 @@ export default function DisputePage({ params }: Props) {
           </div>
 
           {/* GRID LAYOUT */}
-          <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
+          <div className="flex flex-col md:flex-row w-full gap-8">
             {/* LEFT PANEL */}
-            <div className="space-y-6">
-              <Card className="relative w-full overflow-hidden rounded-2xl border border-white/10 bg-slate-900/80 shadow-lg backdrop-blur-sm p-0">
+            {dispute ? (
+              <div className="space-y-6">
+                {status == "Ongoing" ? (
+                  <Card className="relative w-full overflow-hidden rounded-2xl border border-white/10 bg-slate-900/80 shadow-lg backdrop-blur-sm p-0">
+                    {/* Aurora Glow Effect */}
+                    <div className="absolute -top-1/4 left-1/2 -z-10 h-1/2 w-full -translate-x-1/2 rounded-full bg-emerald-500/10 blur-3xl"></div>
+
+                    <div className="flex flex-col gap-4 p-5 sm:p-6">
+                      {/* Redesigned Header */}
+                      <div className="flex gap-4 flex-row items-start justify-between">
+                        <div>
+                          <div className="flex items-center gap-3">
+                            <FileText className="h-6 w-6 shrink-0 text-emerald-400" />
+                            <h2 className="text-xl font-bold text-white sm:text-2xl">
+                              Dispute #{disputeId?.toString() || "—"}
+                            </h2>
+                          </div>
+                          <div className="mt-2 flex items-center gap-2">
+                            <Link className="h-3 w-3 text-slate-500" />
+                            <p className="text-xs text-slate-400">
+                              Linked Deal: {dealId?.toString() || "—"}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex shrink-0 flex-col items-start gap-2 sm:items-end">
+                          <span className="rounded-full bg-emerald-500/10 px-3 py-1 text-xs font-medium text-emerald-400">
+                            {status}
+                          </span>
+                          {disputeTimer && (
+                            <DisputeTimer disputeTimer={disputeTimer} />
+                          )}
+                        </div>
+                      </div>
+
+                      {/* "Plaintiff vs Defendant" Face-off Section */}
+                      {dispute && (
+                        <div className="mt-2 flex  items-center gap-4 rounded-xl  py-4 justify-between w-full xs:flex-row  flex-col">
+                          {/* Plaintiff Info */}
+                          <div className="flex w-full items-center gap-3 md:w-auto md:flex-1">
+                            <User className="h-5 w-5 shrink-0 text-slate-400" />
+                            <div className="min-w-0">
+                              <p className="text-xs text-slate-500">
+                                Plaintiff
+                              </p>
+                              <p className="truncate font-mono text-sm font-medium text-white">
+                                {formatAddress(plaintiff!)}
+                              </p>
+                            </div>
+                          </div>
+
+                          {/* Visual Separator */}
+                          <div className="shrink-0 rounded-full border border-slate-700 bg-slate-800 p-2">
+                            <Scale className="h-5 w-5 text-emerald-500" />
+                          </div>
+
+                          {/* Defendant Info */}
+                          <div className="flex w-full items-center justify-end gap-3 text-right md:w-auto md:flex-1">
+                            <div className="min-w-0">
+                              <p className="text-xs text-slate-500">
+                                Defendant
+                              </p>
+                              <p className="truncate font-mono text-sm font-medium text-white">
+                                {formatAddress(defendant!)}
+                              </p>
+                            </div>
+                            <User className="h-5 w-5 shrink-0 text-slate-400" />
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </Card>
+                ) : (
+                  <DisputeOutcomeCard
+                    isWinner={isWinner}
+                    onClaimFunds={handleClaimFunds}
+                    claimState={{ claim }}
+                    deal={deal!}
+                  />
+                )}
+              </div>
+            ) : (
+              <Card className="relative w-full overflow-hidden rounded-2xl border border-white/10 bg-slate-900/80 p-0 shadow-lg backdrop-blur-sm">
                 {/* Aurora Glow Effect */}
-                <div className="absolute -top-1/4 left-1/2 -z-10 h-1/2 w-full -translate-x-1/2 rounded-full bg-emerald-500/10 blur-3xl"></div>
+                <div className="absolute -top-1/4 left-1/2 -z-10 h-1/2 w-full -translate-x-1/2 rounded-full bg-slate-700/10 blur-3xl"></div>
 
                 <div className="flex flex-col gap-4 p-5 sm:p-6">
-                  {/* 1. Redesigned Header */}
-                  <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                  {/* --- Skeleton for Header --- */}
+                  <div className="flex animate-pulse flex-row items-start justify-between gap-4">
                     <div>
-                      <div className="flex items-center gap-3">
-                        <FileText className="h-6 w-6 shrink-0 text-emerald-400" />
-                        <h2 className="text-xl font-bold text-white sm:text-2xl">
-                          Dispute #{disputeId?.toString() || "—"}
-                        </h2>
-                      </div>
-                      <div className="mt-2 flex items-center gap-2">
-                        <Link className="h-3 w-3 text-slate-500" />
-                        <p className="text-xs text-slate-400">
-                          Linked Deal: {dealId?.toString() || "—"}
-                        </p>
-                      </div>
+                      {/* Title */}
+                      <div className="mb-3 h-7 w-48 rounded-md bg-slate-700"></div>
+                      {/* Linked Deal */}
+                      <div className="h-4 w-32 rounded-md bg-slate-700"></div>
                     </div>
-                    <div className="flex shrink-0 flex-col items-start gap-2 sm:items-end">
-                      <span className="rounded-full bg-emerald-500/10 px-3 py-1 text-xs font-medium text-emerald-400">
-                        {status}
-                      </span>
-                      {disputeTimer && (
-                        <DisputeTimer disputeTimer={disputeTimer} />
-                      )}
+                    <div className="flex shrink-0 flex-col items-end gap-2">
+                      {/* Status Badge */}
+                      <div className="h-6 w-20 rounded-full bg-slate-700"></div>
+                      {/* Timer */}
+                      <div className="h-5 w-24 rounded-md bg-slate-700"></div>
                     </div>
                   </div>
 
-                  {/* 2. "Plaintiff vs Defendant" Face-off Section */}
-                  {dispute && (
-                    <div className="mt-2 flex  items-center gap-4 rounded-xl  py-4 flex-row justify-between w-full ">
-                      {/* Plaintiff Info */}
-                      <div className="flex w-full items-center gap-3 md:w-auto md:flex-1">
-                        <User className="h-5 w-5 shrink-0 text-slate-400" />
-                        <div className="min-w-0">
-                          <p className="text-xs text-slate-500">Plaintiff</p>
-                          <p className="truncate font-mono text-sm font-medium text-white">
-                            {formatAddress(plaintiff!)}
-                          </p>
-                        </div>
-                      </div>
-
-                      {/* Visual Separator */}
-                      <div className="shrink-0 rounded-full border border-slate-700 bg-slate-800 p-2">
-                        <Scale className="h-5 w-5 text-emerald-500" />
-                      </div>
-
-                      {/* Defendant Info */}
-                      <div className="flex w-full items-center justify-end gap-3 text-right md:w-auto md:flex-1">
-                        <div className="min-w-0">
-                          <p className="text-xs text-slate-500">Defendant</p>
-                          <p className="truncate font-mono text-sm font-medium text-white">
-                            {formatAddress(defendant!)}
-                          </p>
-                        </div>
-                        <User className="h-5 w-5 shrink-0 text-slate-400" />
+                  {/* --- Skeleton for "Plaintiff vs Defendant" --- */}
+                  <div className="mt-2 flex flex-col items-center gap-4 rounded-xl py-4 xs:flex-row">
+                    {/* Plaintiff Info */}
+                    <div className="flex w-full animate-pulse items-center gap-3 md:flex-1">
+                      <div className="h-8 w-8 shrink-0 rounded-full bg-slate-700"></div>
+                      <div className="w-full space-y-2">
+                        <div className="h-3 w-16 rounded-md bg-slate-700"></div>
+                        <div className="h-5 w-full max-w-48 rounded-md bg-slate-700"></div>
                       </div>
                     </div>
-                  )}
+
+                    {/* Visual Separator */}
+                    <div className="h-10 w-10 shrink-0 animate-pulse rounded-full bg-slate-800"></div>
+
+                    {/* Defendant Info */}
+                    <div className="flex w-full animate-pulse items-center justify-end gap-3 text-right md:flex-1">
+                      <div className="w-full space-y-2">
+                        <div className="h-3 w-16 self-end rounded-md bg-slate-700"></div>
+                        <div className="h-5 w-full max-w-48 self-end rounded-md bg-slate-700"></div>
+                      </div>
+                      <div className="h-8 w-8 shrink-0 rounded-full bg-slate-700"></div>
+                    </div>
+                  </div>
                 </div>
               </Card>
-            </div>
+            )}
 
             {/* RIGHT PANEL */}
-            <div className="xl:col-span-2">
-              <Tabs defaultValue="evidence" className="w-full">
+            <div className="w-full">
+              <Tabs defaultValue="deal" className="w-full">
                 <TabsList className="w-full bg-slate-900/60 border border-slate-800 rounded-xl flex justify-around">
                   <TabsTrigger
-                    className="flex-1 py-3 text-sm font-medium text-white data-[state=active]:bg-green-800"
+                    className="flex-1 py-3 text-sm font-medium text-white data-[state=active]:bg-emerald-500 hover:bg-slate-900 cursor-pointer"
                     value="deal"
                   >
                     Deal Details
                   </TabsTrigger>
                   <TabsTrigger
-                    className="flex-1 py-3 text-sm font-medium text-white data-[state=active]:bg-green-800"
+                    className="flex-1 py-3 text-sm font-medium text-white data-[state=active]:bg-emerald-500 hover:bg-slate-900 cursor-pointer"
                     value="jurors"
                   >
                     Jurors
                   </TabsTrigger>
                   <TabsTrigger
-                    className="flex-1 py-3 text-sm font-medium text-white data-[state=active]:bg-green-800"
+                    className="flex-1 py-3 text-sm font-medium text-white data-[state=active]:bg-emerald-500 hover:bg-slate-900 cursor-pointer"
                     value="evidence"
                   >
                     Evidence
@@ -506,7 +660,7 @@ export default function DisputePage({ params }: Props) {
 
                 {/* DEAL TAB */}
                 <TabsContent value="deal" className="mt-6">
-                  {deal && (
+                  {deal ? (
                     <Card className="relative w-full overflow-hidden rounded-2xl border border-white/10 bg-slate-900/80 shadow-lg backdrop-blur-sm p-0">
                       {/* Aurora Glow Effect */}
                       <div className="absolute -top-1/2 left-1/2 -z-10 h-full w-full -translate-x-1/2 rounded-full bg-emerald-500/10 blur-3xl"></div>
@@ -515,14 +669,13 @@ export default function DisputePage({ params }: Props) {
                         {/* Header */}
                         <div className="flex items-center justify-between">
                           <div className="flex min-w-0 items-center gap-2">
-                            <Wallet className="h-4 w-4 shrink-0 text-slate-500" />
                             <p className="truncate font-mono text-sm text-slate-300">
-                              {deal.id.toString()}
+                              #{deal.id.toString()}
                             </p>
                           </div>
-                          <div className="flex shrink-0 items-center gap-2 rounded-full bg-emerald-500/10 px-3 py-1 text-xs font-medium text-emerald-400">
-                            <div className="h-1.5 w-1.5 rounded-full bg-emerald-500"></div>
-                            <span>Active</span>
+                          <div className="flex shrink-0 items-center gap-2 rounded-full bg-blue-500/10 px-3 py-1 text-xs font-medium text-blue-400">
+                            <div className="h-1.5 w-1.5 rounded-full bg-blue-500"></div>
+                            <span>{status}</span>
                           </div>
                         </div>
 
@@ -572,6 +725,53 @@ export default function DisputePage({ params }: Props) {
                                 {formatAddress(deal.receiver)}
                               </span>
                               <CircleUser className="h-4 w-4 shrink-0 text-slate-400" />
+                            </div>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ) : (
+                    <Card className="relative w-full overflow-hidden rounded-2xl border border-white/10 bg-slate-900/80 p-0 shadow-lg backdrop-blur-sm">
+                      {/* Skeleton's Aurora Glow Effect */}
+                      <div className="absolute -top-1/2 left-1/2 -z-10 h-full w-full -translate-x-1/2 rounded-full bg-slate-700/10 blur-3xl"></div>
+
+                      <CardContent className="flex animate-pulse flex-col gap-6 p-4">
+                        {/* === Skeleton for Header === */}
+                        <div className="flex items-center justify-between">
+                          {/* Deal ID placeholder */}
+                          <div className="h-5 w-24 rounded-md bg-slate-700"></div>
+                          {/* Status Badge placeholder */}
+                          <div className="h-6 w-20 rounded-full bg-slate-700"></div>
+                        </div>
+
+                        {/* === Skeleton for Hero Section === */}
+                        <div className="text-center">
+                          {/* "Amount Transferred" label placeholder */}
+                          <div className="mx-auto h-4 w-32 rounded-md bg-slate-700"></div>
+                          {/* Amount + Symbol placeholder */}
+                          <div className="mx-auto mt-2 h-10 w-48 rounded-md bg-slate-700 sm:h-12"></div>
+                        </div>
+
+                        {/* === Skeleton for Transaction Flow Section === */}
+                        <div className="flex flex-col items-center gap-4 rounded-xl bg-slate-900/50 p-4 sm:flex-row sm:justify-between">
+                          {/* "From" Block placeholder */}
+                          <div className="flex w-full min-w-0 flex-col items-center gap-2 sm:flex-1 sm:items-start">
+                            <div className="h-3 w-12 rounded-md bg-slate-700"></div>
+                            <div className="flex w-full min-w-0 items-center gap-2">
+                              <div className="h-6 w-6 shrink-0 rounded-full bg-slate-700"></div>
+                              <div className="h-5 w-full max-w-36 rounded-md bg-slate-700"></div>
+                            </div>
+                          </div>
+
+                          {/* Arrow placeholder */}
+                          <div className="h-10 w-10 shrink-0 rounded-full bg-slate-800"></div>
+
+                          {/* "To" Block placeholder */}
+                          <div className="flex w-full min-w-0 flex-col items-center gap-2 sm:flex-1 sm:items-end">
+                            <div className="h-3 w-8 rounded-md bg-slate-700"></div>
+                            <div className="flex w-full min-w-0 items-center justify-end gap-2">
+                              <div className="h-5 w-full max-w-36 rounded-md bg-slate-700"></div>
+                              <div className="h-6 w-6 shrink-0 rounded-full bg-slate-700"></div>
                             </div>
                           </div>
                         </div>
@@ -653,7 +853,15 @@ export default function DisputePage({ params }: Props) {
                         })}
                     </div>
                   ) : (
-                    <div>No Deals</div>
+                    <EmptyState
+                      Icon={FileSearch}
+                      title="No Evidence Submitted"
+                      description="Evidence from either party will appear in this section once uploaded."
+                      actionText="Submit New Evidence"
+                      onActionClick={() => {
+                        router.push(`/evidence/${dealId}`);
+                      }}
+                    />
                   )}
                 </TabsContent>
               </Tabs>
