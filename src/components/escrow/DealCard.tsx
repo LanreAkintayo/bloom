@@ -79,7 +79,9 @@ export default function DealCard({
       ? ["Pending", "Acknowledged", "Completed"]
       : currentStatus == "Disputed"
       ? ["Pending", "Acknowledged", "Disputed", "Resolved"]
-      : ["Pending", "Acknowledged", "Disputed", "Resolved"];
+      : currentStatus == "Resolved"
+      ? ["Pending", "Acknowledged", "Disputed", "Resolved"]
+      : ["Pending", "Acknowledged", "Completed"];
 
   const currentIndex = milestones.indexOf(currentStatus);
 
@@ -88,18 +90,18 @@ export default function DealCard({
       case "Canceled":
         return "bg-red-300";
       case "Pending":
-        return "bg-yellow-500";
+        return "bg-yellow-500 hover:bg-yellow-500/70";
       case "Acknowledged":
-        return "bg-cyan-600";
+        return "bg-cyan-600 hover:bg-cyan-600/70";
       case "Completed":
       case "Finalized":
-        return "bg-emerald-600";
+        return "bg-emerald-600 hover:bg-emerald-600/70";
       case "Disputed":
-        return "bg-red-300";
+        return "bg-red-300 hover:bg-red-300/70";
       case "Resolved":
-        return "bg-emerald-400";
+        return "bg-emerald-400 hover:bg-emerald-400/70";
       default:
-        return "bg-slate-600";
+        return "bg-slate-600 hover:bg-slate-600/70";
     }
   };
 
@@ -208,7 +210,9 @@ export default function DealCard({
           {currentStatus === "Pending" && signerAddress === deal.sender && (
             <Button
               onClick={() => onCancel(deal.id)}
-              className="bg-red-800 hover:bg-red-800/70 flex items-center justify-center gap-2 px-2 text-[13px]"
+              className={`${getStatusColor(
+                currentStatus
+              )}  flex items-center justify-center gap-2 px-2 text-[13px] text-black`}
               disabled={
                 loadingAction.dealId === deal.id &&
                 loadingAction.type === "cancel"
@@ -251,7 +255,9 @@ export default function DealCard({
               <div className="flex items-center space-x-2 text-[13px]">
                 <Button
                   onClick={() => onUnacknowledge(deal.id)}
-                  className="bg-yellow-900 hover:bg-yellow-900/70 flex items-center justify-center gap-2 text-[13px] px-2"
+                  className={`${getStatusColor(
+                    currentStatus
+                  )}  flex items-center justify-center gap-2 px-2 text-[13px] text-black`}
                   disabled={
                     loadingAction.dealId === deal.id &&
                     loadingAction.type === "unacknowledge"
@@ -273,7 +279,7 @@ export default function DealCard({
                     onClick={() => {
                       router.push(`/dispute/report_dispute/${deal.id}`);
                     }}
-                    className="bg-cyan-700 hover:bg-cyan-700/70 flex items-center justify-center gap-2 text-[13px] py-0 px-2"
+                    className="bg-emerald-500 hover:bg-emerald-700/70 flex items-center justify-center gap-2 text-[13px] py-0 px-2 text-black"
                   >
                     Open Dispute
                   </Button>
@@ -283,7 +289,9 @@ export default function DealCard({
           {currentStatus === "Pending" && signerAddress === deal.receiver && (
             <Button
               onClick={() => onAcknowledge(deal.id)}
-              className="bg-cyan-600 hover:bg-cyan-700 flex items-center justify-center gap-2 text-[13px] px-2 py-0"
+              className={`${getStatusColor(
+                currentStatus
+              )}  flex items-center justify-center gap-2 px-2 text-[13px] text-black`}
               disabled={
                 loadingAction.dealId === deal.id &&
                 loadingAction.type === "acknowledge"
@@ -300,16 +308,24 @@ export default function DealCard({
               )}
             </Button>
           )}
-          {currentStatus === "Disputed"  || currentStatus === "Resolved" &&  (
-            // <Button
-            //   onClick={() => onCancel(deal.id)}
-            //   className="bg-green-800 hover:bg-green-800/70 flex items-center justify-center gap-2 text-[13px] py-0 px-2"
-            // >
-            //   View Updates
-            // </Button>
-
+          {currentStatus === "Disputed" && (
             <Link href={`/dispute/${deal.id}`} passHref>
-              <Button className="bg-emerald-600 hover:bg-green-600/90 flex items-center justify-center gap-2 text-[13px] py-0 px-2 cursor-pointer">
+              <Button
+                className={`${getStatusColor(
+                  currentStatus
+                )}  flex items-center justify-center gap-2 px-2 text-[13px] text-black`}
+              >
+                View Updates
+              </Button>
+            </Link>
+          )}
+          {currentStatus === "Resolved" && (
+            <Link href={`/dispute/${deal.id}`} passHref>
+              <Button
+                className={`${getStatusColor(
+                  currentStatus
+                )}  flex items-center justify-center gap-2 px-2 text-[13px] text-black`}
+              >
                 View Updates
               </Button>
             </Link>

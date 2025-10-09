@@ -44,7 +44,7 @@ export default function DisputeModal({
 }: DisputeModalProps) {
   const { step, setStep } = disputeState;
   const { address: signerAddress } = useAccount();
-  const router = useRouter()
+  const router = useRouter();
 
   useEffect(() => {
     if (!isOpen) setStep(0);
@@ -59,7 +59,7 @@ export default function DisputeModal({
     onLogs(logs) {
       if (!isOpen) return; // only react when modal is open
       bloomLog("Approval event detected", logs);
-      setStep((prev:number) => Math.max(prev, 1));
+      setStep((prev: number) => Math.max(prev, 1));
     },
   });
 
@@ -72,8 +72,7 @@ export default function DisputeModal({
     onLogs(logs) {
       if (!isOpen) return;
       bloomLog("DisputeOpened event detected", logs);
-      setStep((prev:number) => Math.max(prev, 2));
-
+      setStep((prev: number) => Math.max(prev, 2));
     },
   });
 
@@ -85,8 +84,7 @@ export default function DisputeModal({
     onLogs(logs) {
       if (!isOpen) return;
       bloomLog("Random number request event detected", logs);
-      setStep((prev:number) => Math.max(prev, 3));
-
+      setStep((prev: number) => Math.max(prev, 3));
     },
   });
 
@@ -98,29 +96,51 @@ export default function DisputeModal({
     onLogs(logs) {
       if (!isOpen) return;
       bloomLog("JurorsSelected event detected", logs);
-      setStep((prev:number) => Math.max(prev, 5));
+      setStep((prev: number) => Math.max(prev, 5));
     },
   });
 
   const steps = [
     {
       title: "Approving Arbitration Fee",
-      descOngoing: "Waiting for approval confirmation...",
+      descOngoing: (
+        <div className="inline-block rounded-full  py-1 text-xs font-medium text-slate-300">
+          <p>Waiting for approval confirmation...</p>
+          <p className="italic text-[11px] text-slate-400">
+            Confirm on Metamask
+          </p>
+        </div>
+      ),
       descDone: "Approval confirmed",
     },
     {
       title: "Submitting Dispute",
-      descOngoing: "Waiting for transaction confirmation...",
+      descOngoing: (
+        <div className="inline-block rounded-full  py-1 text-xs font-medium text-slate-300">
+          <p>Waiting for transaction confirmation...</p>
+          <p className="italic text-[11px] text-slate-400">
+            Confirm on Metamask
+          </p>
+        </div>
+      ),
       descDone: "Transaction confirmed",
     },
     {
       title: "Requesting Random Numbers",
-      descOngoing: "Generating randomness for juror selection...",
+      descOngoing: (
+        <div className="inline-block rounded-full  py-1 text-xs font-medium text-slate-300">
+          Generating randomness for juror selection...
+        </div>
+      ),
       descDone: "Random numbers received",
     },
     {
       title: "Selecting Jurors",
-      descOngoing: "Selecting jurors (~3 minutes)...",
+      descOngoing: (
+        <div className="inline-block rounded-full  py-1 text-xs font-medium text-slate-300">
+          Selecting jurors (~3 minutes)...
+        </div>
+      ),
       descDone: "Jurors selected",
     },
     {
@@ -134,7 +154,6 @@ export default function DisputeModal({
       <DialogContent
         className="bg-slate-900 text-white border border-slate-800 rounded-2xl shadow-xl max-w-md"
         onInteractOutside={(e) => e.preventDefault()}
-        // 👇 this prevents closing when pressing Escape
         onEscapeKeyDown={(e) => e.preventDefault()}
       >
         <DialogHeader>
@@ -142,13 +161,13 @@ export default function DisputeModal({
             Open Dispute
           </DialogTitle>
           <DialogDescription className="text-xs">
-            Please waith for few seconds for your transaction to be processed
+            Please wait for few seconds for your transaction to be processed
           </DialogDescription>
         </DialogHeader>
 
         <div className="mt-6 relative flex flex-col items-start pl-10">
           {/* Vertical line */}
-          <div className="absolute left-[51px] -top-0 bottom-3 w-1  h-[370px] bg-slate-700 rounded">
+          <div className="absolute left-[51px] -top-0 bottom-3 w-1 h-[370px] bg-slate-700 rounded">
             <div
               className="bg-emerald-500 w-1 rounded transition-all duration-500"
               style={{ height: `${(step / steps.length) * 100 + 8}%` }}

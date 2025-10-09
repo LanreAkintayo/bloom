@@ -686,7 +686,7 @@ export default function DisputePage({ params }: Props) {
                           </p>
                           {/* */}
                           <p className="mt-1 text-3xl font-bold tracking-tight text-emerald-400 sm:text-4xl">
-                            {inCurrencyFormat(formatUnits(deal.amount, 18))}
+                            {inCurrencyFormat(formatUnits(deal.amount, token.decimal))}
                             <span className="ml-2 text-xl font-medium text-slate-400 sm:text-2xl">
                               {token.symbol}
                             </span>

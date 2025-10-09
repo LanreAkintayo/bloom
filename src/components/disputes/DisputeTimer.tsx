@@ -1,4 +1,4 @@
-import { formatCountdown } from "@/lib/utils";
+import { bloomLog, formatCountdown } from "@/lib/utils";
 import { Timer } from "@/types";
 import { useEffect, useMemo, useState } from "react";
 
@@ -19,13 +19,28 @@ export default function DisputeTimer({ disputeTimer }: DisputeTimerProps) {
     );
   }, [disputeTimer]);
 
+  const totalVotingDuration = useMemo(() => {
+    return (
+      Number(disputeTimer?.standardVotingDuration ?? 0) +
+      Number(disputeTimer?.extendDuration ?? 0)
+    );
+  }, [disputeTimer]);
+  
+  const totalVotingDurationInMinutes = totalVotingDuration / 60
+
+  bloomLog('total voting duration', totalVotingDuration)
+
   // Countdown state
   const [remainingMs, setRemainingMs] = useState(() =>
     Math.max(endTime - Date.now(), 0)
   );
 
-    const remainingHours = Math.floor(remainingMs / (1000 * 60 * 60));
-  const remainingMinutes = remainingHours * 60;
+  const remainingHours = Math.floor(remainingMs / (1000 * 60 * 60));
+  const remainingMinutes = (remainingMs / 1000 * 100);
+
+  bloomLog("Remaining hours: ", remainingHours)
+
+  bloomLog("Remaining Minutes: ", remainingMinutes)
 
   useEffect(() => {
     if (!isActive) return;
@@ -40,7 +55,9 @@ export default function DisputeTimer({ disputeTimer }: DisputeTimerProps) {
     return () => clearInterval(interval);
   }, [endTime, isActive]);
 
-    const getStatusColor = (minutes: number) => {
+  bloomLog("Total duration in minutes:", totalVotingDurationInMinutes)
+
+  const getStatusColor = (minutes: number) => {
     if (minutes <= remainingMinutes * (1 / 3))
       return { stripe: "bg-red-500", badge: "bg-red-500/30 text-red-500" };
     if (minutes <= remainingMinutes * (2 / 3))
@@ -51,7 +68,7 @@ export default function DisputeTimer({ disputeTimer }: DisputeTimerProps) {
     return { stripe: "bg-green-500", badge: "bg-green-500/30 text-green-500" };
   };
 
-  const { stripe, badge } = getStatusColor(remainingMinutes);
+  const { stripe, badge } = getStatusColor(totalVotingDurationInMinutes);
 
   return (
     <div>
