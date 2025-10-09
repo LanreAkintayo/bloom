@@ -1,9 +1,21 @@
 "use client";
 
 import React, { useEffect, useMemo, useState } from "react";
-import { Card, CardContent, CardHeader, CardFooter } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardFooter,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { User, ArrowRight, Timer as TimerIcon, Coins, Swords } from "lucide-react";
+import {
+  User,
+  ArrowRight,
+  Timer as TimerIcon,
+  Coins,
+  Swords,
+  ArrowDown,
+} from "lucide-react";
 import {
   ExtendedDispute,
   StorageParams,
@@ -45,7 +57,7 @@ export default function DisputeCard({
   const hasWon = disputeVote?.support === dispute.winner;
   const against =
     dispute.initiator === dispute.sender ? dispute.receiver : dispute.sender;
-  const disputeFee = tokenMeta
+  const formattedDisputeFee = tokenMeta
     ? inCurrencyFormat(formatUnits(dispute.disputeFee, tokenMeta.decimal))
     : 0;
   const endTime = useMemo(() => {
@@ -81,99 +93,125 @@ export default function DisputeCard({
   const timeLeftColors = getStatusColor(remainingMinutes);
 
   return (
-    // --- THE MAGIC STARTS HERE: Complete JSX Overhaul ---
-    <Card className="relative w-full  overflow-hidden rounded-2xl border border-white/10 bg-slate-900/80 shadow-2xl backdrop-blur-sm py-0">
-      
-      {/* Dynamic Aurora Glow */}
-      {/* <div className={`absolute -top-1/2 left-1/2 -z-10 h-[200%] w-[200%] -translate-x-1/2 rounded-full ${isActive ? 'bg-cyan-900/15' : hasWon ? 'bg-emerald-500/15' : 'bg-red-500/15'} blur-3xl`}></div> */}
 
-      {/* 1. Unified Header */}
-      <CardHeader className="flex-row items-center justify-between border-b border-white/10 p-4">
-        <h4 className="font-bold text-white text-lg">Dispute #{disputeId}</h4>
-        {isActive ? (
-          <span className="rounded-full bg-cyan-500/10 px-3 py-1 text-xs font-semibold text-cyan-400">
-            Active
-          </span>
-        ) : (
-          <span className={`rounded-full px-3 py-1 text-xs font-semibold text-white ${hasWon ? "bg-emerald-600" : "bg-red-600"}`}>
-            {hasWon ? "Won" : "Lost"}
-          </span>
-        )}
-      </CardHeader>
-      
-      <CardContent className="p-4 space-y-4">
-        {/* 2. Description (optional) */}
-        {dispute.description && (
-          <p className="text-sm text-slate-400 line-clamp-2">{dispute.description}</p>
-        )}
-
-        {/* 3. Visual 'Face-Off' for Parties */}
-        <div className="flex items-center justify-between gap-2 rounded-xl bg-slate-900/50 p-3">
-          <div className="flex min-w-0 flex-1 items-center gap-2">
-            <User className="h-4 w-4 shrink-0 text-cyan-400" />
-            <div className="min-w-0">
-              <p className="text-xs text-slate-500">Initiator</p>
-              <p className="truncate font-mono text-sm text-white">{formatAddress(dispute.initiator)}</p>
-            </div>
-          </div>
-          <Swords className="h-5 w-5 shrink-0 text-slate-600" />
-          <div className="flex min-w-0 flex-1 items-center justify-end gap-2 text-right">
-            <div className="min-w-0">
-              <p className="text-xs text-slate-500">Against</p>
-              <p className="truncate font-mono text-sm text-white">{formatAddress(against)}</p>
-            </div>
-            <User className="h-4 w-4 shrink-0 text-slate-400" />
-          </div>
+    <Card className="relative w-full overflow-hidden rounded-2xl border border-white/10 bg-slate-900/80 p-4 pb-20 shadow-2xl backdrop-blur-sm transition-all duration-300 hover:border-cyan-500/40 xs:pb-16">
+      <CardHeader className="flex flex-row items-center justify-between p-0 border-b border-slate-700/50">
+        <h4 className="font-bold text-white text-lg xs:text-xl">
+          Dispute #{disputeId}
+        </h4>
+        <div>
+          {isActive ? (
+            <p className="rounded-full bg-cyan-500/10 px-3 py-1 text-xs font-semibold text-cyan-400">
+              Active
+            </p>
+          ) : (
+            <p
+              className={`rounded-full px-3 py-1 text-xs font-semibold text-white ${
+                hasWon ? "bg-emerald-600" : "bg-red-600"
+              }`}
+            >
+              {hasWon ? "Won" : "Lost"}
+            </p>
+          )}
         </div>
+      </CardHeader>
 
-        {/* 4. Scannable Metrics */}
-        <div className="grid grid-cols-2 gap-4 pt-2">
-          <div className="flex items-start gap-3">
-            <TimerIcon className="h-5 w-5 shrink-0 text-slate-500 mt-0.5" />
-            <div>
-              <p className="text-xs text-slate-400">Time Left</p>
+      <CardContent className="space-y-4 p-0">
+        {dispute.description && (
+          <p className="text-xs text-slate-400 line-clamp-2">
+            {dispute.description}
+          </p>
+        )}
+
+        <div className="rounded-xl bg-slate-900/70 p-3 xs:p-4 ">
+          {/* --- 2. Adaptive 'Face-Off' Section --- */}
+          <div className="flex flex-col items-center gap-3 xs:flex-row sm:justify-between sm:gap-2">
+            {/* Initiator */}
+            <div className="flex w-full min-w-0 items-center gap-2 xs:flex-1">
+              <User className="h-4 w-4 shrink-0 text-cyan-400" />
+              <div className="min-w-0">
+                <p className="text-xs text-slate-500">Initiator</p>
+                <p className="truncate font-mono text-sm text-white">
+                  {formatAddress(dispute.initiator)}
+                </p>
+              </div>
+            </div>
+
+            {/* Contextual Icon: ArrowDown on mobile, Swords on desktop */}
+            <ArrowDown className="h-5 w-5 shrink-0 text-slate-600 xs:hidden" />
+            <Swords className="hidden h-5 w-5 shrink-0 text-slate-600 xs:block" />
+
+            {/* Against */}
+            <div className="flex w-full min-w-0 items-center justify-end gap-2 text-right xs:flex-1">
+              <div className="min-w-0">
+                <p className="text-xs text-slate-500">Against</p>
+                <p className="truncate font-mono text-sm text-white">
+                  {formatAddress(against)}
+                </p>
+              </div>
+              <User className="h-4 w-4 shrink-0 text-slate-400" />
+            </div>
+          </div>
+
+          <div className="my-3 border-t border-slate-700/50"></div>
+
+          {/* --- 3. Responsive Metrics Section --- */}
+          <div className="flex flex-col gap-3 text-sm xs:flex-row xs:justify-between">
+            <div className="flex items-center gap-2">
+              <TimerIcon className="h-4 w-4 shrink-0 text-slate-500" />
+              <p className="text-xs text-slate-400">Time Left:</p>
               {isActive ? (
-                <p className={`font-semibold ${timeLeftColors.textColor}`}>{formatCountdown(remainingMs)}</p>
+                <p className={`font-semibold ${timeLeftColors.textColor}`}>
+                  {formatCountdown(remainingMs)}
+                </p>
               ) : (
                 <p className="font-semibold text-slate-500">Ended</p>
               )}
             </div>
-          </div>
-          <div className="flex items-start gap-3">
-            <Coins className="h-5 w-5 shrink-0 text-slate-500 mt-0.5" />
-            <div>
-              <p className="text-xs text-slate-400">Dispute Fee</p>
-              <p className="font-semibold text-white">{disputeFee} {tokenSymbol}</p>
+            <div className="flex items-center gap-2">
+              <Coins className="h-4 w-4 shrink-0 text-slate-500" />
+              <p className="text-xs text-slate-400">Fee:</p>
+              <p className="font-semibold text-white">
+                {formattedDisputeFee} {tokenSymbol}
+              </p>
             </div>
           </div>
         </div>
       </CardContent>
 
-      {/* 5. Focused Call-to-Action */}
-      <CardFooter className="border-t border-white/10 bg-black/20 p-4">
-        <Link href={isActive ? `/vote/${dispute.dealId}` : `/dispute/${dispute.dealId}`} className="w-full">
-          <Button
-            className={`w-full font-semibold text-white shadow-lg transition-all
-              ${isActive
+      <Link
+        href={
+          isActive ? `/vote/${dispute.dealId}` : `/dispute/${dispute.dealId}`
+        }
+        // --- 4. Responsive Button Position ---
+        className="absolute bottom-3 right-3 xs:bottom-4 xs:right-4"
+      >
+        <Button
+          size="sm"
+          className={`font-semibold text-white shadow-lg transition-all
+            ${
+              isActive
                 ? "bg-emerald-600 hover:bg-emerald-500 shadow-emerald-500/10 hover:shadow-emerald-500/20"
                 : "bg-cyan-600 hover:bg-cyan-500 shadow-cyan-500/10 hover:shadow-cyan-500/20"
-              }`}
-            disabled={isActive && disputeVote?.jurorAddress === signerAddress}
-          >
-            {isActive ? (
-              disputeVote?.jurorAddress === signerAddress ? "Already Voted" : (
-                <>
-                  Vote Now <ArrowRight className="ml-2 h-4 w-4" />
-                </>
-              )
-            ) : "View Details"}
-          </Button>
-        </Link>
-      </CardFooter>
+            }`}
+          disabled={isActive && disputeVote?.jurorAddress === signerAddress}
+        >
+          {isActive ? (
+            disputeVote?.jurorAddress === signerAddress ? (
+              "Voted"
+            ) : (
+              <>
+                Vote Now <ArrowRight className="ml-2 h-4 w-4" />
+              </>
+            )
+          ) : (
+            "View Details"
+          )}
+        </Button>
+      </Link>
     </Card>
   );
 }
-
 
 // import React, { useEffect, useMemo, useState } from "react";
 // import { Card } from "@/components/ui/card";

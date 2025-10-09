@@ -49,3 +49,25 @@ export const formatTime = (timestamp: string | bigint): string => {
 
     return `${hours}h ${minutes}m ${seconds}s`;
   };
+
+
+  export function formatLargeNumber(num: bigint, decimals: number = 2): string {
+  const number = Number(num);
+  const si = [
+    { value: 1, symbol: "" },
+    { value: 1e3, symbol: "K" }, // Thousand
+    { value: 1e6, symbol: "M" }, // Million
+    { value: 1e9, symbol: "B" }, // Billion
+    { value: 1e12, symbol: "T" }, // Trillion
+    { value: 1e15, symbol: "P" }, // Quadrillion
+    { value: 1e18, symbol: "E" }, // Quintillion
+  ];
+  const rx = /\.0+$|(\.[0-9]*[1-9])0+$/;
+  let i;
+  for (i = si.length - 1; i > 0; i--) {
+    if (number >= si[i].value) {
+      break;
+    }
+  }
+  return (number / si[i].value).toFixed(decimals).replace(rx, "$1") + si[i].symbol;
+}

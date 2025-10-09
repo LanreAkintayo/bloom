@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useMemo, useState } from "react";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
   Coins,
@@ -11,6 +11,7 @@ import {
   Info,
   User,
   ArrowRight,
+  ShieldCheck,
 } from "lucide-react";
 import StatsCard from "@/components/juror/StatsCard";
 import RewardsCard from "@/components/juror/RewardsCard";
@@ -298,20 +299,52 @@ export default function JurorDashboard() {
             )}
 
             {/* Rules Section */}
-            <Card className="bg-slate-900/95 border border-slate-700 shadow-lg">
-              <CardContent className="p-4">
-                <h3 className="text-lg font-medium text-white mb-2 flex items-center gap-2">
-                  <Info className="w-5 h-5 text-cyan-400" />
+            <Card className="relative w-full overflow-hidden rounded-2xl border border-white/10 bg-slate-900/80 shadow-2xl backdrop-blur-sm">
+              {/* Aurora Glow Effect */}
+              <div className="absolute -top-1/4 left-1/2 -z-10 h-1/2 w-full -translate-x-1/2 rounded-full bg-cyan-800/15 blur-3xl"></div>
+
+              <CardHeader className="flex-row items-center gap-3 border-b border-white/10 p-4">
+                <h3 className="text-lg font-semibold text-white">
+                  <Info className="h-5 w-5 text-cyan-400 inline" /> {" "}
                   Rules & Guidelines
                 </h3>
-                <ul className="list-disc list-inside text-white/70 space-y-1 text-sm">
-                  <li>
-                    Ensure you review disputes promptly to maintain reputation.
-                  </li>
-                  <li>Staked BLM affects your selection chances.</li>
-                  <li>Claim rewards regularly to keep track of earnings.</li>
-                  <li>Do not miss voting deadlines.</li>
-                </ul>
+              </CardHeader>
+
+              <CardContent className="p-4 sm:p-6">
+                {/* 1. Custom list with more spacing */}
+                <div className="space-y-4">
+                  {/* 2. Each list item is now a flex container with an icon */}
+                  <div className="flex items-start gap-3">
+                    <ShieldCheck className="h-5 w-5 shrink-0 text-cyan-400 mt-0.5" />
+                    <p className="text-sm text-slate-300">
+                      Ensure you review disputes promptly to maintain your
+                      reputation.
+                    </p>
+                  </div>
+
+                  <div className="flex items-start gap-3">
+                    <ShieldCheck className="h-5 w-5 shrink-0 text-cyan-400 mt-0.5" />
+                    <p className="text-sm text-slate-300">
+                      Staked BLM affects your selection chances for future
+                      disputes.
+                    </p>
+                  </div>
+
+                  <div className="flex items-start gap-3">
+                    <ShieldCheck className="h-5 w-5 shrink-0 text-cyan-400 mt-0.5" />
+                    <p className="text-sm text-slate-300">
+                      Claim rewards regularly to keep track of your earnings.
+                    </p>
+                  </div>
+
+                  <div className="flex items-start gap-3">
+                    <ShieldCheck className="h-5 w-5 shrink-0 text-cyan-400 mt-0.5" />
+                    <p className="text-sm text-slate-300">
+                      Do not miss voting deadlines to avoid penalties and
+                      reputation loss.
+                    </p>
+                  </div>
+                </div>
               </CardContent>
             </Card>
           </div>
