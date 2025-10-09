@@ -12,6 +12,7 @@ import {
   User,
   ArrowRight,
   ShieldCheck,
+  FileSearch,
 } from "lucide-react";
 import StatsCard from "@/components/juror/StatsCard";
 import RewardsCard from "@/components/juror/RewardsCard";
@@ -51,6 +52,8 @@ import {
 import { Address, zeroAddress } from "viem";
 import DisputeCard from "@/components/disputes/DisputeCard";
 import RewardModal from "@/components/juror/RewardModal";
+import DisputeCardSkeleton from "@/components/disputes/DisputeCardSkeleton";
+import EmptyState from "@/components/EmptyState";
 
 export default function JurorDashboard() {
   const { address: signerAddress } = useAccount();
@@ -113,7 +116,15 @@ export default function JurorDashboard() {
         enabled: !!disputeIds?.length,
       },
     ],
-  }) as [{ data?: ExtendedDispute[] }, { data?: Vote[] }, { data?: Timer[] }];
+  }) as [
+    { data?: ExtendedDispute[]; isLoading: boolean },
+    { data?: Vote[]; isLoading: boolean },
+    { data?: Timer[]; isLoading: boolean }
+  ];
+
+  const isDisputesLoading = dependentResults[0].isLoading;
+
+  bloomLog("Is disputes loading:", isDisputesLoading);
 
   const [disputesResult, disputeVotesResult, disputeTimersResult] =
     dependentResults;
@@ -276,7 +287,18 @@ export default function JurorDashboard() {
 
             {/* Content Area */}
             {/* Dispute List */}
-            {activeDisputes && pastDisputes && (
+            {/* 1. LOADING STATE: Show skeletons while data is being fetched */}
+            {isDisputesLoading || disputes == null ? (
+              <div className="space-y-4">
+                <DisputeCardSkeleton />
+                <DisputeCardSkeleton />
+                <DisputeCardSkeleton />
+              </div>
+            ) : (activeTab === "active"
+                ? activeDisputes
+                : pastDisputes
+              ).length > 0 ? (
+              // 2. DATA STATE: If not loading and the array has items, show the list
               <div className="space-y-4">
                 {(activeTab === "active" ? activeDisputes : pastDisputes)
                   .slice()
@@ -296,6 +318,13 @@ export default function JurorDashboard() {
                     );
                   })}
               </div>
+            ) : (
+              // 3. EMPTY STATE: If not loading and the array is empty, show a message
+              <EmptyState
+                Icon={FileSearch}
+                title="No Disputes Found"
+                description={`There are no ${activeTab} disputes to display at this time.`}
+              />
             )}
 
             {/* Rules Section */}
@@ -305,8 +334,8 @@ export default function JurorDashboard() {
 
               <CardHeader className="flex-row items-center gap-3 border-b border-white/10 p-4">
                 <h3 className="text-lg font-semibold text-white">
-                  <Info className="h-5 w-5 text-cyan-400 inline" /> {" "}
-                  Rules & Guidelines
+                  <Info className="h-5 w-5 text-cyan-400 inline" /> Rules &
+                  Guidelines
                 </h3>
               </CardHeader>
 
