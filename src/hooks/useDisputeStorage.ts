@@ -288,7 +288,6 @@ export const getJuror = async (
   }
 };
 
-
 // -------------------------------
 // Get Juror Token Payment
 // -------------------------------
@@ -316,27 +315,45 @@ export const getManyJurorPayments = async (
   juror: Address,
   tokenAddresses: string[]
 ): Promise<TokenPayment[]> => {
-  const contracts = tokenAddresses.map((token) => ({
-    abi: disputeStorageAbi,
-    address: disputeStorageAddress,
-    functionName: "getJurorTokenPayment",
-    args: [juror, token],
-    chainId,
-  }));
+  const contracts = tokenAddresses.flatMap((token) => [
+    {
+      abi: disputeStorageAbi,
+      address: disputeStorageAddress,
+      functionName: "getJurorTokenPayment",
+      args: [juror, token],
+      chainId,
+    },
+    {
+      abi: disputeStorageAbi,
+      address: disputeStorageAddress,
+      functionName: "jurorTokenPaymentsClaimed",
+      args: [juror, token],
+      chainId,
+    },
+  ]);
 
   const results = await readContracts(config, { contracts });
 
-  return results.map((r, i) => {
-    const tokenAddress = tokenAddresses[i];
+  bloomLog("Results: ", results);
+
+  return tokenAddresses.map((tokenAddress, i) => {
+    // For each token, we get its two corresponding results from the `results` array.
+    const paymentResult = results[i * 2];
+    const paymentClaimedResult = results[i * 2 + 1];
+
     const symbol = addressToToken[chainId]?.[tokenAddress.toLowerCase()];
-    const tokenMeta = TOKEN_META[chainId][symbol];
-    const image = IMAGES[symbol];
+    const tokenMeta =
+      symbol === "WETH"
+        ? TOKEN_META[chainId]["ETH"]
+        : TOKEN_META[chainId][symbol!];
+    const image = symbol === "WETH" ? IMAGES["ETH"] : IMAGES[symbol];
 
     return {
       ...tokenMeta,
       image,
       address: tokenAddress,
-      payment: r.result as bigint,
+      payment: paymentResult?.result as bigint,
+      paymentClaimed: paymentClaimedResult?.result as bigint,
     };
   });
 };
@@ -369,7 +386,7 @@ export const getManyDisputeVote = async (
 export const getDisputeTimer = async (
   disputeId: bigint
 ): Promise<Timer | null> => {
-   try {
+  try {
     const disputeTimer = (await readContract(config, {
       abi: disputeStorageAbi,
       address: disputeStorageAddress,

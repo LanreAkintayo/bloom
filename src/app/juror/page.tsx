@@ -49,6 +49,7 @@ import {
 } from "@/constants";
 import { Address, zeroAddress } from "viem";
 import DisputeCard from "@/components/disputes/DisputeCard";
+import RewardModal from "@/components/juror/RewardModal";
 
 export default function JurorDashboard() {
   const { address: signerAddress } = useAccount();
@@ -72,31 +73,22 @@ export default function JurorDashboard() {
         queryFn: () => getJurorDisputeHistory(signerAddress!),
         enabled: !!signerAddress,
       },
-      {
-        queryKey: ["rewards", signerAddress],
-        queryFn: () => getManyJurorPayments(signerAddress!, supportedTokens),
-        enabled: !!signerAddress,
-      },
     ],
-  }) as [
-    { data?: StorageParams },
-    { data?: Juror },
-    { data?: bigint[] },
-    { data?: TokenPayment[] }
-  ];
+  }) as [{ data?: StorageParams }, { data?: Juror }, { data?: bigint[] }];
 
-  const [
-    storageParamsResult,
-    jurorResult,
-    disputeHistoryResult,
-    rewardsResult,
-  ] = results;
+  const [storageParamsResult, jurorResult, disputeHistoryResult] = results;
+
+  const { data: rewards, refetch: refetchRewards } = useQuery({
+    queryKey: ["rewards", signerAddress],
+    queryFn: () => getManyJurorPayments(signerAddress!, supportedTokens),
+    enabled: !!signerAddress,
+  });
 
   // Safely extract data with fallbacks
   const storageParams = storageParamsResult.data ?? null;
   const juror = jurorResult.data ?? null;
   const disputeIds = disputeHistoryResult.data ?? [];
-  const rewards = rewardsResult.data ?? [];
+  // const rewards = rewardsResult.data ?? [];
 
   const dependentResults = useQueries({
     queries: [
@@ -225,9 +217,12 @@ export default function JurorDashboard() {
     // await contract.claimReward(tokenAddress, amount);
   };
 
+  // const [claimState, setClaimState] = useState<{ loading: boolean; text: string; error: any }>({ loading: false, text: "", error: null})>
+
   return (
     <>
       <Header />
+
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-950 to-black text-white p-6">
         {/* Page Header */}
         <div className="mb-10 text-center">
@@ -243,7 +238,13 @@ export default function JurorDashboard() {
             {juror && <StatsCard juror={juror} />}
 
             {/* Rewards Card */}
-            {rewards && <RewardsCard rewards={rewards} onClaim={handleClaim} />}
+            {rewards && (
+              <RewardsCard
+                rewards={rewards}
+                refetch={refetchRewards}
+                onClaim={handleClaim}
+              />
+            )}
           </div>
 
           {/* Right Panel */}

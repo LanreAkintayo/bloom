@@ -107,6 +107,7 @@ export type Timer = {
 
 export type TokenPayment = Token & {
   payment: bigint;
+  paymentClaimed: bigint;
 };
 
 export type ExtendedDispute = Dispute & {
