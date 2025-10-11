@@ -285,12 +285,12 @@ export default function JurorDashboard() {
               </Button>
             </div>
 
-            {/* Content Area */}
+            {/* Content Area 
             {/* Dispute List */}
             {/* 1. LOADING STATE: Show skeletons while data is being fetched */}
             {isDisputesLoading || disputes == null ? (
               <div className="space-y-4">
-                <DisputeCardSkeleton />
+                {/* <DisputeCardSkeleton /> */}
                 <DisputeCardSkeleton />
                 <DisputeCardSkeleton />
               </div>
