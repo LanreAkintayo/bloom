@@ -513,8 +513,8 @@ export default function EscrowPage() {
             <CardContent className="space-y-6">
               {/* Header + How It Works Button */}
               <div className="flex justify-between items-center">
-                <h2 className="text-2xl font-bold text-emerald-400">
-                  Create New Escrow Deal
+                <h2 className="text-xl sm:text-2xl font-bold text-emerald-400">
+                  Create New Deal
                 </h2>
                 <Button
                   variant="secondary"

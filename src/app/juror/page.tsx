@@ -128,9 +128,9 @@ export default function JurorDashboard() {
 
   const [disputesResult, disputeVotesResult, disputeTimersResult] =
     dependentResults;
-  const disputes = disputesResult?.data ?? [];
-  const disputeVotes = disputeVotesResult?.data ?? [];
-  const disputeTimers = disputeTimersResult?.data ?? [];
+  const disputes = disputesResult?.data ?? null;
+  const disputeVotes = disputeVotesResult?.data ?? null;
+  const disputeTimers = disputeTimersResult?.data ?? null;
 
   // const { data: storageParams } = useQuery({
   //   queryKey: ["storageParams"],
@@ -287,20 +287,17 @@ export default function JurorDashboard() {
 
             {/* Content Area 
             {/* Dispute List */}
-            {/* 1. LOADING STATE: Show skeletons while data is being fetched */}
             {isDisputesLoading || disputes == null ? (
               <div className="space-y-4">
-                <DisputeCardSkeleton />
-                <DisputeCardSkeleton />
                 <DisputeCardSkeleton />
               </div>
             ) : (activeTab === "active"
                 ? activeDisputes
                 : pastDisputes
-              ).length > 0 ? (
-              // 2. DATA STATE: If not loading and the array has items, show the list
+              )!.length > 0 ? (
+
               <div className="space-y-4">
-                {(activeTab === "active" ? activeDisputes : pastDisputes)
+                {(activeTab === "active" ? activeDisputes : pastDisputes)!
                   .slice()
                   .map((_, index, array) => {
                     const dispute = array[array.length - 1 - index];

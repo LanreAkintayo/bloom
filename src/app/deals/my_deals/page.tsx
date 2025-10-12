@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import DealCard from "@/components/escrow/DealCard";
+import DealCard, { DealCardSkeleton } from "@/components/escrow/DealCard";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Info } from "lucide-react";
@@ -97,7 +97,6 @@ export default function MyDealsPage() {
     loadAllSupportedTokens();
   }, []);
 
-
   //   bloomLog("Creator Deals: ", creatorDeals);
 
   const [activeMainTab, setActiveMainTab] = useState<
@@ -114,14 +113,17 @@ export default function MyDealsPage() {
   >("All");
 
   const dealsToDisplay =
-    (activeMainTab === "Created Deals" ? creatorDeals : recipientDeals) ?? [];
+    (activeMainTab === "Created Deals" ? creatorDeals : recipientDeals) ?? null;
 
   const filteredDeals =
-    activeStatusFilter === "All"
+    dealsToDisplay == null
+      ? null
+      : activeStatusFilter === "All"
       ? [...dealsToDisplay].reverse() // reverse order here
       : [...dealsToDisplay]
           .filter((deal) => Status[deal.status] === activeStatusFilter)
           .reverse(); // also reverse after filtering
+
   const statusOptions = [
     "All",
     "Pending",
@@ -331,7 +333,7 @@ export default function MyDealsPage() {
                 <Button
                   key={tab}
                   onClick={() => setActiveMainTab(tab as any)}
-                  className={`px-6 w-4/12 ${
+                  className={`px-6 w-4/12 flex-1 ${
                     activeMainTab === tab
                       ? "bg-emerald-600 hover:bg-emerald-700"
                       : "bg-slate-800 hover:bg-slate-700 text-white/70"
@@ -369,7 +371,44 @@ export default function MyDealsPage() {
             </div>
 
             {/* Deals List */}
-            {filteredDeals?.length === 0 ? (
+            {/* {filteredDeals?.length === 0 ? (
+              <div className="text-center text-white/70 mt-10">
+                <Info className="w-6 h-6 mx-auto mb-2" />
+                {activeMainTab === "Created Deals"
+                  ? "No created deals found"
+                  : "No deals created for you"}
+              </div>
+            ) : (
+              <div className="grid gap-6 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+                {filteredDeals?.map((deal, id) => (
+                  <DealCard
+                    key={id}
+                    deal={deal}
+                    currentUser={
+                      activeMainTab === "Created Deals" ? "sender" : "receiver"
+                    }
+                    onCancel={() => openConfirm("cancel", deal.id)}
+                    onRelease={() => openConfirm("release", deal.id)}
+                    onClaim={() => openConfirm("release", deal.id)}
+                    onAcknowledge={() => openConfirm("acknowledge", deal.id)}
+                    onUnacknowledge={() =>
+                      openConfirm("unacknowledge", deal.id)
+                    }
+                    onDispute={() => openConfirm("dispute", deal.id)}
+                    loadingAction={loadingAction}
+                  />
+                ))}
+              </div>
+            )} */}
+
+            {!filteredDeals ? (
+              // Show skeletons while loading
+              <div className="grid gap-6 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+                {Array.from({ length: 2 }).map((_, index) => (
+                  <DealCardSkeleton key={index} />
+                ))}
+              </div>
+            ) : filteredDeals.length === 0 ? (
               <div className="text-center text-white/70 mt-10">
                 <Info className="w-6 h-6 mx-auto mb-2" />
                 {activeMainTab === "Created Deals"
