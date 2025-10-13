@@ -20,7 +20,7 @@ import {
   Mail,
   Play,
 } from "lucide-react";
-import Hero3D from "@/components/Hero3D";
+// import Hero3D from "@/components/Hero3D";
 import HeroGridTracer from "@/components/HeroGridTracer";
 
 /**
@@ -101,67 +101,67 @@ function GlassCard({
 
 // ---------- Ambient background and cursor parallax ----------
 
-function AmbientBackground() {
-  // small performance aware background with CSS and a minimal cursor parallax
-  const ref = useRef<HTMLDivElement | null>(null);
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-    let raf = 0;
-    function onMove(e: MouseEvent) {
-      cancelAnimationFrame(raf);
-      raf = requestAnimationFrame(() => {
-        const x = e.clientX / window.innerWidth;
-        const y = e.clientY / window.innerHeight;
-        el.style.setProperty("--mx", `${(x - 0.5) * 40}px`);
-        el.style.setProperty("--my", `${(y - 0.5) * 40}px`);
-      });
-    }
-    window.addEventListener("pointermove", onMove);
-    return () => {
-      cancelAnimationFrame(raf);
-      window.removeEventListener("pointermove", onMove);
-    };
-  }, []);
-  return (
-    <div
-      ref={ref}
-      aria-hidden
-      className="pointer-events-none fixed inset-0 -z-10"
-      style={
-        {
-          // css variables used by children
-        } as React.CSSProperties
-      }
-    >
-      <div
-        className="absolute left-[-20%] top-[-10%] h-[36rem] w-[36rem] rounded-full blur-[110px] opacity-90"
-        style={{
-          background:
-            "radial-gradient(closest-side, rgba(16,185,129,0.12), transparent 40%), linear-gradient(135deg, rgba(14,165,233,0.06), rgba(99,102,241,0.03))",
-          transform: "translate(var(--mx,0), var(--my,0))",
-        }}
-      />
-      <div
-        className="absolute right-[-18%] top-[15%] h-[28rem] w-[28rem] rounded-full blur-[140px] opacity-80"
-        style={{
-          background:
-            "radial-gradient(closest-side, rgba(6,182,212,0.08), transparent 40%), linear-gradient(120deg, rgba(99,102,241,0.04), rgba(236,72,153,0.02))",
-          transform:
-            "translate(calc(var(--mx,0) * -0.5), calc(var(--my,0) * -0.5))",
-        }}
-      />
-      <div
-        className="absolute bottom-[-24%] left-1/2 h-[40rem] w-[40rem] -translate-x-1/2 rounded-full blur-[160px] opacity-70"
-        style={{
-          background:
-            "radial-gradient(closest-side, rgba(16,185,129,0.08), transparent 40%), linear-gradient(90deg, rgba(6,182,212,0.04), rgba(99,102,241,0.03))",
-        }}
-      />
-      <div className="absolute inset-0 bg-[radial-gradient(1200px_400px_at_10%_10%,rgba(255,255,255,0.01),transparent),radial-gradient(800px_300px_at_90%_90%,rgba(0,0,0,0.02),transparent)]" />
-    </div>
-  );
-}
+// function AmbientBackground() {
+//   // small performance aware background with CSS and a minimal cursor parallax
+//   const ref = useRef<HTMLDivElement | null>(null);
+//   useEffect(() => {
+//     const el = ref.current;
+//     if (!el) return;
+//     let raf = 0;
+//     function onMove(e: MouseEvent) {
+//       cancelAnimationFrame(raf);
+//       raf = requestAnimationFrame(() => {
+//         const x = e.clientX / window.innerWidth;
+//         const y = e.clientY / window.innerHeight;
+//         el.style.setProperty("--mx", `${(x - 0.5) * 40}px`);
+//         el.style.setProperty("--my", `${(y - 0.5) * 40}px`);
+//       });
+//     }
+//     window.addEventListener("pointermove", onMove);
+//     return () => {
+//       cancelAnimationFrame(raf);
+//       window.removeEventListener("pointermove", onMove);
+//     };
+//   }, []);
+//   return (
+//     <div
+//       ref={ref}
+//       aria-hidden
+//       className="pointer-events-none fixed inset-0 -z-10"
+//       style={
+//         {
+//           // css variables used by children
+//         } as React.CSSProperties
+//       }
+//     >
+//       <div
+//         className="absolute left-[-20%] top-[-10%] h-[36rem] w-[36rem] rounded-full blur-[110px] opacity-90"
+//         style={{
+//           background:
+//             "radial-gradient(closest-side, rgba(16,185,129,0.12), transparent 40%), linear-gradient(135deg, rgba(14,165,233,0.06), rgba(99,102,241,0.03))",
+//           transform: "translate(var(--mx,0), var(--my,0))",
+//         }}
+//       />
+//       <div
+//         className="absolute right-[-18%] top-[15%] h-[28rem] w-[28rem] rounded-full blur-[140px] opacity-80"
+//         style={{
+//           background:
+//             "radial-gradient(closest-side, rgba(6,182,212,0.08), transparent 40%), linear-gradient(120deg, rgba(99,102,241,0.04), rgba(236,72,153,0.02))",
+//           transform:
+//             "translate(calc(var(--mx,0) * -0.5), calc(var(--my,0) * -0.5))",
+//         }}
+//       />
+//       <div
+//         className="absolute bottom-[-24%] left-1/2 h-[40rem] w-[40rem] -translate-x-1/2 rounded-full blur-[160px] opacity-70"
+//         style={{
+//           background:
+//             "radial-gradient(closest-side, rgba(16,185,129,0.08), transparent 40%), linear-gradient(90deg, rgba(6,182,212,0.04), rgba(99,102,241,0.03))",
+//         }}
+//       />
+//       <div className="absolute inset-0 bg-[radial-gradient(1200px_400px_at_10%_10%,rgba(255,255,255,0.01),transparent),radial-gradient(800px_300px_at_90%_90%,rgba(0,0,0,0.02),transparent)]" />
+//     </div>
+//   );
+// }
 
 // ---------- Header component with mobile menu ----------
 
@@ -354,7 +354,7 @@ function TracerGrid() {
   useEffect(() => {
     let x = 0,
       y = 0;
-    let points: string[] = [`${x},${y}`];
+    const points: string[] = [`${x},${y}`];
 
     const interval = setInterval(() => {
       const direction = Math.floor(Math.random() * 4);
@@ -1017,7 +1017,7 @@ export default function BoomLanding() {
 
   return (
     <main className="min-h-screen bg-[#0a0c11] text-white relative antialiased">
-      <AmbientBackground />
+      {/* <AmbientBackground /> */}
       <Header onCreate={() => alert("Create Deal flow placeholder")} />
 
       {/* Hero Section */}

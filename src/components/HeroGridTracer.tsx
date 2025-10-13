@@ -34,55 +34,55 @@ function GridLines() {
   return <group>{lines.map((l, i) => <primitive key={i} object={l} />)}</group>;
 }
 
-function Tracer() {
-  const lineRef = useRef<THREE.Line>(null);
-  const headRef = useRef<THREE.Mesh>(null);
-  const [pos, setPos] = useState([0, 0]);
-  const [target, setTarget] = useState([1, 0]);
-  const progress = useRef(0);
+// function Tracer() {
+//   const lineRef = useRef<THREE.Line>(null);
+//   const headRef = useRef<THREE.Mesh>(null);
+//   const [pos, setPos] = useState([0, 0]);
+//   const [target, setTarget] = useState([1, 0]);
+//   const progress = useRef(0);
 
-  useFrame((_, delta) => {
-    progress.current += delta * 0.5; // speed
+//   useFrame((_, delta) => {
+//     progress.current += delta * 0.5; // speed
 
-    if (progress.current >= 1) {
-      setPos(target);
-      const dirs = [
-        [1, 0],
-        [-1, 0],
-        [0, 1],
-        [0, -1],
-      ];
-      const dir = dirs[Math.floor(Math.random() * dirs.length)];
-      setTarget([pos[0] + dir[0], pos[1] + dir[1]]);
-      progress.current = 0;
-    }
+//     if (progress.current >= 1) {
+//       setPos(target);
+//       const dirs = [
+//         [1, 0],
+//         [-1, 0],
+//         [0, 1],
+//         [0, -1],
+//       ];
+//       const dir = dirs[Math.floor(Math.random() * dirs.length)];
+//       setTarget([pos[0] + dir[0], pos[1] + dir[1]]);
+//       progress.current = 0;
+//     }
 
-    const x = THREE.MathUtils.lerp(pos[0], target[0], progress.current);
-    const y = THREE.MathUtils.lerp(pos[1], target[1], progress.current);
+//     const x = THREE.MathUtils.lerp(pos[0], target[0], progress.current);
+//     const y = THREE.MathUtils.lerp(pos[1], target[1], progress.current);
 
-    if (lineRef.current) {
-      const points = [new THREE.Vector3(pos[0], pos[1], 0), new THREE.Vector3(x, y, 0)];
-      lineRef.current.geometry.setFromPoints(points);
-    }
+//     if (lineRef.current) {
+//       const points = [new THREE.Vector3(pos[0], pos[1], 0), new THREE.Vector3(x, y, 0)];
+//       lineRef.current.geometry.setFromPoints(points);
+//     }
 
-    if (headRef.current) {
-      headRef.current.position.set(x, y, 0);
-    }
-  });
+//     if (headRef.current) {
+//       headRef.current.position.set(x, y, 0);
+//     }
+//   });
 
-  return (
-    <>
-      <line ref={lineRef}>
-        <bufferGeometry />
-        <lineBasicMaterial color={"cyan"} linewidth={2} />
-      </line>
-      <mesh ref={headRef}>
-        <sphereGeometry args={[0.08, 16, 16]} />
-        <meshBasicMaterial color={"cyan"} emissive={"cyan"} />
-      </mesh>
-    </>
-  );
-}
+//   return (
+//     <>
+//       <line ref={lineRef}>
+//         <bufferGeometry />
+//         <lineBasicMaterial color={"cyan"} linewidth={2} />
+//       </line>
+//       <mesh ref={headRef}>
+//         <sphereGeometry args={[0.08, 16, 16]} />
+//         <meshBasicMaterial color={"cyan"} emissive={"cyan"} />
+//       </mesh>
+//     </>
+//   );
+// }
 
 export default function HeroGridTracer() {
   return (
@@ -93,7 +93,7 @@ export default function HeroGridTracer() {
     >
       <color attach="background" args={["transparent"]} />
       <GridLines />
-      <Tracer />
+      {/* <Tracer /> */}
     </Canvas>
   );
 }

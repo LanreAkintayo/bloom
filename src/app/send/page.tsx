@@ -344,7 +344,7 @@ export default function SendPage() {
                 <>
                   <h3 className="text-lg font-semibold mb-2">Confirm transfer</h3>
                   <div className="text-sm text-white/60 mb-4">
-                    You're about to send <strong>{numericAmount} {selected.symbol}</strong> to <span className="font-mono text-xs">{recipient}</span>
+                    You&apos;re about to send <strong>{numericAmount} {selected.symbol}</strong> to <span className="font-mono text-xs">{recipient}</span>
                   </div>
 
                   <div className="flex gap-3">

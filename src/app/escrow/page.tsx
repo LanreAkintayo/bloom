@@ -95,26 +95,26 @@ const [pendingDeal, setPendingDeal] = useState({
   description: "",
 });
 
-const [deals, setDeals] = useState([
-  {
-    id: 1,
-    recipient: "0xA1b2...3c4D",
-    sender: "You",
-    amount: "500 USDC",
-    status: "Pending" as const,
-    description: "Freelance website design project",
-    createdAt: "2025-09-15",
-  },
-  {
-    id: 2,
-    recipient: "0xE5f6...7g8H",
-    sender: "You",
-    amount: "300 DAI",
-    status: "Acknowledged" as const,
-    description: "Logo + Branding work",
-    createdAt: "2025-09-10",
-  },
-]);
+// const [deals, setDeals] = useState([
+//   {
+//     id: 1,
+//     recipient: "0xA1b2...3c4D",
+//     sender: "You",
+//     amount: "500 USDC",
+//     status: "Pending" as const,
+//     description: "Freelance website design project",
+//     createdAt: "2025-09-15",
+//   },
+//   {
+//     id: 2,
+//     recipient: "0xE5f6...7g8H",
+//     sender: "You",
+//     amount: "300 DAI",
+//     status: "Acknowledged" as const,
+//     description: "Logo + Branding work",
+//     createdAt: "2025-09-10",
+//   },
+// ]);
 
 // --- Refs & transitions ---
 const rawAmountRef = useRef<string>("");
@@ -643,7 +643,7 @@ const TokenOptionsList = useMemo(() => (
                   Your Deals
                 </h2>
                 <div className="space-y-4">
-                  {deals.map((deal) => (
+                  {/* {deals.map((deal) => (
                     <DealCard
                       currentUser={"sender"}
                       key={deal.id}
@@ -652,7 +652,7 @@ const TokenOptionsList = useMemo(() => (
                       onRelease={handleReleaseDeal}
                       onClaim={handleClaimDeal}
                     />
-                  ))}
+                  ))} */}
                 </div>
               </div>
             </CardContent>

@@ -13,18 +13,14 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Badge } from "@/components/ui/badge";
 import {
   Loader2,
   ShieldCheck,
-  Lock,
   Wallet,
   Coins,
-  FileText,
   Check,
   ChevronDown,
 } from "lucide-react";
-import DealCard from "@/components/escrow/DealCard"; // Import your new DealCard
 import WalletCard from "@/components/escrow/WalletCard";
 import HowItWorks from "@/components/escrow/HowItWorks";
 import ConfirmationModal from "@/components/escrow/ConfirmationModal";
@@ -38,11 +34,9 @@ import { Listbox, Transition } from "@headlessui/react";
 import Image from "next/image";
 import {
   bloomEscrowAbi,
-  CHAINS,
   erc20Abi,
   getChainConfig,
   IMAGES,
-  TOKEN_META,
 } from "@/constants";
 import { Token } from "@/types";
 import { config } from "@/lib/wagmi";
@@ -55,7 +49,7 @@ import StatusModal from "@/components/escrow/StatusModal";
 import { parseUnits } from "viem";
 import { MAX_PERCENT } from "@/constants";
 import Link from "next/link";
-import { useWatchContractEvent } from "wagmi";
+// import { useWatchContractEvent } from "wagmi";
 
 function formatWithCommas(value: string) {
   if (!value) return "";
@@ -107,27 +101,6 @@ export default function EscrowPage() {
     token: "",
     description: "",
   });
-
-  const [deals, setDeals] = useState([
-    {
-      id: 1,
-      recipient: "0xA1b2...3c4D",
-      sender: "You",
-      amount: "500 USDC",
-      status: "Pending" as const,
-      description: "Freelance website design project",
-      createdAt: "2025-09-15",
-    },
-    {
-      id: 2,
-      recipient: "0xE5f6...7g8H",
-      sender: "You",
-      amount: "300 DAI",
-      status: "Acknowledged" as const,
-      description: "Logo + Branding work",
-      createdAt: "2025-09-10",
-    },
-  ]);
 
   // --- Refs & transitions ---
   const rawAmountRef = useRef<string>("");
@@ -320,21 +293,7 @@ export default function EscrowPage() {
   };
 
   // Handlers for DealCard actions
-  const handleCancelDeal = (id: number) => {
-    // setDeals(
-    //   deals.map((d) => (d.id === id ? { ...d, status: "Disputed" } : d))
-    // );
-  };
 
-  const handleReleaseDeal = (id: number) => {
-    // setDeals(
-    //   deals.map((d) => (d.id === id ? { ...d, status: "Completed" } : d))
-    // );
-  };
-
-  const handleClaimDeal = (id: number) => {
-    alert(`Claim action for deal ID: ${id}`);
-  };
 
   // --- Handlers (contracts) ---
   const approveByTransaction = async (

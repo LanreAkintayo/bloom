@@ -6,13 +6,9 @@ import {
   SendHorizontal,
   Plus,
   Search,
-  Paperclip,
   Mic,
-  Sparkles,
   Pin,
   Clock,
-  CheckCircle2,
-  XCircle,
   Undo2,
   Bell,
   Settings,
@@ -559,26 +555,26 @@ export default function ChatPage() {
     if (latestActionIndex === -1) return;
     // update from end
     const idx = messages.length - 1 - latestActionIndex;
-    setMessages((m: Message[]) =>
-      m
-        .map((mm, i) =>
-          i === idx
-            ? {
-                ...mm,
-                action: mm.action
-                  ? { ...mm.action, status: "success" }
-                  : undefined,
-              }
-            : mm
-        )
-        .concat({
-          id: nid(),
-          author: "ai",
-          kind: "text",
-          createdAt: Date.now(),
-          text: "✅ Confirmed. Transaction prepared in escrow. Recipient may claim when ready.",
-        })
-    );
+    // setMessages((m: Message[]) =>
+    //   m
+    //     .map((mm, i) =>
+    //       i === idx
+    //         ? {
+    //             ...mm,
+    //             action: mm.action
+    //               ? { ...mm.action, status: "success" }
+    //               : undefined,
+    //           }
+    //         : mm
+    //     )
+    //     .concat({
+    //       id: nid(),
+    //       author: "ai",
+    //       kind: "text",
+    //       createdAt: Date.now(),
+    //       text: "✅ Confirmed. Transaction prepared in escrow. Recipient may claim when ready.",
+    //     })
+    // );
     pushToast("Action confirmed");
   }
 
@@ -588,26 +584,26 @@ export default function ChatPage() {
       .findIndex((m) => m.kind === "action");
     if (latestActionIndex === -1) return;
     const idx = messages.length - 1 - latestActionIndex;
-    setMessages((m: Message[]) =>
-      m
-        .map((mm, i) =>
-          i === idx
-            ? {
-                ...mm,
-                action: mm.action
-                  ? { ...mm.action, status: "error" }
-                  : undefined,
-              }
-            : mm
-        )
-        .concat({
-          id: nid(),
-          author: "ai",
-          kind: "text",
-          createdAt: Date.now(),
-          text: "❌ Cancelled.",
-        })
-    );
+    // setMessages((m: Message[]) =>
+    //   m
+    //     .map((mm, i) =>
+    //       i === idx
+    //         ? {
+    //             ...mm,
+    //             action: mm.action
+    //               ? { ...mm.action, status: "error" }
+    //               : undefined,
+    //           }
+    //         : mm
+    //     )
+    //     .concat({
+    //       id: nid(),
+    //       author: "ai",
+    //       kind: "text",
+    //       createdAt: Date.now(),
+    //       text: "❌ Cancelled.",
+    //     })
+    // );
     pushToast("Action cancelled");
   }
 
@@ -623,8 +619,8 @@ export default function ChatPage() {
   /* Layout helpers */
   const MINI_W = 72;
   const FULL_W = 320;
-  const isDesktop =
-    typeof window !== "undefined" ? window.innerWidth >= 1024 : true;
+  // const isDesktop =
+  //   typeof window !== "undefined" ? window.innerWidth >= 1024 : true;
   const effectiveFull =
     sidebarMode === "full" || (sidebarMode === "mini" && hoveringMini);
 

@@ -18,7 +18,6 @@ import {
   Sparkles,
   BarChart3,
   ArrowRight,
-  Settings,
   CheckCircleIcon,
 } from "lucide-react";
 import { motion } from "framer-motion";
@@ -50,11 +49,11 @@ const Card = ({
   </motion.div>
 );
 
-const Badge = ({ children }: { children: React.ReactNode }) => (
-  <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[11px] font-semibold tracking-wide text-white/80 backdrop-blur">
-    {children}
-  </span>
-);
+// const Badge = ({ children }: { children: React.ReactNode }) => (
+//   <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[11px] font-semibold tracking-wide text-white/80 backdrop-blur">
+//     {children}
+//   </span>
+// );
 
 // Background ambience
 const Ambient = () => (

@@ -136,7 +136,7 @@ export default function RewardsCard({
               description: (
                 <div className="space-y-2 text-[13px]">
                   <p>
-                    You've successfully claimed {formattedAmount} {token.symbol}
+                    You&apos;ve successfully claimed {formattedAmount} {token.symbol}
                   </p>
                 </div>
               ),

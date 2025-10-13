@@ -11,7 +11,7 @@ export async function POST(req: Request) {
 
     if (cache.has(message)) return NextResponse.json(cache.get(message));
 
-    const response = await handleMessage(message);
+    const response:any = await handleMessage(message);
 
     cache.set(message, response);
     return NextResponse.json(response);

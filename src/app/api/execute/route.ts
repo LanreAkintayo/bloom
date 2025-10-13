@@ -51,7 +51,6 @@ export async function POST(req: Request) {
       );
     }
 
-    const decimals = BigInt(10) ** BigInt(token.decimals);
     const amount = BigInt(Math.floor(parseFloat(intent.amount) * 10 ** token.decimals));
 
     return NextResponse.json({

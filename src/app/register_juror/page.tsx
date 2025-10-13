@@ -69,7 +69,7 @@ const RegisterJuror = () => {
   const isFormValid = signerAddress?.trim() !== "" && isStakeValid();
 
   const handleStakeAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    let value = e.target.value;
+    const value = e.target.value;
     if (!/^\d*\.?\d*$/.test(value)) return;
     if (value.startsWith("00")) return;
     const numericValue = parseFloat(value);
