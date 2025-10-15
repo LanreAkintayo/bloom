@@ -640,7 +640,7 @@ const TokenOptionsList = useMemo(() => (
               {/* Your Deals */}
               <div>
                 <h2 className="text-xl font-bold text-cyan-400 mt-4 mb-2">
-                  Your Dealss
+                  Your Deals
                 </h2>
                 <div className="space-y-4">
                   {/* {deals.map((deal) => (
