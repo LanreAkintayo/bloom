@@ -7,60 +7,61 @@ import { motion } from "framer-motion";
 import * as THREE from "three"; // Import THREE for TypeScript types
 
 // --- Custom Gradient Material ---
-const GradientMaterial = shaderMaterial(
-  // Uniforms
-  {
-    u_size: 1.0,
-    u_color1: new THREE.Color("#86efac"), // Bottom color
-    u_color2: new THREE.Color("#38bdf8"), // Top color
-  },
-  // Vertex Shader
-  `
-    varying vec3 vPosition;
-    void main() {
-      vPosition = position;
-      gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-    }
-  `,
-  // Fragment Shader
-  `
-    uniform float u_size;
-    uniform vec3 u_color1;
-    uniform vec3 u_color2;
-    varying vec3 vPosition;
+// const GradientMaterial = shaderMaterial(
+//   // Uniforms
+//   {
+//     u_size: 1.0,
+//     u_color1: new THREE.Color("#86efac"), // Bottom color
+//     u_color2: new THREE.Color("#38bdf8"), // Top color
+//   },
+//   // Vertex Shader
+//   `
+//     varying vec3 vPosition;
+//     void main() {
+//       vPosition = position;
+//       gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+//     }
+//   `,
+//   // Fragment Shader
+//   `
+//     uniform float u_size;
+//     uniform vec3 u_color1;
+//     uniform vec3 u_color2;
+//     varying vec3 vPosition;
 
-    void main() {
-      // Map the Y position (from -size to +size) to a 0-1 range
-      float t = (vPosition.y + u_size) / (2.0 * u_size);
-      t = clamp(t, 0.0, 1.0); // Ensure it's in the 0-1 range
+//     void main() {
+//       // Map the Y position (from -size to +size) to a 0-1 range
+//       float t = (vPosition.y + u_size) / (2.0 * u_size);
+//       t = clamp(t, 0.0, 1.0); // Ensure it's in the 0-1 range
 
-      // mix() interpolates between two colors
-      vec3 color = mix(u_color1, u_color2, t);
+//       // mix() interpolates between two colors
+//       vec3 color = mix(u_color1, u_color2, t);
       
-      // Apply the final color with 0.8 opacity
-      gl_FragColor = vec4(color, 0.8);
-    }
-  `
-);
+//       // Apply the final color with 0.8 opacity
+//       gl_FragColor = vec4(color, 0.8);
+//     }
+//   `
+// );
 
 // This makes <gradientMaterial /> available as a JSX tag
-extend({ GradientMaterial });
+// extend({ GradientMaterial });
 
 // --- FIX: Tell TypeScript about our new component ---
-declare global {
-  namespace JSX {
-    interface IntrinsicElements {
-      // This merges the standard shaderMaterial props with our custom uniforms
-      gradientMaterial: ThreeElements["shaderMaterial"] & {
-        u_size: number;
-        u_color1: THREE.Color;
-        u_color2: THREE.Color;
-        // wireframe & transparent are already part of ThreeElements["shaderMaterial"]
-      };
-    }
-  }
-}
-// --- End of FIX ---
+// // eslint-disable-next-line @typescript-eslint/no-namespace
+// declare global {
+//   namespace JSX {
+//     interface IntrinsicElements {
+//       // This merges the standard shaderMaterial props with our custom uniforms
+//       gradientMaterial: ThreeElements["shaderMaterial"] & {
+//         u_size: number;
+//         u_color1: THREE.Color;
+//         u_color2: THREE.Color;
+//         // wireframe & transparent are already part of ThreeElements["shaderMaterial"]
+//       };
+//     }
+//   }
+// }
+// // --- End of FIX ---
 
 // --- Helper Component ---
 
