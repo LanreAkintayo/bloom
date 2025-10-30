@@ -42,6 +42,7 @@ import {
 import { motion, useAnimation } from "framer-motion";
 import { useInView } from "react-intersection-observer";
 import HeroOrb from "@/components/Orb";
+import Sphere3D from "@/components/Sphere3D";
 import Hero from "@/components/Hero";
 import DemoChatAnimated from "@/components/DemoChatAnimated";
 import PrimaryButton from "@/components/landing/PrimaryButton";
@@ -268,24 +269,17 @@ export default function Page() {
                   Read the Docs <BookOpen className="h-4 w-4" />
                 </GhostButton>
               </div>
-
-              {/* Hero KPIs */}
-              {/* <div className="mt-10 grid grid-cols-2 gap-3 sm:grid-cols-3">
-                {[{ label: "Avg. Fee", value: "~$0.002" }, { label: "Undo Window", value: "Until claimed" }, { label: "Supported", value: "ETH • USDC • SONIC" }].map((k) => (
-                  <Card key={k.label} className="p-4">
-                    <p className="text-[10px] uppercase tracking-widest text-white/50">{k.label}</p>
-                    <p className="mt-1 text-lg font-bold">{k.value}</p>
-                  </Card>
-                ))}
-              </div> */}
             </div>
 
             {/* Right visual */}
             <div className="relative">
               <div className="absolute -left-10 -top-10 h-72 w-72 rounded-full bg-emerald-500/25 blur-3xl" />
-              <div className="absolute bottom-0 right-0 h-72 w-72 rounded-full bg-cyan-500/20 blur-3xl" />
 
-              <HeroOrb />
+              <Sphere3D />
+
+              <div className="absolute bottom-0 right-0  rounded-full bg-cyan-500/20 blur-3xl" />
+
+              {/* <HeroOrb /> */}
             </div>
           </div>
         </Container>
