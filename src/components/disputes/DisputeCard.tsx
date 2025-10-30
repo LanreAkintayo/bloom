@@ -106,8 +106,8 @@ export default function DisputeCard({
             </p>
           ) : (
             <p
-              className={`rounded-full px-3 py-1 text-xs font-semibold text-white ${
-                hasWon ? "bg-emerald-600" : "bg-red-600"
+              className={`rounded-full px-3 py-1 text-xs font-semibold ${
+                hasWon ? "bg-emerald-200 text-green-700" : "bg-red-200 text-red-700"
               }`}
             >
               {hasWon ? "Won" : "Lost"}

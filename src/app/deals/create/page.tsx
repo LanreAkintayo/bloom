@@ -450,13 +450,13 @@ export default function EscrowPage() {
                   </Button>
                 </Link>
 
-                <Link href="/deals/my_deal" className="block">
+                {/* <Link href="/deals/my_deal" className="block">
                   <Button className="w-full bg-cyan-600/20 hover:bg-cyan-600/30 text-white/70 flex items-center gap-2">
                     <Wallet className="w-4 h-4" /> Your Disputes
                   </Button>
-                </Link>
+                </Link> */}
 
-                <Link href="/deals/my_deal" className="block">
+                <Link href="/deals/create" className="block">
                   <Button className="w-full bg-cyan-600/20 hover:bg-cyan-600/30 text-white/70 flex items-center gap-2">
                     <ShieldCheck className="w-4 h-4" /> Escrow FAQ
                   </Button>

@@ -128,9 +128,13 @@ export default function JurorDashboard() {
 
   const [disputesResult, disputeVotesResult, disputeTimersResult] =
     dependentResults;
+
+    bloomLog("Disputes Result ", disputesResult?.data)
   const disputes = disputesResult?.data ?? null;
   const disputeVotes = disputeVotesResult?.data ?? null;
   const disputeTimers = disputeTimersResult?.data ?? null;
+
+  bloomLog("Disputes: ", disputes);
 
   // const { data: storageParams } = useQuery({
   //   queryKey: ["storageParams"],
@@ -231,6 +235,14 @@ export default function JurorDashboard() {
 
   // const [claimState, setClaimState] = useState<{ loading: boolean; text: string; error: any }>({ loading: false, text: "", error: null})>
 
+  const disputesToShow =
+    (activeTab === "active" ? activeDisputes : pastDisputes) || [];
+  const hasDisputes = disputesToShow.length > 0;
+
+  const disputeStillLoading = isDisputesLoading ;
+
+  bloomLog("Disputes to show: ", disputesToShow);
+
   return (
     <>
       <Header />
@@ -287,15 +299,54 @@ export default function JurorDashboard() {
 
             {/* Content Area 
             {/* Dispute List */}
+
+            {isDisputesLoading ? (
+              <div className="space-y-4">
+                <DisputeCardSkeleton />
+              </div>
+            ) : hasDisputes ? (
+              <div className="space-y-4">
+                {disputesToShow
+                  .slice()
+                  .reverse() // Reverses the array (cleaner than index math)
+                  .map((dispute) => {
+                    if (!dispute) return null;
+                    const vote = disputeVotesMap?.get(dispute.disputeId);
+                    const timer = disputeTimersMap?.get(dispute.disputeId);
+                    return (
+                      <DisputeCard
+                        key={dispute.disputeId.toString()}
+                        dispute={dispute}
+                        disputeVote={vote!}
+                        disputeTimer={timer!}
+                        storageParams={storageParams!}
+                      />
+                    );
+                  })}
+              </div>
+            ) : (
+              // 3. EMPTY STATE: If not loading and no disputes, show empty
+              <EmptyState
+                Icon={FileSearch}
+                title="No Disputes Found"
+                description={`There are no ${activeTab} disputes to display at this time.`}
+              />
+            )}
+
+            {/* {!isDisputesLoading && disputes == null && (
+              <EmptyState
+                Icon={FileSearch}
+                title="No Disputes Found"
+                description={`There are no ${activeTab} disputes to display at this time.`}
+              />
+            )}
+
             {isDisputesLoading || disputes == null ? (
               <div className="space-y-4">
                 <DisputeCardSkeleton />
               </div>
-            ) : (activeTab === "active"
-                ? activeDisputes
-                : pastDisputes
-              )!.length > 0 ? (
-
+            ) : (activeTab === "active" ? activeDisputes : pastDisputes)!
+                .length > 0 ? (
               <div className="space-y-4">
                 {(activeTab === "active" ? activeDisputes : pastDisputes)!
                   .slice()
@@ -322,7 +373,7 @@ export default function JurorDashboard() {
                 title="No Disputes Found"
                 description={`There are no ${activeTab} disputes to display at this time.`}
               />
-            )}
+            )} */}
 
             {/* Rules Section */}
             <Card className="relative w-full overflow-hidden rounded-2xl border border-white/10 bg-slate-900/80 shadow-2xl backdrop-blur-sm">
