@@ -1,6 +1,6 @@
 # 🏛️ System Architecture Diagrams
 
-This file contains the high-level architecture models for the decentralized escrow and dispute system.
+This file contains the high-level architecture models for the decentralized escrow and dispute system
 
 ---
 
