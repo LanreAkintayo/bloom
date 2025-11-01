@@ -221,7 +221,7 @@ export default function Page() {
               {/* <PrimaryButton>Get Started</PrimaryButton> */}
 
               <Link href="/deals/create" className="block">
-                <Button className="w-full bg-cyan-800 hover:bg-cyan-600/30 text-white/70 flex items-center gap-2">
+                <Button className="group inline-flex items-center gap-2 rounded-2xl bg-gradient-to-tr from-emerald-400 to-cyan-300 px-5 py-3 text-sm font-bold text-black shadow-[0_0_0_0_rgba(16,185,129,0.6)] transition will-change-transform hover:-translate-y-0.5 hover:shadow-[0_0_40px_12px_rgba(6,182,212,0.35)] focus:outline-none">
                   Get Started
                 </Button>
               </Link>
@@ -238,8 +238,9 @@ export default function Page() {
           <div className="grid grid-cols-1 items-center gap-10 md:grid-cols-2">
             <div className="relative z-10">
               <div className="mb-5 flex flex-wrap items-center gap-3">
-                <Badge>Secure • AI-Powered • Gasless</Badge>
-                <Badge>Non‑custodial by design</Badge>
+                <Badge>Secure </Badge>
+                <Badge>Trustless Escrow </Badge>
+                <Badge>On-Chain Arbitration</Badge>
               </div>
               <motion.h1
                 initial={{ opacity: 0, y: 20 }}
@@ -252,14 +253,14 @@ export default function Page() {
   from-emerald-300 via-cyan-400 to-blue-500 
   bg-clip-text text-transparent bg-[length:200%_200%]"
                 >
-                  The Safer, Smarter Way to Move Crypto
+                  {/* The Safer, Smarter Way to Move Crypto */}
+                  Trustless Payments. On-Chain Justice
                 </span>
               </motion.h1>
 
               <p className="mt-4 max-w-xl text-white/70">
-                Escrow protection, an intelligent AI assistant, and account
-                abstraction come together to make crypto transfers safe,
-                intuitive, and undoable — without sacrificing decentralization.
+                A trustless escrow system for P2P payments, backed by a
+                decentralized jury to resolve conflicts
               </p>
               <div className="mt-8 flex flex-wrap gap-4">
                 <PrimaryButton>

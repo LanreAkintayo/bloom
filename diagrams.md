@@ -40,7 +40,7 @@ stateDiagram-v2
     %% 3. Apply styles to states
     class Created,Acknowledged stateDefault
     class InDispute,Voting,Resolved,Appeal stateActive
-    class Released stateSuccess
+    class Released stateSuccessx
     class Refunded stateFail
 
     %% 4. Style the arrows (links) based on their order
@@ -126,6 +126,45 @@ graph TD
 
 ```
 
+```mermaid
+sequenceDiagram
+    %% Participants
+    actor Initiator
+    actor Counterparty
+    actor Juror
+    participant DisputeManager
+    participant DisputeStorage
+    participant BloomEscrow
+    participant Automation
+    participant VRFWrapper
+
+    %% 1. Dispute is Opened
+    Note over Initiator, Counterparty: Dispute is raised
+    Initiator->>DisputeManager: selectJurors(disputeId)
+    DisputeManager->>DisputeStorage: read pools & config
+    DisputeManager->>VRFWrapper: requestRandomness()
+    VRFWrapper-->>DisputeManager: randomness returned
+    DisputeManager->>DisputeStorage: update jurors list
+    DisputeManager->>BloomEscrow: update deal status → InDispute
+
+    %% 2. Jurors Vote
+    loop Jurors vote
+        Juror->>DisputeManager: vote(disputeId, support)
+        DisputeManager->>DisputeStorage: record vote
+    end
+
+    %% 3. Automation resolves dispute
+    Automation->>DisputeManager: performUpkeep()
+    DisputeManager->>DisputeStorage: tally votes
+    DisputeManager->>DisputeManager: determine winner
+    DisputeManager->>DisputeStorage: update reputation & stake
+
+    %% 4. Funds Released
+    DisputeManager->>BloomEscrow: releaseFunds(winner, dealId)
+    BloomEscrow->>BloomEscrow: transfer funds
+    BloomEscrow->>BloomEscrow: update status → Resolved
+
+```
 
 ```mermaid
 sequenceDiagram
